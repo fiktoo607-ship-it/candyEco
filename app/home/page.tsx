@@ -5,6 +5,8 @@ import SiteHeader from '@/components/site-header';
 import { featuredProducts as fallbackFeatured } from '@/lib/site-data';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   let displayFeatured = fallbackFeatured;
   try {
