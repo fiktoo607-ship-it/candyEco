@@ -97,6 +97,7 @@ export default function ProductsSection() {
                   <th className="p-md">Category</th>
                   <th className="p-md">Price</th>
                   <th className="p-md">State</th>
+                  <th className="p-md">Visibility</th>
                   <th className="p-md text-right">Actions</th>
                 </tr>
               </thead>
@@ -149,6 +150,9 @@ export default function ProductsSection() {
                             ? "غير متوفر"
                             : "قريباً"}
                       </span>
+                    </td>
+                    <td className="p-md font-semibold text-on-surface-variant">
+                      {product.visibility ?? 0}
                     </td>
                     <td className="p-md text-right">
                       <div className="flex justify-end gap-sm">

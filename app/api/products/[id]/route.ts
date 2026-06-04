@@ -31,7 +31,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt } = body;
+    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt, visibility } = body;
 
     const existingProduct = await prisma.product.findUnique({
       where: { id },
@@ -62,6 +62,7 @@ export async function PUT(
         story: story !== undefined ? story : existingProduct.story,
         limitBay: limitBay !== undefined ? (limitBay === null ? null : Number(limitBay)) : existingProduct.limitBay,
         state: state !== undefined ? state : existingProduct.state,
+        visibility: visibility !== undefined ? Number(visibility) : existingProduct.visibility,
         publishedAt: publishedAt !== undefined ? (publishedAt ? new Date(publishedAt) : null) : existingProduct.publishedAt,
       },
     });

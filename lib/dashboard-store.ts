@@ -55,6 +55,8 @@ interface DashboardState {
   setPublishedAt: (date: string) => void;
   category: string;
   setCategory: (cat: string) => void;
+  visibility: string;
+  setVisibility: (visibility: string) => void;
 
   // Helpers to open/close modal and delete
   openCreate: (defaultCategory: string) => void;
@@ -112,6 +114,8 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   setPublishedAt: (publishedAt) => set({ publishedAt }),
   category: '',
   setCategory: (category) => set({ category }),
+  visibility: '0',
+  setVisibility: (visibility) => set({ visibility }),
 
   openCreate: (defaultCategory) => set({
     modalMode: 'create',
@@ -126,6 +130,7 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     state: 'exist',
     publishedAt: new Date().toISOString().substring(0, 10),
     category: defaultCategory,
+    visibility: '0',
     isModalOpen: true,
   }),
 
@@ -142,6 +147,7 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     state: p.state as 'exist' | 'outofStock' | 'commingSoun',
     publishedAt: p.publishedAt ? new Date(p.publishedAt).toISOString().substring(0, 10) : '',
     category: p.category,
+    visibility: String(p.visibility ?? 0),
     isModalOpen: true,
   }),
 

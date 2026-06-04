@@ -33,6 +33,8 @@ export default function ProductModal() {
     setPublishedAt,
     category,
     setCategory,
+    visibility,
+    setVisibility,
   } = useDashboardStore();
 
   const createMutation = useCreateProduct();
@@ -99,6 +101,7 @@ export default function ProductModal() {
       category,
       limitBay: limitBay.trim() === '' ? null : Number(limitBay),
       state,
+      visibility: visibility.trim() === '' ? 0 : Number(visibility),
       publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
     };
 
@@ -318,6 +321,19 @@ export default function ProductModal() {
                 className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary h-[38px]"
               />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-xs">
+            <label className="text-sm font-bold text-on-surface-variant">
+              Visibility Score
+            </label>
+            <input
+              type="number"
+              placeholder="e.g. 10 (higher score = better visibility on home page)"
+              value={visibility}
+              onChange={(e) => setVisibility(e.target.value)}
+              className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
+            />
           </div>
 
           <div className="flex flex-col gap-xs">

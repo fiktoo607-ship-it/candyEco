@@ -11,6 +11,7 @@ export interface Product {
   story: string;
   limitBay: number | null;
   state: 'exist' | 'outofStock' | 'commingSoun';
+  visibility: number;
   publishedAt: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -26,6 +27,7 @@ export interface ProductInput {
   story: string;
   limitBay: number | null;
   state: 'exist' | 'outofStock' | 'commingSoun';
+  visibility: number;
   publishedAt: string | null;
 }
 

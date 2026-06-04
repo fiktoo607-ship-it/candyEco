@@ -12,11 +12,10 @@ export default async function HomePage() {
   let displayFeatured = fallbackFeatured;
   try {
     const dbFeatured = await prisma.product.findMany({
-      where: {
-        title: {
-          in: ['كرواسون الزبدة الكلاسيكي', 'تارت التوت الموسمي', 'رغيف العجين المخمر الحرفي']
-        }
-      },
+      orderBy: [
+        { visibility: 'desc' },
+        { createdAt: 'desc' }
+      ],
       take: 3
     });
     if (dbFeatured && dbFeatured.length > 0) {

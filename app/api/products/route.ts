@@ -4,9 +4,10 @@ import { prisma } from '@/lib/prisma';
 export async function GET() {
   try {
     const products = await prisma.product.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: [
+        { visibility: 'desc' },
+        { createdAt: 'desc' }
+      ],
     });
     return NextResponse.json(products);
   } catch (error) {
@@ -19,7 +20,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt } = body;
+    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt, visibility } = body;
 
     if (!title || !slug || !price || !category || !imageUrl || !description || !story) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -36,6 +37,7 @@ export async function POST(request: NextRequest) {
         story,
         limitBay: limitBay !== undefined ? (limitBay === null ? null : Number(limitBay)) : null,
         state: state || 'exist',
+        visibility: visibility !== undefined ? Number(visibility) : 0,
         publishedAt: publishedAt ? new Date(publishedAt) : null,
       },
     });
