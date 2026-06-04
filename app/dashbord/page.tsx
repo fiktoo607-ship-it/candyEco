@@ -42,6 +42,8 @@ export default function DashboardPage() {
   const [slug, setSlug] = useState('');
   const [price, setPrice] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [story, setStory] = useState('');
   const [limitBay, setLimitBay] = useState('');
@@ -62,9 +64,13 @@ export default function DashboardPage() {
       const data = await res.json();
       setProducts(data);
       setError(null);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || 'An error occurred while fetching products.');
+      const errMsg =
+        err instanceof Error
+          ? err.message
+          : "An error occurred while fetching products.";
+      setError(errMsg);
     } finally {
       setIsLoading(false);
     }
@@ -128,9 +134,50 @@ export default function DashboardPage() {
     setIsModalOpen(true);
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("Image size must be less than 10MB");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Upload failed");
+      }
+
+      const data = await res.json();
+      setImageUrl(data.url);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to upload image";
+      console.error(msg);
+      setUploadError(msg);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // Handle Form Submission (Create or Edit)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isUploading) {
+      alert("Please wait for the image upload to complete.");
+      return;
+    }
     if (!title || !slug || !price || !imageUrl || !description || !story) {
       alert('Please fill in all required fields.');
       return;
@@ -173,9 +220,11 @@ export default function DashboardPage() {
 
       setIsModalOpen(false);
       fetchProducts();
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      alert(err.message || 'An error occurred while saving.');
+      const errMsg =
+        err instanceof Error ? err.message : "An error occurred while saving.";
+      alert(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -199,35 +248,56 @@ export default function DashboardPage() {
       setIsDeleteOpen(false);
       setProductToDelete(null);
       fetchProducts();
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      alert(err.message || 'An error occurred while deleting.');
+      const errMsg =
+        err instanceof Error
+          ? err.message
+          : "An error occurred while deleting.";
+      alert(errMsg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <main dir="ltr" className="flex min-h-screen flex-col bg-surface text-on-surface md:flex-row">
+    <main
+      dir="ltr"
+      className="flex min-h-screen flex-col bg-surface text-on-surface md:flex-row"
+    >
       {/* Sidebar */}
       <aside className="sticky top-0 z-20 flex w-full flex-col border-r border-outline-variant/30 bg-surface-container-lowest shadow-soft md:min-h-screen md:w-64">
         <div className="flex items-center gap-sm p-lg">
-          <span className="material-symbols-outlined text-3xl text-primary animate-pulse">bakery_dining</span>
+          <span className="material-symbols-outlined text-3xl text-primary animate-pulse">
+            bakery_dining
+          </span>
           {/* <span className="font-display text-2xl font-bold text-primary">Admin</span> */}
         </div>
         <nav className="flex flex-1 flex-col gap-sm px-md">
-          <a className="rounded-lg px-md py-sm text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary" href="#overview">
+          <a
+            className="rounded-lg px-md py-sm text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary"
+            href="#overview"
+          >
             Overview
           </a>
-          <a className="rounded-lg bg-primary-container/10 px-md py-sm text-primary transition-colors font-semibold" href="#products">
+          <a
+            className="rounded-lg bg-primary-container/10 px-md py-sm text-primary transition-colors font-semibold"
+            href="#products"
+          >
             Manage Products
           </a>
-          <a className="rounded-lg px-md py-sm text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary" href="#orders">
+          <a
+            className="rounded-lg px-md py-sm text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary"
+            href="#orders"
+          >
             Orders
           </a>
         </nav>
         <div className="mt-auto border-t border-outline-variant/30 p-md">
-          <a className="rounded-lg px-md py-sm text-on-surface-variant transition-colors hover:text-primary" href="#logout">
+          <a
+            className="rounded-lg px-md py-sm text-on-surface-variant transition-colors hover:text-primary"
+            href="#logout"
+          >
             Logout
           </a>
         </div>
@@ -236,8 +306,10 @@ export default function DashboardPage() {
       {/* Main Content Area */}
       <section className="flex-1 flex flex-col">
         <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-outline-variant/30 bg-surface/90 backdrop-blur-md px-gutter shadow-soft">
-          <h1 className="font-display text-3xl font-bold text-on-surface">Manage Products</h1>
-          <button 
+          <h1 className="font-display text-3xl font-bold text-on-surface">
+            Manage Products
+          </h1>
+          <button
             onClick={handleOpenCreate}
             className="inline-flex items-center gap-xs rounded-full bg-primary px-md py-sm text-sm font-semibold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint hover:scale-[1.02]"
           >
@@ -258,7 +330,9 @@ export default function DashboardPage() {
             {/* Search and Filters */}
             <div className="flex flex-col gap-md border-b border-outline-variant/30 p-md lg:flex-row lg:items-center lg:justify-between">
               <label className="relative w-full lg:w-80">
-                <span className="material-symbols-outlined pointer-events-none absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                <span className="material-symbols-outlined pointer-events-none absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">
+                  search
+                </span>
                 <input
                   type="text"
                   placeholder="Search products..."
@@ -268,21 +342,28 @@ export default function DashboardPage() {
                 />
               </label>
               <div className="text-sm text-on-surface-variant font-medium">
-                Total Products: <span className="text-primary font-bold">{totalItems}</span>
+                Total Products:{" "}
+                <span className="text-primary font-bold">{totalItems}</span>
               </div>
             </div>
 
             {/* Loading Indicator */}
             {isLoading ? (
               <div className="flex h-64 flex-col items-center justify-center gap-md">
-                <span className="material-symbols-outlined text-4xl text-primary animate-spin">sync</span>
+                <span className="material-symbols-outlined text-4xl text-primary animate-spin">
+                  sync
+                </span>
                 <p className="text-on-surface-variant">Loading products...</p>
               </div>
             ) : currentItems.length === 0 ? (
               <div className="flex h-64 flex-col items-center justify-center gap-sm text-on-surface-variant">
-                <span className="material-symbols-outlined text-5xl">folder_open</span>
+                <span className="material-symbols-outlined text-5xl">
+                  folder_open
+                </span>
                 <p className="text-lg font-semibold">No products found</p>
-                <p className="text-sm">Try adding a new product or refining your search query.</p>
+                <p className="text-sm">
+                  Try adding a new product or refining your search query.
+                </p>
               </div>
             ) : (
               /* Products Table */
@@ -300,7 +381,10 @@ export default function DashboardPage() {
                   </thead>
                   <tbody className="divide-y divide-outline-variant/20">
                     {currentItems.map((product) => (
-                      <tr key={product.id} className="group transition-colors hover:bg-surface/50">
+                      <tr
+                        key={product.id}
+                        className="group transition-colors hover:bg-surface/50"
+                      >
                         <td className="p-md">
                           <div className="relative h-16 w-16 overflow-hidden rounded-lg bg-surface-container-high border border-outline-variant/20 shadow-sm">
                             <Image
@@ -316,23 +400,33 @@ export default function DashboardPage() {
                           <div className="font-semibold text-on-surface group-hover:text-primary transition-colors flex items-center gap-sm">
                             {product.title}
                           </div>
-                          <div className="text-xs text-on-surface-variant/80 mt-[2px] line-clamp-1 max-w-md">{product.description}</div>
+                          <div className="text-xs text-on-surface-variant/80 mt-[2px] line-clamp-1 max-w-md">
+                            {product.description}
+                          </div>
                         </td>
                         <td className="p-md">
                           <span className="rounded-full bg-secondary-container/20 px-sm py-xs text-sm text-on-surface font-medium border border-outline-variant/30">
                             {product.category}
                           </span>
                         </td>
-                        <td className="p-md font-bold text-primary">{product.price}</td>
+                        <td className="p-md font-bold text-primary">
+                          {product.price}
+                        </td>
                         <td className="p-md">
-                          <span className={`rounded-full px-sm py-[2px] text-xs font-semibold ${
-                            product.state === 'exist'
-                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
-                              : product.state === 'outofStock'
-                              ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400'
-                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400'
-                          }`}>
-                            {product.state === 'exist' ? 'متوفر' : product.state === 'outofStock' ? 'غير متوفر' : 'قريباً'}
+                          <span
+                            className={`rounded-full px-sm py-[2px] text-xs font-semibold ${
+                              product.state === "exist"
+                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400"
+                                : product.state === "outofStock"
+                                  ? "bg-rose-100 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400"
+                                  : "bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400"
+                            }`}
+                          >
+                            {product.state === "exist"
+                              ? "متوفر"
+                              : product.state === "outofStock"
+                                ? "غير متوفر"
+                                : "قريباً"}
                           </span>
                         </td>
                         <td className="p-md text-right">
@@ -341,14 +435,18 @@ export default function DashboardPage() {
                               onClick={() => handleOpenEdit(product)}
                               className="inline-flex items-center gap-xs rounded-lg px-sm py-xs text-sm font-semibold text-primary transition-all hover:bg-primary-container/10 active:scale-95"
                             >
-                              <span className="material-symbols-outlined text-base">edit</span>
+                              <span className="material-symbols-outlined text-base">
+                                edit
+                              </span>
                               Edit
                             </button>
                             <button
                               onClick={() => handleOpenDelete(product)}
                               className="inline-flex items-center gap-xs rounded-lg px-sm py-xs text-sm font-semibold text-error transition-all hover:bg-error-container/30 active:scale-95"
                             >
-                              <span className="material-symbols-outlined text-base">delete</span>
+                              <span className="material-symbols-outlined text-base">
+                                delete
+                              </span>
                               Delete
                             </button>
                           </div>
@@ -364,7 +462,9 @@ export default function DashboardPage() {
             {!isLoading && totalItems > 0 && (
               <div className="flex items-center justify-between border-t border-outline-variant/30 p-md">
                 <span className="text-sm text-on-surface-variant font-medium">
-                  Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
+                  Showing {indexOfFirstItem + 1} to{" "}
+                  {Math.min(indexOfLastItem, totalItems)} of {totalItems}{" "}
+                  entries
                 </span>
                 <div className="flex gap-xs">
                   <button
@@ -374,22 +474,26 @@ export default function DashboardPage() {
                   >
                     ‹
                   </button>
-                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`rounded-md px-sm py-xs text-sm font-semibold transition-all ${
-                        currentPage === page
-                          ? 'bg-primary text-white shadow-soft'
-                          : 'border border-outline-variant text-on-surface hover:bg-surface-container-low'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(
+                    (page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`rounded-md px-sm py-xs text-sm font-semibold transition-all ${
+                          currentPage === page
+                            ? "bg-primary text-white shadow-soft"
+                            : "border border-outline-variant text-on-surface hover:bg-surface-container-low"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ),
+                  )}
                   <button
                     disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage((c) => Math.min(c + 1, totalPages))}
+                    onClick={() =>
+                      setCurrentPage((c) => Math.min(c + 1, totalPages))
+                    }
                     className="rounded-md border border-outline-variant px-sm py-xs text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     ›
@@ -407,7 +511,7 @@ export default function DashboardPage() {
           <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up">
             <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low">
               <h2 className="font-display text-xl font-bold text-on-surface">
-                {modalMode === 'create' ? 'Add New Product' : 'Edit Product'}
+                {modalMode === "create" ? "Add New Product" : "Edit Product"}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -417,10 +521,15 @@ export default function DashboardPage() {
               </button>
             </header>
 
-            <form onSubmit={handleSubmit} className="p-md flex flex-col gap-sm overflow-y-auto max-h-[75vh]">
+            <form
+              onSubmit={handleSubmit}
+              className="p-md flex flex-col gap-sm overflow-y-auto max-h-[75vh]"
+            >
               <div className="grid grid-cols-2 gap-sm">
                 <div className="flex flex-col gap-xs">
-                  <label className="text-sm font-bold text-on-surface-variant">Product Title *</label>
+                  <label className="text-sm font-bold text-on-surface-variant">
+                    Product Title *
+                  </label>
                   <input
                     type="text"
                     required
@@ -428,21 +537,31 @@ export default function DashboardPage() {
                     value={title}
                     onChange={(e) => {
                       setTitle(e.target.value);
-                      if (modalMode === 'create') {
-                        setSlug(e.target.value.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-ء-ي]/g, ''));
+                      if (modalMode === "create") {
+                        setSlug(
+                          e.target.value
+                            .toLowerCase()
+                            .trim()
+                            .replace(/\s+/g, "-")
+                            .replace(/[^a-z0-9-ء-ي]/g, ""),
+                        );
                       }
                     }}
                     className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
                   />
                 </div>
                 <div className="flex flex-col gap-xs">
-                  <label className="text-sm font-bold text-on-surface-variant">Slug *</label>
+                  <label className="text-sm font-bold text-on-surface-variant">
+                    Slug *
+                  </label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. cocoa-cake"
                     value={slug}
-                    onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+                    onChange={(e) =>
+                      setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))
+                    }
                     className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
                   />
                 </div>
@@ -450,7 +569,9 @@ export default function DashboardPage() {
 
               <div className="grid grid-cols-2 gap-sm">
                 <div className="flex flex-col gap-xs">
-                  <label className="text-sm font-bold text-on-surface-variant">Price *</label>
+                  <label className="text-sm font-bold text-on-surface-variant">
+                    Price *
+                  </label>
                   <input
                     type="text"
                     required
@@ -461,7 +582,9 @@ export default function DashboardPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-xs">
-                  <label className="text-sm font-bold text-on-surface-variant">Category *</label>
+                  <label className="text-sm font-bold text-on-surface-variant">
+                    Category *
+                  </label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
@@ -476,21 +599,80 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-xs">
-                <label className="text-sm font-bold text-on-surface-variant">Image URL *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Paste direct image link"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
-                />
+              <div className="flex flex-col gap-sm">
+                <label className="text-sm font-bold text-on-surface-variant">
+                  Product Image *
+                </label>
+
+                {/* File Upload Zone */}
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-outline-variant rounded-xl p-md bg-surface-container-low/50 hover:bg-surface-container-low transition-colors relative group">
+                  {imageUrl ? (
+                    <div className="relative w-full flex flex-col items-center gap-sm">
+                      <div className="relative h-32 w-32 overflow-hidden rounded-lg border border-outline-variant/30 shadow-md">
+                        <Image
+                          src={imageUrl}
+                          alt="Product preview"
+                          fill
+                          className="object-cover"
+                          sizes="128px"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setImageUrl("")}
+                        className="rounded-full bg-error/10 px-sm py-xs text-xs font-semibold text-error hover:bg-error/20 transition-colors"
+                      >
+                        Remove Image
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center cursor-pointer py-sm w-full">
+                      <span className="material-symbols-outlined text-4xl text-primary mb-xs">
+                        cloud_upload
+                      </span>
+                      <span className="text-sm font-semibold text-on-surface">
+                        Click to upload image
+                      </span>
+                      <span className="text-xs text-on-surface-variant/80 mt-[2px]">
+                        PNG, JPG, WEBP up to 10MB
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        disabled={isUploading}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-surface-container-lowest/80 backdrop-blur-xs flex flex-col items-center justify-center gap-xs rounded-xl">
+                      <span className="material-symbols-outlined text-2xl text-primary animate-spin">
+                        sync
+                      </span>
+                      <span className="text-xs font-semibold text-primary">
+                        Uploading image...
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {uploadError && (
+                  <span className="text-xs text-error font-medium flex items-center gap-xs">
+                    <span className="material-symbols-outlined text-sm">
+                      error
+                    </span>
+                    {uploadError}
+                  </span>
+                )}
               </div>
 
               <div className="grid grid-cols-3 gap-sm">
                 <div className="flex flex-col gap-xs col-span-1">
-                  <label className="text-sm font-bold text-on-surface-variant">Limit Purchase</label>
+                  <label className="text-sm font-bold text-on-surface-variant">
+                    Limit Purchase
+                  </label>
                   <input
                     type="number"
                     placeholder="e.g. 5"
@@ -500,7 +682,9 @@ export default function DashboardPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-xs col-span-1">
-                  <label className="text-sm font-bold text-on-surface-variant">State *</label>
+                  <label className="text-sm font-bold text-on-surface-variant">
+                    State *
+                  </label>
                   <select
                     value={state}
                     onChange={(e) => setState(e.target.value as any)}
@@ -512,7 +696,9 @@ export default function DashboardPage() {
                   </select>
                 </div>
                 <div className="flex flex-col gap-xs col-span-1">
-                  <label className="text-sm font-bold text-on-surface-variant">Publish Date</label>
+                  <label className="text-sm font-bold text-on-surface-variant">
+                    Publish Date
+                  </label>
                   <input
                     type="date"
                     value={publishedAt}
@@ -523,7 +709,9 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex flex-col gap-xs">
-                <label className="text-sm font-bold text-on-surface-variant">Description *</label>
+                <label className="text-sm font-bold text-on-surface-variant">
+                  Description *
+                </label>
                 <textarea
                   required
                   rows={2}
@@ -535,7 +723,9 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex flex-col gap-xs">
-                <label className="text-sm font-bold text-on-surface-variant">Story *</label>
+                <label className="text-sm font-bold text-on-surface-variant">
+                  Story *
+                </label>
                 <textarea
                   required
                   rows={2}
@@ -556,11 +746,15 @@ export default function DashboardPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isUploading}
                   className="rounded-lg bg-primary px-md py-sm font-semibold text-white hover:bg-surface-tint disabled:opacity-60 flex items-center gap-xs"
                 >
-                  {isSubmitting && <span className="material-symbols-outlined text-sm animate-spin">sync</span>}
-                  {modalMode === 'create' ? 'Create' : 'Save Changes'}
+                  {(isSubmitting || isUploading) && (
+                    <span className="material-symbols-outlined text-sm animate-spin">
+                      sync
+                    </span>
+                  )}
+                  {modalMode === "create" ? "Create" : "Save Changes"}
                 </button>
               </footer>
             </form>
@@ -587,8 +781,11 @@ export default function DashboardPage() {
 
             <div className="p-md">
               <p className="text-on-surface-variant leading-relaxed">
-                Are you sure you want to delete <span className="font-bold text-on-surface">"{productToDelete?.title}"</span>?
-                This action is permanent and cannot be undone.
+                Are you sure you want to delete{" "}
+                <span className="font-bold text-on-surface">
+                  "{productToDelete?.title}"
+                </span>
+                ? This action is permanent and cannot be undone.
               </p>
 
               <footer className="mt-md flex justify-end gap-sm pt-md border-t border-outline-variant/10">
@@ -604,7 +801,11 @@ export default function DashboardPage() {
                   disabled={isSubmitting}
                   className="rounded-lg bg-error px-md py-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 flex items-center gap-xs"
                 >
-                  {isSubmitting && <span className="material-symbols-outlined text-sm animate-spin">sync</span>}
+                  {isSubmitting && (
+                    <span className="material-symbols-outlined text-sm animate-spin">
+                      sync
+                    </span>
+                  )}
                   Delete
                 </button>
               </footer>

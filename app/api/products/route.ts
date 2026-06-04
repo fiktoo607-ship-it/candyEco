@@ -9,9 +9,10 @@ export async function GET() {
       },
     });
     return NextResponse.json(products);
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch products';
     console.error('Error fetching products:', error);
-    return NextResponse.json({ error: error.message || 'Failed to fetch products' }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -40,8 +41,9 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(newProduct, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create product';
     console.error('Error creating product:', error);
-    return NextResponse.json({ error: error.message || 'Failed to create product' }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

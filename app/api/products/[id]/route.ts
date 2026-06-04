@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { deleteImage } from '@/lib/cloudinary';
 
 export async function GET(
   request: NextRequest,
@@ -16,9 +17,10 @@ export async function GET(
     }
 
     return NextResponse.json(product);
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch product';
     console.error('Error fetching product:', error);
-    return NextResponse.json({ error: error.message || 'Failed to fetch product' }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -39,6 +41,15 @@ export async function PUT(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
+    // If imageUrl is changing, clean up the old image from Cloudinary
+    if (imageUrl !== undefined && imageUrl !== existingProduct.imageUrl && existingProduct.imageUrl) {
+      try {
+        await deleteImage(existingProduct.imageUrl);
+      } catch (cloudErr) {
+        console.error('Failed to delete old image from Cloudinary:', cloudErr);
+      }
+    }
+
     const updatedProduct = await prisma.product.update({
       where: { id },
       data: {
@@ -56,9 +67,10 @@ export async function PUT(
     });
 
     return NextResponse.json(updatedProduct);
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update product';
     console.error('Error updating product:', error);
-    return NextResponse.json({ error: error.message || 'Failed to update product' }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -77,13 +89,23 @@ export async function DELETE(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
+    // Delete image from Cloudinary if applicable
+    if (existingProduct.imageUrl) {
+      try {
+        await deleteImage(existingProduct.imageUrl);
+      } catch (cloudErr) {
+        console.error('Failed to delete image from Cloudinary:', cloudErr);
+      }
+    }
+
     await prisma.product.delete({
       where: { id },
     });
 
     return NextResponse.json({ message: 'Product deleted successfully' });
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to delete product';
     console.error('Error deleting product:', error);
-    return NextResponse.json({ error: error.message || 'Failed to delete product' }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
