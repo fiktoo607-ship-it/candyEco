@@ -13,8 +13,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   if (!product) {
     return {
-      title: 'المنتج غير موجود | Candy Eco',
-      description: 'عذراً، لم يتم العثور على المنتج المطلوب.',
+      title: 'Produit non trouvé | Candy Eco',
+      description: 'Désolé, le produit demandé n\'existe pas.',
     };
   }
 

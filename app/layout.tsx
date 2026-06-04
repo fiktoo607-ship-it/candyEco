@@ -16,13 +16,13 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: 'مخبز حرفي',
-  description: 'Next.js project for the artisanal bakery site with Tailwind CSS and Zustand.'
+  title: 'Boulangerie Artisanale',
+  description: 'Projet Next.js pour un site de boulangerie artisanale avec Tailwind CSS et Zustand.'
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ar" dir="rtl" className={`${cairo.variable} ${playfair.variable}`}>
+    <html lang="fr" dir="ltr" className={`${cairo.variable} ${playfair.variable}`}>
       <body>
         <Providers>{children}</Providers>
       </body>

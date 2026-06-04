@@ -6,11 +6,11 @@ import { getProductFilter, products as fallbackProducts } from '@/lib/site-data'
 import { useBakeryStore } from '@/lib/store';
 
 const filters = [
-  { value: 'all', label: 'الكل' },
-  { value: 'cake', label: 'كعك' },
-  { value: 'cookies', label: 'بسكويت' },
-  { value: 'tart', label: 'تارت' },
-  { value: 'macarons', label: 'ماكرون' }
+  { value: 'all', label: 'Tous' },
+  { value: 'cake', label: 'Gâteaux' },
+  { value: 'cookies', label: 'Biscuits' },
+  { value: 'tart', label: 'Tartes' },
+  { value: 'macarons', label: 'Macarons' }
 ] as const;
 
 export default function ProductBrowser() {

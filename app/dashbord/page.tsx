@@ -7,7 +7,7 @@ import ProductModal from '@/components/dashbord/ProductModal';
 import DeleteModal from '@/components/dashbord/DeleteModal';
 import { useDashboardStore } from '@/lib/dashboard-store';
 
-const CATEGORIES = ['معجنات', 'كعك', 'بسكويت', 'حلويات', 'مخبوزات'];
+const CATEGORIES = ['Viennoiseries', 'Gâteaux', 'Biscuits', 'Pâtisseries', 'Boulangerie'];
 
 export default function DashboardPage() {
   const { activeTab, openCreate } = useDashboardStore();

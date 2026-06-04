@@ -54,7 +54,7 @@ export default function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-outline-variant/30 bg-surface/95 backdrop-blur">
       <div className="mx-auto flex h-20 max-w-container-max items-center justify-between px-gutter">
         <Link href="/home" className="font-display text-2xl font-bold text-primary">
-          مخبز حرفي
+          Boulangerie Artisanale
         </Link>
 
         {/* Desktop Nav */}

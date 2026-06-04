@@ -15,35 +15,35 @@ interface Slide {
 const slides: Slide[] = [
   {
     imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=1200',
-    tagline: 'مخبز حرفي | Artisanal Bakery',
-    title: 'حلويات مصنوعة يدوياً لكل لحظة',
-    description: 'استمتع بدفء مطبخنا الصباحي مع المعجنات والكعك الحرفي المخبوز طازجاً يومياً باستخدام أجود المكونات الطبيعية.',
-    primaryLink: { href: '/our-product', label: 'تسوق الآن' },
-    secondaryLink: { href: '/about', label: 'قصتنا' }
+    tagline: 'Boulangerie Artisanale | Artisanal Bakery',
+    title: 'Pâtisseries artisanales pour chaque instant',
+    description: 'Savourez la chaleur de notre fournil matinal avec des viennoiseries et pains artisanaux cuits quotidiennement à base d\'ingrédients naturels de premier choix.',
+    primaryLink: { href: '/our-product', label: 'Acheter' },
+    secondaryLink: { href: '/about', label: 'Notre Histoire' }
   },
   {
     imageUrl: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1200',
-    tagline: 'كعك وتورتات فاخرة | Gourmet Cakes',
-    title: 'نصنع الفرحة في كل مناسبة',
-    description: 'كعكاتنا الحرفية مخبوزة بشغف ومزينة يدوياً بدقة فائقة لتجعل من كل مناسبة ذكرى لا تُنسى.',
-    primaryLink: { href: '/our-product', label: 'تصفح الكعك' },
-    secondaryLink: { href: '/contact', label: 'اطلب كعكتك' }
+    tagline: 'Gâteaux d\'Exception | Gourmet Cakes',
+    title: 'Créer de la joie pour chaque occasion',
+    description: 'Nos gâteaux artisanaux sont confectionnés avec passion et décorés à la main pour faire de vos événements des souvenirs inoubliables.',
+    primaryLink: { href: '/our-product', label: 'Découvrir les Gâteaux' },
+    secondaryLink: { href: '/contact', label: 'Commander' }
   },
   {
     imageUrl: 'https://images.unsplash.com/photo-1517433456452-f9633a875f6f?q=80&w=1200',
-    tagline: 'بسكويت ومقرمشات طازجة | Fresh Cookies',
-    title: 'نكهات كلاسيكية بلمسة حديثة',
-    description: 'جرب تشكيلتنا اللذيذة من البسكويت المحضر يدوياً برقائق الشوكولاتة الداكنة وملح البحر الفاخر.',
-    primaryLink: { href: '/our-product', label: 'تسوق البسكويت' },
-    secondaryLink: { href: '/about', label: 'طريقة خبزنا' }
+    tagline: 'Biscuits Frais | Fresh Cookies',
+    title: 'Des saveurs classiques avec une touche moderne',
+    description: 'Découvrez notre délicieuse sélection de biscuits faits main avec des pépites de chocolat noir premium et une pointe de fleur de sel.',
+    primaryLink: { href: '/our-product', label: 'Découvrir les Biscuits' },
+    secondaryLink: { href: '/about', label: 'Notre méthode' }
   },
   {
     imageUrl: 'https://images.unsplash.com/photo-1550617931-e17a7b70dce2?q=80&w=1200',
-    tagline: 'تارت وحلويات فرنسية | Seasonal Tarts',
-    title: 'عذوبة الطبيعة في تارت موسمي',
-    description: 'نستخلص أفضل نكهات الفواكه الموسمية والليمون الطازج على قاعدة تارت مقرمشة ومحشوة بالكاسترد الناعم.',
-    primaryLink: { href: '/our-product', label: 'اكتشف الحلويات' },
-    secondaryLink: { href: '/contact', label: 'اتصل بنا' }
+    tagline: 'Tartes de Saison | Seasonal Tarts',
+    title: 'La douceur de la nature dans une tarte de saison',
+    description: 'Découvrez nos tartes garnies de fruits de saison et d\'une crème pâtissière onctueuse sur une pâte croustillante.',
+    primaryLink: { href: '/our-product', label: 'Découvrir les Desserts' },
+    secondaryLink: { href: '/contact', label: 'Nous Contacter' }
   }
 ];
 
@@ -109,11 +109,11 @@ export default function HeroCarousel() {
               />
               {/* Dark Overlay & Gradient */}
               <div className="absolute inset-0 bg-black/45" />
-              <div className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
 
-              {/* Text & Content Overlay (RTL Support) */}
+              {/* Text & Content Overlay (LTR Support) */}
               <div className="relative mx-auto flex h-full max-w-container-max items-center px-gutter py-xl z-20">
-                <div className="max-w-2xl text-right text-white" dir="rtl">
+                <div className="max-w-2xl text-left text-white" dir="ltr">
                   <p className="mb-sm text-sm font-semibold uppercase tracking-[0.3em] text-primary-container">
                     {slide.tagline}
                   </p>

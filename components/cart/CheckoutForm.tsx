@@ -19,7 +19,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
     if (items.length === 0) return;
 
     if (!customerName || !customerPhone || !shippingAddress) {
-      alert("الرجاء ملء جميع حقول الطلب");
+      alert("Veuillez remplir tous les champs obligatoires.");
       return;
     }
 
@@ -39,7 +39,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
       onSuccess();
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : "فشل تقديم الطلب. يرجى المحاولة مرة أخرى.");
+      alert(err instanceof Error ? err.message : "Échec de l'envoi de la commande. Veuillez réessayer.");
     }
   };
 
@@ -47,22 +47,22 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
 
   return (
     <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft sticky top-24">
-      <h2 className="text-xl font-bold text-on-surface mb-md">تفاصيل الطلب</h2>
+      <h2 className="text-xl font-bold text-on-surface mb-md">Détails de la Livraison</h2>
       
       <div className="flex justify-between items-center text-base mb-md border-b border-outline-variant/20 pb-sm">
-        <span className="text-on-surface-variant font-medium">المجموع الإجمالي</span>
+        <span className="text-on-surface-variant font-medium">Montant Total</span>
         <span className="text-2xl font-bold text-primary">${totalPrice.toFixed(2)}</span>
       </div>
 
       <form onSubmit={handleCheckout} className="space-y-sm">
         <div>
           <label className="block text-sm font-bold text-on-surface-variant mb-xs">
-            الاسم الكامل *
+            Nom Complet *
           </label>
           <input
             type="text"
             required
-            placeholder="أدخل اسمك الكامل"
+            placeholder="Saisissez votre nom complet"
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary"
@@ -71,12 +71,12 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
 
         <div>
           <label className="block text-sm font-bold text-on-surface-variant mb-xs">
-            رقم الهاتف *
+            Numéro de Téléphone *
           </label>
           <input
             type="tel"
             required
-            placeholder="مثال: 0612345678"
+            placeholder="Ex: 0612345678"
             value={customerPhone}
             onChange={(e) => setCustomerPhone(e.target.value)}
             className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary text-left"
@@ -86,12 +86,12 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
 
         <div>
           <label className="block text-sm font-bold text-on-surface-variant mb-xs">
-            العنوان / الموقع *
+            Adresse de Livraison *
           </label>
           <input
             type="text"
             required
-            placeholder="المدينة، الحي، رقم الشارع"
+            placeholder="Ville, Quartier, Rue"
             value={shippingAddress}
             onChange={(e) => setShippingAddress(e.target.value)}
             className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary"
@@ -106,7 +106,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
           {submitOrderMutation.isPending && (
             <span className="material-symbols-outlined text-base animate-spin">sync</span>
           )}
-          اطلب الآن
+          Confirmer la Commande
         </button>
       </form>
     </div>

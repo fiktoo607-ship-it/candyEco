@@ -35,16 +35,16 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   let badge: string | undefined = undefined;
   let isActionable = true;
-  let buttonText = "أضف إلى السلة";
+  let buttonText = "Ajouter au panier";
 
   if (product.state === 'outofStock') {
-    badge = 'غير متوفر';
+    badge = 'Indisponible';
     isActionable = false;
-    buttonText = 'غير متوفر';
+    buttonText = 'Indisponible';
   } else if (product.state === 'commingSoun') {
-    badge = 'قريباً';
+    badge = 'Bientôt';
     isActionable = false;
-    buttonText = 'قريباً';
+    buttonText = 'Bientôt';
   }
 
   return (
@@ -64,7 +64,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         ) : null}
       </Link>
 
-      <div className="flex flex-col flex-grow p-md" dir="rtl">
+      <div className="flex flex-col flex-grow p-md" dir="ltr">
         <div>
           <p className="mb-xs text-sm font-bold uppercase tracking-[0.2em] text-primary">{product.category}</p>
           <Link href={`/our-product/${product.slug}`} className="hover:text-primary transition-colors">

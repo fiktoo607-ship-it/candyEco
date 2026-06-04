@@ -50,7 +50,7 @@ export default function CartItemsList() {
               type="button"
               onClick={() => removeItem(item.product.id)}
               className="rounded-lg p-2 text-error hover:bg-error/10 transition-colors flex items-center justify-center"
-              title="حذف"
+              title="Supprimer"
             >
               <span className="material-symbols-outlined text-lg">delete</span>
             </button>

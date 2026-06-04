@@ -21,16 +21,16 @@ export default function ProductDetails({ product }: { product: ProductData }) {
 
   let badge: string | undefined = undefined;
   let isActionable = true;
-  let buttonText = "أضف إلى السلة";
+  let buttonText = "Ajouter au panier";
 
   if (product.state === 'outofStock') {
-    badge = 'غير متوفر';
+    badge = 'Indisponible';
     isActionable = false;
-    buttonText = 'غير متوفر';
+    buttonText = 'Indisponible';
   } else if (product.state === 'commingSoun') {
-    badge = 'قريباً';
+    badge = 'Bientôt';
     isActionable = false;
-    buttonText = 'قريباً';
+    buttonText = 'Bientôt';
   }
 
   return (
@@ -53,7 +53,7 @@ export default function ProductDetails({ product }: { product: ProductData }) {
       </div>
 
       {/* Product Details Column */}
-      <div className="flex flex-col justify-center gap-md" dir="rtl">
+      <div className="flex flex-col justify-center gap-md" dir="ltr">
         <div>
           <span className="rounded-full bg-secondary-container/20 px-sm py-xs text-sm text-primary font-bold border border-outline-variant/30">
             {product.category}
@@ -67,14 +67,14 @@ export default function ProductDetails({ product }: { product: ProductData }) {
         </div>
 
         <div className="border-t border-outline-variant/20 pt-md">
-          <h2 className="text-lg font-bold text-on-surface-variant">الوصف</h2>
+          <h2 className="text-lg font-bold text-on-surface-variant">Description</h2>
           <p className="mt-xs text-base leading-8 text-on-surface-variant">
             {product.description}
           </p>
         </div>
 
         <div className="border-t border-outline-variant/20 pt-md">
-          <h2 className="text-lg font-bold text-on-surface-variant">قصة المنتج</h2>
+          <h2 className="text-lg font-bold text-on-surface-variant">L'Histoire du Produit</h2>
           <p className="mt-xs text-base leading-8 text-on-surface-variant italic">
             {product.story}
           </p>
