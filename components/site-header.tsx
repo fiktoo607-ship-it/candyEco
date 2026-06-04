@@ -1,12 +1,14 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { navigationLinks } from '@/lib/site-data';
 import { useBakeryStore } from '@/lib/store';
 import { useCartStore } from '@/lib/cart-store';
+import { THEME_CONFIG } from '@/lib/theme';
 
 function MenuIcon() {
   return (
@@ -53,8 +55,15 @@ export default function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-outline-variant/30 bg-surface/95 backdrop-blur">
       <div className="mx-auto flex h-20 max-w-container-max items-center justify-between px-gutter">
-        <Link href="/home" className="font-display text-2xl font-bold text-primary">
-          Boulangerie Artisanale
+        <Link href="/home" className="flex items-center">
+          <Image
+            src="/logo-title.png"
+            alt={THEME_CONFIG.brand.logoText}
+            width={198}
+            height={40}
+            className="h-10 w-auto object-contain"
+            priority
+          />
         </Link>
 
         {/* Desktop Nav */}

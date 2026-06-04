@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Cairo, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import Providers from '@/components/providers';
+import { THEME_CONFIG } from '@/lib/theme';
 
 const cairo = Cairo({
   subsets: ['arabic', 'latin'],
@@ -16,8 +17,8 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: 'Boulangerie Artisanale',
-  description: 'Projet Next.js pour un site de boulangerie artisanale avec Tailwind CSS et Zustand.'
+  title: THEME_CONFIG.brand.name,
+  description: THEME_CONFIG.brand.description,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -1,4 +1,9 @@
+import { THEME_CONFIG } from '@/lib/theme';
+
 export default function BakeryVisitCard() {
+  const addressParts = THEME_CONFIG.brand.contact.address.split(', ');
+  const hoursParts = THEME_CONFIG.brand.contact.hours.split(' | ');
+
   return (
     <div className="space-y-lg lg:col-span-5">
       <div className="rounded-2xl border border-surface-container bg-surface-container-lowest p-lg shadow-soft">
@@ -6,15 +11,29 @@ export default function BakeryVisitCard() {
         <div className="mt-md space-y-md text-base leading-8 text-on-surface-variant">
           <div>
             <p className="font-semibold text-on-surface">Adresse</p>
-            <p>124 Rue Baker<br />Quartier des Artisans<br />New York, NY 10001</p>
+            <p>
+              {addressParts.map((part, i) => (
+                <span key={i}>
+                  {part}
+                  {i < addressParts.length - 1 && <br />}
+                </span>
+              ))}
+            </p>
           </div>
           <div>
             <p className="font-semibold text-on-surface">Horaires</p>
-            <p>Lundi - Samedi : 7h00 - 18h00<br />Dimanche : Fermé</p>
+            <p>
+              {hoursParts.map((part, i) => (
+                <span key={i}>
+                  {part}
+                  {i < hoursParts.length - 1 && <br />}
+                </span>
+              ))}
+            </p>
           </div>
           <div>
             <p className="font-semibold text-on-surface">Téléphone</p>
-            <p>(555) 123-4567</p>
+            <p>{THEME_CONFIG.brand.contact.phone}</p>
           </div>
         </div>
       </div>

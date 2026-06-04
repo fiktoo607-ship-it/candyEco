@@ -4,6 +4,7 @@ import { Metadata } from 'next';
 import SiteHeader from '@/components/site-header';
 import SiteFooter from '@/components/site-footer';
 import ProductDetails from '@/components/product-details/ProductDetails';
+import { THEME_CONFIG } from '@/lib/theme';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -13,13 +14,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   if (!product) {
     return {
-      title: 'Produit non trouvé | Candy Eco',
+      title: `Produit non trouvé | ${THEME_CONFIG.brand.name}`,
       description: 'Désolé, le produit demandé n\'existe pas.',
     };
   }
 
   return {
-    title: `${product.title} | Candy Eco`,
+    title: `${product.title} | ${THEME_CONFIG.brand.name}`,
     description: product.description,
   };
 }
