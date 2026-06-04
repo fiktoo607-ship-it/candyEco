@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Cairo, Playfair_Display } from 'next/font/google';
 import './globals.css';
+import Providers from '@/components/providers';
 
 const cairo = Cairo({
   subsets: ['arabic', 'latin'],
@@ -22,7 +23,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ar" dir="rtl" className={`${cairo.variable} ${playfair.variable}`}>
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
