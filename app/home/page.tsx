@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import HeroCarousel from '@/components/HeroCarousel';
 import { featuredProducts as fallbackFeatured } from '@/lib/site-data';
 import { prisma } from '@/lib/prisma';
 
@@ -40,32 +41,7 @@ export default async function HomePage() {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <main className="flex-1">
-        <section className="relative isolate overflow-hidden bg-surface-container-lowest">
-          <div className="absolute inset-0">
-            <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuA07iZjoM13sVYlYQtUrcUwHXEJnsSdStrPwobecH0ta-m9CvgHlptFEPOBkp8jrkQMglUT2NEHuZNDR0HeNnTryeYJd6TbsTc-36AH3SpOTczwCSe5H5KiEAtLR55uIa6oHq2pHkyWw6tsKesLqwXA-qc1wGMnOuIAt94oNM1UlbV97h8r5HrBKSkrce39SbhAy1adboz6hV3-zSgaAA8hpKz6R1EJjJgL84ob9DAHX6kr7YxPP6nWVnL6lNMpUT-saqFqLvaRV9I"
-              alt="خلفية حلويات"
-              className="h-full w-full object-cover object-center opacity-80"
-            />
-            <div className="absolute inset-0 bg-gradient-to-l from-surface/85 via-surface/45 to-transparent" />
-          </div>
-
-          <div className="relative mx-auto flex min-h-[640px] max-w-container-max items-center px-gutter py-xl">
-            <div className="max-w-2xl">
-              <p className="mb-sm text-sm font-semibold uppercase tracking-[0.3em] text-primary">Artisanal Bakery</p>
-              <h1 className="font-display text-5xl font-bold leading-tight text-on-surface md:text-6xl">حلويات مصنوعة يدوياً لكل لحظة</h1>
-              <p className="mt-md max-w-xl text-lg leading-8 text-on-surface-variant">استمتع بدفء مطبخنا الصباحي مع المعجنات والكعك الحرفي المخبوز طازجاً يومياً باستخدام أجود المكونات.</p>
-              <div className="mt-lg flex flex-wrap gap-sm">
-                <Link href="/our-product" className="rounded-xl bg-primary-container px-xl py-md text-base font-semibold text-white transition-transform hover:scale-[0.98]">
-                  تسوق الآن
-                </Link>
-                <Link href="/about" className="rounded-xl border border-outline-variant bg-surface-container-lowest px-xl py-md text-base font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-low">
-                  قصتنا
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+        <HeroCarousel />
 
         <section className="mx-auto max-w-container-max px-gutter py-xl">
           <div className="mb-lg text-center">
