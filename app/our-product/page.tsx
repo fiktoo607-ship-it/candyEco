@@ -1,6 +1,6 @@
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import ProductBrowser from '@/components/product-browser';
+import ProductBrowser from '@/components/our-product/ProductBrowser';
 
 export default function OurProductPage() {
   return (

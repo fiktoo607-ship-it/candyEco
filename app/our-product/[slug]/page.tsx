@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import SiteHeader from '@/components/site-header';
 import SiteFooter from '@/components/site-footer';
-import ProductDetailsClient from './ProductDetailsClient';
+import ProductDetails from '@/components/product-details/ProductDetails';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -46,7 +46,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <main className="mx-auto flex max-w-container-max flex-1 flex-col px-gutter py-xl w-full">
-        <ProductDetailsClient product={serializableProduct} />
+        <ProductDetails product={serializableProduct} />
       </main>
       <SiteFooter />
     </div>
