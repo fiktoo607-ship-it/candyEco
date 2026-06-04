@@ -7,18 +7,87 @@ datasource db {
 }
 
 model Product {
-  id          String    @id @default(uuid())
+  id          String      @id @default(uuid())
   title       String
-  slug        String    @unique
+  slug        String      @unique
   price       String
   category    String
   imageUrl    String
   description String
   story       String
   limitBay    Int?
-  state       String    @default("exist")
+  state       String      @default("exist")
   publishedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+}
+
+model Cart {
+  id          String      @id @default(uuid())
+  sessionId   String      @unique
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  items       CartItem[]
+}
+
+model CartItem {
+  id          String      @id @default(uuid())
+  cartId      String
+  cart        Cart        @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity    Int
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([cartId, productId])
+}
+
+model Order {
+  id                 String              @id @default(uuid())
+  sessionId          String?
+  status             String              @default("pending") // e.g. "pending", "processing", "completed", "cancelled"
+  totalPrice         String              // Formatted price string (e.g. "$45.00")
+  totalAmount        Float               // Numeric price for calculations and points
+  customerName       String?
+  customerPhone      String?
+  shippingAddress    String?             // Customer's location
+  pointsEarned       Int                 @default(0)
+  
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  items              OrderItem[]
+  pointsTransactions PointsTransaction[]
+}
+
+model OrderItem {
+  id              String      @id @default(uuid())
+  orderId         String
+  order           Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity        Int
+  priceAtPurchase String      // Formatted snapshot of product.price at purchase (e.g. "$4.50")
+  amountAtPurchase Float       // Numeric snapshot of product price at purchase (e.g. 4.50)
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model PointsTransaction {
+  id          String    @id @default(uuid())
+  customerId  String?   // Links to session ID or customer email/phone
+  orderId     String?
+  order       Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  type        String    // e.g. "earn", "redeem"
+  points      Int       // Positive (earn) or negative (redeem) points
+  description String?
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
 }
 
