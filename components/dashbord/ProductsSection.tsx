@@ -145,10 +145,10 @@ export default function ProductsSection() {
                         }`}
                       >
                         {product.state === "exist"
-                          ? "متوفر"
+                          ? "Disponible"
                           : product.state === "outofStock"
-                            ? "غير متوفر"
-                            : "قريباً"}
+                            ? "Indisponible"
+                            : "Bientôt"}
                       </span>
                     </td>
                     <td className="p-md font-semibold text-on-surface-variant">

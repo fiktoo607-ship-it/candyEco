@@ -1,6 +1,24 @@
 import { useOrders, useUpdateOrderStatus, Order } from '@/lib/hooks/use-orders';
 import { useDashboardStore } from '@/lib/dashboard-store';
 
+function formatFrenchDate(dateInput: Date | string): string {
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return '';
+  
+  const day = date.getDate();
+  const months = [
+    'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
+    'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'
+  ];
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  
+  return `${day} ${month} ${year}, ${hours}:${minutes}`;
+}
+
 export default function OrdersSection() {
   const {
     orderSearchQuery,
@@ -129,13 +147,7 @@ export default function OrdersSection() {
                     </span>
                   </td>
                   <td className="p-md text-xs text-on-surface-variant">
-                    {new Date(order.createdAt).toLocaleDateString('ar-EG', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                    {formatFrenchDate(order.createdAt)}
                   </td>
                   <td className="p-md text-right">
                     <div className="flex justify-end items-center gap-xs">

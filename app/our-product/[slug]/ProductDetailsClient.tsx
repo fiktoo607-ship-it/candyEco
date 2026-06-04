@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useCartStore } from '@/lib/cart-store';
+import dictionary from '@/lib/copy-dictionary.json';
 
 interface ProductData {
   id: string;
@@ -21,16 +22,16 @@ export default function ProductDetailsClient({ product }: { product: ProductData
 
   let badge: string | undefined = undefined;
   let isActionable = true;
-  let buttonText = "أضف إلى السلة";
+  let buttonText = dictionary.productCard.addToCart;
 
   if (product.state === 'outofStock') {
-    badge = 'غير متوفر';
+    badge = dictionary.productCard.unavailable;
     isActionable = false;
-    buttonText = 'غير متوفر';
+    buttonText = dictionary.productCard.unavailable;
   } else if (product.state === 'commingSoun') {
-    badge = 'قريباً';
+    badge = dictionary.productCard.comingSoon;
     isActionable = false;
-    buttonText = 'قريباً';
+    buttonText = dictionary.productCard.comingSoon;
   }
 
   return (
@@ -53,7 +54,7 @@ export default function ProductDetailsClient({ product }: { product: ProductData
       </div>
 
       {/* Product Details Column */}
-      <div className="flex flex-col justify-center gap-md" dir="rtl">
+      <div className="flex flex-col justify-center gap-md" dir="ltr">
         <div>
           <span className="rounded-full bg-secondary-container/20 px-sm py-xs text-sm text-primary font-bold border border-outline-variant/30">
             {product.category}
@@ -67,14 +68,14 @@ export default function ProductDetailsClient({ product }: { product: ProductData
         </div>
 
         <div className="border-t border-outline-variant/20 pt-md">
-          <h2 className="text-lg font-bold text-on-surface-variant">الوصف</h2>
+          <h2 className="text-lg font-bold text-on-surface-variant">{dictionary.productDetails.description}</h2>
           <p className="mt-xs text-base leading-8 text-on-surface-variant">
             {product.description}
           </p>
         </div>
 
         <div className="border-t border-outline-variant/20 pt-md">
-          <h2 className="text-lg font-bold text-on-surface-variant">قصة المنتج</h2>
+          <h2 className="text-lg font-bold text-on-surface-variant">{dictionary.productDetails.story}</h2>
           <p className="mt-xs text-base leading-8 text-on-surface-variant italic">
             {product.story}
           </p>
