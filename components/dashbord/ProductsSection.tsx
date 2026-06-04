@@ -160,18 +160,12 @@ export default function ProductsSection() {
                           onClick={() => openEdit(product)}
                           className="inline-flex items-center gap-xs rounded-lg px-sm py-xs text-sm font-semibold text-primary transition-all hover:bg-primary-container/10 active:scale-95"
                         >
-                          <span className="material-symbols-outlined text-base">
-                            edit
-                          </span>
                           Edit
                         </button>
                         <button
                           onClick={() => openDelete(product)}
                           className="inline-flex items-center gap-xs rounded-lg px-sm py-xs text-sm font-semibold text-error transition-all hover:bg-error-container/30 active:scale-95"
                         >
-                          <span className="material-symbols-outlined text-base">
-                            delete
-                          </span>
                           Delete
                         </button>
                       </div>
@@ -188,8 +182,7 @@ export default function ProductsSection() {
           <div className="flex items-center justify-between border-t border-outline-variant/30 p-md">
             <span className="text-sm text-on-surface-variant font-medium">
               Showing {indexOfFirstItem + 1} to{" "}
-              {Math.min(indexOfLastItem, totalItems)} of {totalItems}{" "}
-              entries
+              {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
             </span>
             <div className="flex gap-xs">
               <button
@@ -216,7 +209,9 @@ export default function ProductsSection() {
               )}
               <button
                 disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}
+                onClick={() =>
+                  setCurrentPage(Math.min(currentPage + 1, totalPages))
+                }
                 className="rounded-md border border-outline-variant px-sm py-xs text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 ›
