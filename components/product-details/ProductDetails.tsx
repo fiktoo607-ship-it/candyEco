@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useCartStore } from '@/lib/cart-store';
+import dictionary from '@/lib/copy-dictionary.json';
 
 interface ProductData {
   id: string;
@@ -21,16 +22,16 @@ export default function ProductDetails({ product }: { product: ProductData }) {
 
   let badge: string | undefined = undefined;
   let isActionable = true;
-  let buttonText = "Ajouter au panier";
+  let buttonText = dictionary.productCard.addToCart;
 
   if (product.state === 'outofStock') {
-    badge = 'Indisponible';
+    badge = dictionary.productCard.unavailable;
     isActionable = false;
-    buttonText = 'Indisponible';
+    buttonText = dictionary.productCard.unavailable;
   } else if (product.state === 'commingSoun') {
-    badge = 'Bientôt';
+    badge = dictionary.productCard.comingSoon;
     isActionable = false;
-    buttonText = 'Bientôt';
+    buttonText = dictionary.productCard.comingSoon;
   }
 
   return (
@@ -67,14 +68,14 @@ export default function ProductDetails({ product }: { product: ProductData }) {
         </div>
 
         <div className="border-t border-outline-variant/20 pt-md">
-          <h2 className="text-lg font-bold text-on-surface-variant">Description</h2>
+          <h2 className="text-lg font-bold text-on-surface-variant">{dictionary.productDetails.description}</h2>
           <p className="mt-xs text-base leading-8 text-on-surface-variant">
             {product.description}
           </p>
         </div>
 
         <div className="border-t border-outline-variant/20 pt-md">
-          <h2 className="text-lg font-bold text-on-surface-variant">L'Histoire du Produit</h2>
+          <h2 className="text-lg font-bold text-on-surface-variant">{dictionary.productDetails.story}</h2>
           <p className="mt-xs text-base leading-8 text-on-surface-variant italic">
             {product.story}
           </p>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import dictionary from '@/lib/copy-dictionary.json';
 
 interface Slide {
   imageUrl: string;
@@ -12,40 +13,24 @@ interface Slide {
   secondaryLink: { href: string; label: string };
 }
 
-const slides: Slide[] = [
-  {
-    imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=1200',
-    tagline: 'Boulangerie Artisanale | Artisanal Bakery',
-    title: 'Pâtisseries artisanales pour chaque instant',
-    description: 'Savourez la chaleur de notre fournil matinal avec des viennoiseries et pains artisanaux cuits quotidiennement à base d\'ingrédients naturels de premier choix.',
-    primaryLink: { href: '/our-product', label: 'Acheter' },
-    secondaryLink: { href: '/about', label: 'Notre Histoire' }
-  },
-  {
-    imageUrl: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1200',
-    tagline: 'Gâteaux d\'Exception | Gourmet Cakes',
-    title: 'Créer de la joie pour chaque occasion',
-    description: 'Nos gâteaux artisanaux sont confectionnés avec passion et décorés à la main pour faire de vos événements des souvenirs inoubliables.',
-    primaryLink: { href: '/our-product', label: 'Découvrir les Gâteaux' },
-    secondaryLink: { href: '/contact', label: 'Commander' }
-  },
-  {
-    imageUrl: 'https://images.unsplash.com/photo-1517433456452-f9633a875f6f?q=80&w=1200',
-    tagline: 'Biscuits Frais | Fresh Cookies',
-    title: 'Des saveurs classiques avec une touche moderne',
-    description: 'Découvrez notre délicieuse sélection de biscuits faits main avec des pépites de chocolat noir premium et une pointe de fleur de sel.',
-    primaryLink: { href: '/our-product', label: 'Découvrir les Biscuits' },
-    secondaryLink: { href: '/about', label: 'Notre méthode' }
-  },
-  {
-    imageUrl: 'https://images.unsplash.com/photo-1550617931-e17a7b70dce2?q=80&w=1200',
-    tagline: 'Tartes de Saison | Seasonal Tarts',
-    title: 'La douceur de la nature dans une tarte de saison',
-    description: 'Découvrez nos tartes garnies de fruits de saison et d\'une crème pâtissière onctueuse sur une pâte croustillante.',
-    primaryLink: { href: '/our-product', label: 'Découvrir les Desserts' },
-    secondaryLink: { href: '/contact', label: 'Nous Contacter' }
-  }
+const imageUrls = [
+  'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=1200',
+  'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1200',
+  'https://images.unsplash.com/photo-1517433456452-f9633a875f6f?q=80&w=1200',
+  'https://images.unsplash.com/photo-1550617931-e17a7b70dce2?q=80&w=1200'
 ];
+
+const slides: Slide[] = dictionary.home.carousel.map((item, index) => ({
+  imageUrl: imageUrls[index],
+  tagline: item.tagline,
+  title: item.title,
+  description: item.description,
+  primaryLink: { href: '/our-product', label: item.primaryLabel },
+  secondaryLink: { 
+    href: index === 0 || index === 2 ? '/about' : '/contact', 
+    label: item.secondaryLabel 
+  }
+}));
 
 export default function HeroCarousel() {
   const [currentSlide, setCurrentSlide] = useState(0);

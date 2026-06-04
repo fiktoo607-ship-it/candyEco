@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCartStore } from '@/lib/cart-store';
+import dictionary from '@/lib/copy-dictionary.json';
 
 export interface ProductCardProps {
   product: {
@@ -35,16 +36,16 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   let badge: string | undefined = undefined;
   let isActionable = true;
-  let buttonText = "Ajouter au panier";
+  let buttonText = dictionary.productCard.addToCart;
 
   if (product.state === 'outofStock') {
-    badge = 'Indisponible';
+    badge = dictionary.productCard.unavailable;
     isActionable = false;
-    buttonText = 'Indisponible';
+    buttonText = dictionary.productCard.unavailable;
   } else if (product.state === 'commingSoun') {
-    badge = 'Bientôt';
+    badge = dictionary.productCard.comingSoon;
     isActionable = false;
-    buttonText = 'Bientôt';
+    buttonText = dictionary.productCard.comingSoon;
   }
 
   return (

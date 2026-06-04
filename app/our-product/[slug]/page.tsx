@@ -5,6 +5,7 @@ import SiteHeader from '@/components/site-header';
 import SiteFooter from '@/components/site-footer';
 import ProductDetails from '@/components/product-details/ProductDetails';
 import { THEME_CONFIG } from '@/lib/theme';
+import dictionary from '@/lib/copy-dictionary.json';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -14,8 +15,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   if (!product) {
     return {
-      title: `Produit non trouvé | ${THEME_CONFIG.brand.name}`,
-      description: 'Désolé, le produit demandé n\'existe pas.',
+      title: `${dictionary.productDetails.notFound.title} | ${THEME_CONFIG.brand.name}`,
+      description: dictionary.productDetails.notFound.description,
     };
   }
 

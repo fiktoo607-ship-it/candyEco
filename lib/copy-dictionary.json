@@ -1,0 +1,161 @@
+{
+  "navigation": {
+    "home": "Accueil",
+    "products": "Produits",
+    "about": "Notre Histoire",
+    "contact": "Contact"
+  },
+  "productCard": {
+    "addToCart": "Ajouter au panier",
+    "unavailable": "Indisponible",
+    "comingSoon": "Bientôt"
+  },
+  "productBrowser": {
+    "filters": {
+      "all": "Tous",
+      "cake": "Gâteaux",
+      "cookies": "Biscuits",
+      "tart": "Tartes",
+      "macarons": "Macarons"
+    }
+  },
+  "home": {
+    "carousel": [
+      {
+        "tagline": "Boulangerie Artisanale | Artisanal Bakery",
+        "title": "Pâtisseries artisanales pour chaque instant",
+        "description": "Savourez la chaleur de notre fournil matinal avec des viennoiseries et pains artisanaux cuits quotidiennement à base d'ingrédients naturels de premier choix.",
+        "primaryLabel": "Acheter",
+        "secondaryLabel": "Notre Histoire"
+      },
+      {
+        "tagline": "Gâteaux d'Exception | Gourmet Cakes",
+        "title": "Créer de la joie pour chaque occasion",
+        "description": "Nos gâteaux artisanaux sont confectionnés avec passion et décorés à la main pour faire de vos événements des souvenirs inoubliables.",
+        "primaryLabel": "Découvrir les Gâteaux",
+        "secondaryLabel": "Commander"
+      },
+      {
+        "tagline": "Biscuits Frais | Fresh Cookies",
+        "title": "Des saveurs classiques avec une touche moderne",
+        "description": "Découvrez notre délicieuse sélection de biscuits faits main avec des pépites de chocolat noir premium et une pointe de fleur de sel.",
+        "primaryLabel": "Découvrir les Biscuits",
+        "secondaryLabel": "Notre méthode"
+      },
+      {
+        "tagline": "Tartes de Saison | Seasonal Tarts",
+        "title": "La douceur de la nature dans une tarte de saison",
+        "description": "Découvrez nos tartes garnies de fruits de saison et d'une crème pâtissière onctueuse sur une pâte croustillante.",
+        "primaryLabel": "Découvrir les Desserts",
+        "secondaryLabel": "Nous Contacter"
+      }
+    ],
+    "featured": {
+      "title": "Créations Vedettes"
+    },
+    "story": {
+      "title": "Fait Main, sans Raccourci",
+      "description": "Nous cuisons avec la rigueur de l'artisanat : fermentation lente, ingrédients d'exception et cuisson précise. Le résultat ? Des créations authentiques au goût incomparable.",
+      "imageAlt": "Pain Artisanal"
+    }
+  },
+  "ourProduct": {
+    "header": {
+      "tagline": "Produits",
+      "title": "Nos Créations Artisanales",
+      "description": "Faites à la main avec des ingrédients de premier choix. Savourez notre assortiment cuit du jour."
+    }
+  },
+  "productDetails": {
+    "description": "Description",
+    "story": "L'Histoire du Produit",
+    "notFound": {
+      "title": "Produit non trouvé",
+      "description": "Désolé, le produit demandé n'existe pas."
+    }
+  },
+  "about": {
+    "hero": {
+      "tagline": "Notre Histoire",
+      "title": "Un voyage ancré dans la passion et la tradition",
+      "description": "Tout a commencé dans un petit atelier fariné où l'air embaumait constamment la levure et le beurre caramélisé. Nous croyons que le véritable artisanat demande du temps."
+    },
+    "heritage": {
+      "imageAlt": "Boulanger travaillant la pâte",
+      "title": "Héritage Boulanger",
+      "description1": "Nous ne faisons pas que cuire du pain ; nous créons des expériences. En honorant les techniques ancestrales tout en y apportant une touche de créativité moderne, nous confectionnons des gourmandises à la fois réconfortantes et inattendues.",
+      "description2": "Nourrir le levain naturel, feuilleter les viennoiseries avec précision et façonner chaque miche à la main sont les détails qui donnent à nos créations leur caractère unique."
+    },
+    "values": {
+      "title": "Des Ingrédients Sans Compromis",
+      "items": [
+        {
+          "title": "Céréales Biologiques",
+          "description": "Nous sélectionnons nos farines auprès de meuniers locaux engagés pour la santé des sols et des saveurs authentiques."
+        },
+        {
+          "title": "Beurre AOP Charentes-Poitou",
+          "description": "Une matière grasse d'exception pour donner à nos viennoiseries un feuilletage riche et des saveurs intenses."
+        },
+        {
+          "title": "Le Temps",
+          "description": "Nous laissons nos pâtes reposer et maturer lentement pour un équilibre parfait des arômes et une digestion optimale."
+        }
+      ]
+    }
+  },
+  "contact": {
+    "hero": {
+      "tagline": "Contactez-nous",
+      "title": "Bienvenue",
+      "description": "Que vous ayez une question sur notre production du jour, une commande spéciale ou simplement envie de nous dire bonjour, nous serions ravis d'échanger avec vous."
+    },
+    "links": {
+      "title": "Suivez-nous"
+    },
+    "visit": {
+      "title": "Notre Boutique",
+      "address": "Adresse",
+      "hours": "Horaires",
+      "phone": "Téléphone",
+      "mapAlt": "Plan d'accès"
+    }
+  },
+  "footer": {
+    "handmade": "Fait main avec amour.",
+    "followUs": "Suivez-nous",
+    "hours": "Horaires :"
+  },
+  "cart": {
+    "header": {
+      "tagline": "Panier",
+      "title": "Votre Commande Actuelle"
+    },
+    "success": {
+      "title": "Commande envoyée !",
+      "description": "Merci pour votre commande. Nous avons bien reçu vos informations et notre équipe va la traiter dans les plus brefs délais.",
+      "backButton": "Retour aux produits"
+    },
+    "empty": {
+      "title": "Votre panier est vide",
+      "description": "Vous n'avez pas encore ajouté de produits dans votre panier.",
+      "exploreButton": "Découvrir nos produits"
+    },
+    "list": {
+      "remove": "Supprimer"
+    },
+    "form": {
+      "title": "Détails de la Livraison",
+      "total": "Montant Total",
+      "nameLabel": "Nom Complet *",
+      "namePlaceholder": "Saisissez votre nom complet",
+      "phoneLabel": "Numéro de Téléphone *",
+      "phonePlaceholder": "Ex: 0612345678",
+      "addressLabel": "Adresse de Livraison *",
+      "addressPlaceholder": "Ville, Quartier, Rue",
+      "submitButton": "Confirmer la Commande",
+      "validationError": "Veuillez remplir tous les champs obligatoires.",
+      "submitError": "Échec de l'envoi de la commande. Veuillez réessayer."
+    }
+  }
+}

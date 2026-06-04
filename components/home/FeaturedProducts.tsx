@@ -1,4 +1,5 @@
 import ProductCard from '../ProductCard';
+import dictionary from '@/lib/copy-dictionary.json';
 
 interface FeaturedProduct {
   id?: string;
@@ -19,7 +20,7 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
   return (
     <section className="mx-auto max-w-container-max px-gutter py-xl">
       <div className="mb-lg text-center">
-        <h2 className="font-display text-4xl font-bold text-on-surface">Créations Vedettes</h2>
+        <h2 className="font-display text-4xl font-bold text-on-surface">{dictionary.home.featured.title}</h2>
         <div className="mx-auto mt-sm h-1 w-16 rounded-full bg-primary-container" />
       </div>
 

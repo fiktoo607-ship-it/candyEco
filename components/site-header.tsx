@@ -5,10 +5,17 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { navigationLinks } from '@/lib/site-data';
 import { useBakeryStore } from '@/lib/store';
 import { useCartStore } from '@/lib/cart-store';
 import { THEME_CONFIG } from '@/lib/theme';
+import dictionary from '@/lib/copy-dictionary.json';
+
+const navigationLinks = [
+  { href: '/home', label: dictionary.navigation.home },
+  { href: '/our-product', label: dictionary.navigation.products },
+  { href: '/about', label: dictionary.navigation.about },
+  { href: '/contact', label: dictionary.navigation.contact }
+];
 
 function MenuIcon() {
   return (

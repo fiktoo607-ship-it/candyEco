@@ -2,15 +2,16 @@
 
 import { useProducts } from '@/lib/hooks/use-products';
 import ProductCard from '@/components/ProductCard';
-import { getProductFilter, products as fallbackProducts } from '@/lib/site-data';
+import { getProductFilter } from '@/lib/site-data';
 import { useBakeryStore } from '@/lib/store';
+import dictionary from '@/lib/copy-dictionary.json';
 
 const filters = [
-  { value: 'all', label: 'Tous' },
-  { value: 'cake', label: 'Gâteaux' },
-  { value: 'cookies', label: 'Biscuits' },
-  { value: 'tart', label: 'Tartes' },
-  { value: 'macarons', label: 'Macarons' }
+  { value: 'all', label: dictionary.productBrowser.filters.all },
+  { value: 'cake', label: dictionary.productBrowser.filters.cake },
+  { value: 'cookies', label: dictionary.productBrowser.filters.cookies },
+  { value: 'tart', label: dictionary.productBrowser.filters.tart },
+  { value: 'macarons', label: dictionary.productBrowser.filters.macarons }
 ] as const;
 
 export default function ProductBrowser() {
@@ -19,8 +20,7 @@ export default function ProductBrowser() {
   
   const { data: dbProducts = [], isLoading } = useProducts();
 
-  // Fallback to static mock products if database is empty
-  const displayProducts = dbProducts.length > 0 ? dbProducts : fallbackProducts;
+  const displayProducts = dbProducts;
 
   const filteredProducts = activeCategory === 'all' 
     ? displayProducts 

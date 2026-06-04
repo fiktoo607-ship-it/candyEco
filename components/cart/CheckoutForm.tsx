@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCartStore } from '@/lib/cart-store';
 import { useSubmitOrder } from '@/lib/hooks/use-orders';
+import dictionary from '@/lib/copy-dictionary.json';
 
 interface CheckoutFormProps {
   onSuccess: () => void;
@@ -19,7 +20,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
     if (items.length === 0) return;
 
     if (!customerName || !customerPhone || !shippingAddress) {
-      alert("Veuillez remplir tous les champs obligatoires.");
+      alert(dictionary.cart.form.validationError);
       return;
     }
 
@@ -39,7 +40,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
       onSuccess();
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : "Échec de l'envoi de la commande. Veuillez réessayer.");
+      alert(err instanceof Error ? err.message : dictionary.cart.form.submitError);
     }
   };
 
@@ -47,22 +48,22 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
 
   return (
     <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft sticky top-24">
-      <h2 className="text-xl font-bold text-on-surface mb-md">Détails de la Livraison</h2>
+      <h2 className="text-xl font-bold text-on-surface mb-md">{dictionary.cart.form.title}</h2>
       
       <div className="flex justify-between items-center text-base mb-md border-b border-outline-variant/20 pb-sm">
-        <span className="text-on-surface-variant font-medium">Montant Total</span>
+        <span className="text-on-surface-variant font-medium">{dictionary.cart.form.total}</span>
         <span className="text-2xl font-bold text-primary">${totalPrice.toFixed(2)}</span>
       </div>
 
       <form onSubmit={handleCheckout} className="space-y-sm">
         <div>
           <label className="block text-sm font-bold text-on-surface-variant mb-xs">
-            Nom Complet *
+            {dictionary.cart.form.nameLabel}
           </label>
           <input
             type="text"
             required
-            placeholder="Saisissez votre nom complet"
+            placeholder={dictionary.cart.form.namePlaceholder}
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary"
@@ -71,12 +72,12 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
 
         <div>
           <label className="block text-sm font-bold text-on-surface-variant mb-xs">
-            Numéro de Téléphone *
+            {dictionary.cart.form.phoneLabel}
           </label>
           <input
             type="tel"
             required
-            placeholder="Ex: 0612345678"
+            placeholder={dictionary.cart.form.phonePlaceholder}
             value={customerPhone}
             onChange={(e) => setCustomerPhone(e.target.value)}
             className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary text-left"
@@ -86,12 +87,12 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
 
         <div>
           <label className="block text-sm font-bold text-on-surface-variant mb-xs">
-            Adresse de Livraison *
+            {dictionary.cart.form.addressLabel}
           </label>
           <input
             type="text"
             required
-            placeholder="Ville, Quartier, Rue"
+            placeholder={dictionary.cart.form.addressPlaceholder}
             value={shippingAddress}
             onChange={(e) => setShippingAddress(e.target.value)}
             className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary"
@@ -106,7 +107,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
           {submitOrderMutation.isPending && (
             <span className="material-symbols-outlined text-base animate-spin">sync</span>
           )}
-          Confirmer la Commande
+          {dictionary.cart.form.submitButton}
         </button>
       </form>
     </div>

@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { useCartStore } from '@/lib/cart-store';
+import dictionary from '@/lib/copy-dictionary.json';
 
 export default function CartItemsList() {
   const { items, removeItem, updateQuantity } = useCartStore();
@@ -50,7 +51,7 @@ export default function CartItemsList() {
               type="button"
               onClick={() => removeItem(item.product.id)}
               className="rounded-lg p-2 text-error hover:bg-error/10 transition-colors flex items-center justify-center"
-              title="Supprimer"
+              title={dictionary.cart.list.remove}
             >
               <span className="material-symbols-outlined text-lg">delete</span>
             </button>

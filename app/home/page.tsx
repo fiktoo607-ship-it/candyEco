@@ -3,13 +3,12 @@ import SiteHeader from '@/components/site-header';
 import HeroCarousel from '@/components/home/HeroCarousel';
 import FeaturedProducts from '@/components/home/FeaturedProducts';
 import StorySection from '@/components/home/StorySection';
-import { featuredProducts as fallbackFeatured } from '@/lib/site-data';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  let displayFeatured = fallbackFeatured;
+  let displayFeatured: any[] = [];
   try {
     const dbFeatured = await prisma.product.findMany({
       orderBy: [
