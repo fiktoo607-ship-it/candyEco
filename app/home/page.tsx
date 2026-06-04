@@ -12,22 +12,25 @@ export default async function HomePage() {
   try {
     const dbFeatured = await prisma.product.findMany({
       where: {
-        OR: [
-          { badge: { not: null } },
-          { name: { in: ['كرواسون الزبدة الكلاسيكي', 'تارت التوت الموسمي', 'رغيف العجين المخمر الحرفي'] } }
-        ]
+        title: {
+          in: ['كرواسون الزبدة الكلاسيكي', 'تارت التوت الموسمي', 'رغيف العجين المخمر الحرفي']
+        }
       },
       take: 3
     });
     if (dbFeatured && dbFeatured.length > 0) {
       displayFeatured = dbFeatured.map(p => ({
-        name: p.name,
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
         category: p.category,
         price: p.price,
-        image: p.image,
-        badge: p.badge || undefined,
+        imageUrl: p.imageUrl,
         description: p.description,
-        filter: p.filter as any
+        story: p.story,
+        limitBay: p.limitBay,
+        state: p.state as any,
+        publishedAt: p.publishedAt
       }));
     }
   } catch (err) {
@@ -71,23 +74,32 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 gap-lg md:grid-cols-3">
-            {displayFeatured.map((product) => (
-              <article key={product.name} className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-soft transition-transform hover:-translate-y-1">
-                <div className="relative aspect-square overflow-hidden border-b border-surface-container">
-                  <img src={product.image} alt={product.name} className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
-                  {product.badge ? <span className="absolute left-sm top-sm rounded-full bg-secondary-container/20 px-3 py-1 text-sm font-semibold text-on-surface">{product.badge}</span> : null}
-                </div>
-                <div className="flex h-full flex-col justify-between p-md">
-                  <div>
-                    <p className="mb-xs text-sm font-semibold uppercase tracking-[0.2em] text-primary">{product.category}</p>
-                    <h3 className="font-display text-2xl font-bold text-on-surface">{product.name}</h3>
+            {displayFeatured.map((product) => {
+              let badge: string | undefined = undefined;
+              if (product.state === 'outofStock') {
+                badge = 'غير متوفر';
+              } else if (product.state === 'commingSoun') {
+                badge = 'قريباً';
+              }
+
+              return (
+                <article key={product.title} className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-soft transition-transform hover:-translate-y-1">
+                  <div className="relative aspect-square overflow-hidden border-b border-surface-container">
+                    <img src={product.imageUrl} alt={product.title} className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
+                    {badge ? <span className="absolute left-sm top-sm rounded-full bg-secondary-container/20 px-3 py-1 text-sm font-semibold text-on-surface">{badge}</span> : null}
                   </div>
-                  <div className="mt-md flex items-center justify-between">
-                    <span className="font-display text-2xl font-bold text-on-surface">{product.price}</span>
+                  <div className="flex h-full flex-col justify-between p-md">
+                    <div>
+                      <p className="mb-xs text-sm font-semibold uppercase tracking-[0.2em] text-primary">{product.category}</p>
+                      <h3 className="font-display text-2xl font-bold text-on-surface">{product.title}</h3>
+                    </div>
+                    <div className="mt-md flex items-center justify-between">
+                      <span className="font-display text-2xl font-bold text-on-surface">{product.price}</span>
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         </section>
 

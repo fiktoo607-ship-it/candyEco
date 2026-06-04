@@ -18,21 +18,24 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, category, price, image, badge, description, filter } = body;
+    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt } = body;
 
-    if (!name || !category || !price || !image || !description || !filter) {
+    if (!title || !slug || !price || !category || !imageUrl || !description || !story) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const newProduct = await prisma.product.create({
       data: {
-        name,
-        category,
+        title,
+        slug,
         price,
-        image,
-        badge: badge || null,
+        category,
+        imageUrl,
         description,
-        filter,
+        story,
+        limitBay: limitBay !== undefined ? (limitBay === null ? null : Number(limitBay)) : null,
+        state: state || 'exist',
+        publishedAt: publishedAt ? new Date(publishedAt) : null,
       },
     });
 

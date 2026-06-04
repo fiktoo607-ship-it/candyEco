@@ -3,9 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node ./scripts/next-with-swc-lockfile-shim.cjs dev",
+    "build": "node ./scripts/next-with-swc-lockfile-shim.cjs build",
+    "start": "node ./scripts/next-with-swc-lockfile-shim.cjs start",
     "postinstall": "prisma generate",
     "typecheck": "tsc --noEmit"
   },

@@ -3,7 +3,7 @@
 import Image from 'next/image';
 
 import { useEffect, useState } from 'react';
-import { products as fallbackProducts } from '@/lib/site-data';
+import { products as fallbackProducts, getProductFilter } from '@/lib/site-data';
 import { useBakeryStore } from '@/lib/store';
 
 const filters = [
@@ -39,7 +39,7 @@ export default function ProductBrowser() {
 
   const filteredProducts = activeCategory === 'all' 
     ? displayProducts 
-    : displayProducts.filter((product) => product.filter === activeCategory);
+    : displayProducts.filter((product) => getProductFilter(product.category, product.slug) === activeCategory);
 
   return (
     <div className="space-y-xl">
@@ -61,25 +61,34 @@ export default function ProductBrowser() {
       </div>
 
       <div className="grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-3">
-        {filteredProducts.map((product) => (
-          <article key={product.name} className="overflow-hidden rounded-2xl border border-surface-variant bg-surface-container-lowest shadow-soft transition-transform duration-300 hover:-translate-y-1">
-            <div className="relative aspect-[4/3] overflow-hidden bg-surface-variant">
-              <Image src={product.image} alt={product.name} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 33vw" />
-              {product.badge ? <span className="absolute left-sm top-sm rounded-full bg-[rgba(255,174,218,0.2)] px-3 py-1 text-xs font-semibold text-on-surface backdrop-blur-sm">{product.badge}</span> : null}
-            </div>
+        {filteredProducts.map((product) => {
+          let badge: string | undefined = undefined;
+          if (product.state === 'outofStock') {
+            badge = 'غير متوفر';
+          } else if (product.state === 'commingSoun') {
+            badge = 'قريباً';
+          }
 
-            <div className="flex h-full flex-col p-md">
-              <div>
-                <p className="mb-xs text-sm font-bold uppercase tracking-[0.2em] text-primary">{product.category}</p>
-                <h3 className="font-display text-2xl font-bold text-on-surface">{product.name}</h3>
+          return (
+            <article key={product.title} className="overflow-hidden rounded-2xl border border-surface-variant bg-surface-container-lowest shadow-soft transition-transform duration-300 hover:-translate-y-1">
+              <div className="relative aspect-[4/3] overflow-hidden bg-surface-variant">
+                <Image src={product.imageUrl} alt={product.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 33vw" />
+                {badge ? <span className="absolute left-sm top-sm rounded-full bg-[rgba(255,174,218,0.2)] px-3 py-1 text-xs font-semibold text-on-surface backdrop-blur-sm">{badge}</span> : null}
               </div>
 
-              <p className="mt-sm flex-1 text-base leading-8 text-on-surface-variant">{product.description}</p>
+              <div className="flex h-full flex-col p-md">
+                <div>
+                  <p className="mb-xs text-sm font-bold uppercase tracking-[0.2em] text-primary">{product.category}</p>
+                  <h3 className="font-display text-2xl font-bold text-on-surface">{product.title}</h3>
+                </div>
 
-              <div className="mt-md border-t border-surface-variant pt-sm text-2xl font-bold text-primary">{product.price}</div>
-            </div>
-          </article>
-        ))}
+                <p className="mt-sm flex-1 text-base leading-8 text-on-surface-variant">{product.description}</p>
+
+                <div className="mt-md border-t border-surface-variant pt-sm text-2xl font-bold text-primary">{product.price}</div>
+              </div>
+            </article>
+          );
+        })}
       </div>
     </div>
   );

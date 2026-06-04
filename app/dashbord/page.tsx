@@ -5,23 +5,21 @@ import Image from 'next/image';
 
 interface Product {
   id: string;
-  name: string;
+  title: string;
+  slug: string;
   category: string;
   price: string;
-  image: string;
-  badge: string | null;
+  imageUrl: string;
   description: string;
-  filter: string;
+  story: string;
+  limitBay: number | null;
+  state: 'exist' | 'outofStock' | 'commingSoun';
+  publishedAt: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-const CATEGORIES = [
-  { filter: 'pastry', category: 'معجنات' },
-  { filter: 'cake', category: 'كعك' },
-  { filter: 'cookies', category: 'بسكويت' },
-  { filter: 'tart', category: 'تارت' },
-  { filter: 'macarons', category: 'ماكرون' },
-  { filter: 'bread', category: 'مخبوزات' }
-];
+const CATEGORIES = ['معجنات', 'كعك', 'بسكويت', 'حلويات', 'مخبوزات'];
 
 export default function DashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -40,12 +38,16 @@ export default function DashboardPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form Fields
-  const [name, setName] = useState('');
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
   const [price, setPrice] = useState('');
-  const [image, setImage] = useState('');
-  const [badge, setBadge] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedCatIndex, setSelectedCatIndex] = useState(0); // index in CATEGORIES
+  const [story, setStory] = useState('');
+  const [limitBay, setLimitBay] = useState('');
+  const [state, setState] = useState<'exist' | 'outofStock' | 'commingSoun'>('exist');
+  const [publishedAt, setPublishedAt] = useState('');
+  const [category, setCategory] = useState(CATEGORIES[0]);
 
   // Delete State
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -75,7 +77,7 @@ export default function DashboardPage() {
   // Filter products by search query
   const filteredProducts = products.filter(
     (p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -96,12 +98,16 @@ export default function DashboardPage() {
   const handleOpenCreate = () => {
     setModalMode('create');
     setEditingId(null);
-    setName('');
+    setTitle('');
+    setSlug('');
     setPrice('');
-    setImage('https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600');
-    setBadge('');
+    setImageUrl('https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600');
     setDescription('');
-    setSelectedCatIndex(0);
+    setStory('');
+    setLimitBay('');
+    setState('exist');
+    setPublishedAt(new Date().toISOString().substring(0, 10)); // default to today
+    setCategory(CATEGORIES[0]);
     setIsModalOpen(true);
   };
 
@@ -109,34 +115,39 @@ export default function DashboardPage() {
   const handleOpenEdit = (p: Product) => {
     setModalMode('edit');
     setEditingId(p.id);
-    setName(p.name);
+    setTitle(p.title);
+    setSlug(p.slug);
     setPrice(p.price);
-    setImage(p.image);
-    setBadge(p.badge || '');
+    setImageUrl(p.imageUrl);
     setDescription(p.description);
-    const catIdx = CATEGORIES.findIndex((c) => c.filter === p.filter);
-    setSelectedCatIndex(catIdx !== -1 ? catIdx : 0);
+    setStory(p.story);
+    setLimitBay(p.limitBay !== null ? String(p.limitBay) : '');
+    setState(p.state);
+    setPublishedAt(p.publishedAt ? new Date(p.publishedAt).toISOString().substring(0, 10) : '');
+    setCategory(p.category);
     setIsModalOpen(true);
   };
 
   // Handle Form Submission (Create or Edit)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !price || !image || !description) {
+    if (!title || !slug || !price || !imageUrl || !description || !story) {
       alert('Please fill in all required fields.');
       return;
     }
 
     setIsSubmitting(true);
-    const cat = CATEGORIES[selectedCatIndex];
     const payload = {
-      name,
+      title,
+      slug,
       price,
-      image,
-      badge: badge || null,
+      imageUrl,
       description,
-      category: cat.category,
-      filter: cat.filter
+      story,
+      category,
+      limitBay: limitBay.trim() === '' ? null : Number(limitBay),
+      state,
+      publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
     };
 
     try {
@@ -280,9 +291,10 @@ export default function DashboardPage() {
                   <thead>
                     <tr className="border-b border-outline-variant/30 bg-surface-container-low text-sm font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
                       <th className="p-md">Image</th>
-                      <th className="p-md">Name</th>
+                      <th className="p-md">Title</th>
                       <th className="p-md">Category</th>
                       <th className="p-md">Price</th>
+                      <th className="p-md">State</th>
                       <th className="p-md text-right">Actions</th>
                     </tr>
                   </thead>
@@ -292,8 +304,8 @@ export default function DashboardPage() {
                         <td className="p-md">
                           <div className="relative h-16 w-16 overflow-hidden rounded-lg bg-surface-container-high border border-outline-variant/20 shadow-sm">
                             <Image
-                              src={product.image}
-                              alt={product.name}
+                              src={product.imageUrl}
+                              alt={product.title}
                               fill
                               className="object-cover"
                               sizes="64px"
@@ -302,12 +314,7 @@ export default function DashboardPage() {
                         </td>
                         <td className="p-md">
                           <div className="font-semibold text-on-surface group-hover:text-primary transition-colors flex items-center gap-sm">
-                            {product.name}
-                            {product.badge && (
-                              <span className="rounded-full bg-secondary-container/30 px-sm py-[2px] text-xs font-semibold text-on-secondary-container">
-                                {product.badge}
-                              </span>
-                            )}
+                            {product.title}
                           </div>
                           <div className="text-xs text-on-surface-variant/80 mt-[2px] line-clamp-1 max-w-md">{product.description}</div>
                         </td>
@@ -317,6 +324,17 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td className="p-md font-bold text-primary">{product.price}</td>
+                        <td className="p-md">
+                          <span className={`rounded-full px-sm py-[2px] text-xs font-semibold ${
+                            product.state === 'exist'
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
+                              : product.state === 'outofStock'
+                              ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400'
+                          }`}>
+                            {product.state === 'exist' ? 'متوفر' : product.state === 'outofStock' ? 'غير متوفر' : 'قريباً'}
+                          </span>
+                        </td>
                         <td className="p-md text-right">
                           <div className="flex justify-end gap-sm">
                             <button
@@ -399,17 +417,35 @@ export default function DashboardPage() {
               </button>
             </header>
 
-            <form onSubmit={handleSubmit} className="p-md flex flex-col gap-sm">
-              <div className="flex flex-col gap-xs">
-                <label className="text-sm font-bold text-on-surface-variant">Product Name *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. كعكة الكاكاو منتصف الليل"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
-                />
+            <form onSubmit={handleSubmit} className="p-md flex flex-col gap-sm overflow-y-auto max-h-[75vh]">
+              <div className="grid grid-cols-2 gap-sm">
+                <div className="flex flex-col gap-xs">
+                  <label className="text-sm font-bold text-on-surface-variant">Product Title *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. كعكة الكاكاو"
+                    value={title}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      if (modalMode === 'create') {
+                        setSlug(e.target.value.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-ء-ي]/g, ''));
+                      }
+                    }}
+                    className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
+                  />
+                </div>
+                <div className="flex flex-col gap-xs">
+                  <label className="text-sm font-bold text-on-surface-variant">Slug *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. cocoa-cake"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+                    className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-sm">
@@ -427,13 +463,13 @@ export default function DashboardPage() {
                 <div className="flex flex-col gap-xs">
                   <label className="text-sm font-bold text-on-surface-variant">Category *</label>
                   <select
-                    value={selectedCatIndex}
-                    onChange={(e) => setSelectedCatIndex(Number(e.target.value))}
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
                     className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary h-[38px]"
                   >
-                    {CATEGORIES.map((cat, idx) => (
-                      <option key={cat.filter} value={idx}>
-                        {cat.category} ({cat.filter})
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
                       </option>
                     ))}
                   </select>
@@ -446,31 +482,66 @@ export default function DashboardPage() {
                   type="text"
                   required
                   placeholder="Paste direct image link"
-                  value={image}
-                  onChange={(e) => setImage(e.target.value)}
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
                   className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
                 />
               </div>
 
-              <div className="flex flex-col gap-xs">
-                <label className="text-sm font-bold text-on-surface-variant">Badge (Optional)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. الأكثر مبيعاً or موسمي"
-                  value={badge}
-                  onChange={(e) => setBadge(e.target.value)}
-                  className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
-                />
+              <div className="grid grid-cols-3 gap-sm">
+                <div className="flex flex-col gap-xs col-span-1">
+                  <label className="text-sm font-bold text-on-surface-variant">Limit Purchase</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 5"
+                    value={limitBay}
+                    onChange={(e) => setLimitBay(e.target.value)}
+                    className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
+                  />
+                </div>
+                <div className="flex flex-col gap-xs col-span-1">
+                  <label className="text-sm font-bold text-on-surface-variant">State *</label>
+                  <select
+                    value={state}
+                    onChange={(e) => setState(e.target.value as any)}
+                    className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary h-[38px]"
+                  >
+                    <option value="exist">Exist</option>
+                    <option value="outofStock">Out of Stock</option>
+                    <option value="commingSoun">Coming Soon</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-xs col-span-1">
+                  <label className="text-sm font-bold text-on-surface-variant">Publish Date</label>
+                  <input
+                    type="date"
+                    value={publishedAt}
+                    onChange={(e) => setPublishedAt(e.target.value)}
+                    className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary h-[38px]"
+                  />
+                </div>
               </div>
 
               <div className="flex flex-col gap-xs">
                 <label className="text-sm font-bold text-on-surface-variant">Description *</label>
                 <textarea
                   required
-                  rows={3}
-                  placeholder="Describe the product details..."
+                  rows={2}
+                  placeholder="Describe the product shortly..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary resize-none"
+                />
+              </div>
+
+              <div className="flex flex-col gap-xs">
+                <label className="text-sm font-bold text-on-surface-variant">Story *</label>
+                <textarea
+                  required
+                  rows={2}
+                  placeholder="Tell the story/heritage of the product..."
+                  value={story}
+                  onChange={(e) => setStory(e.target.value)}
                   className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary resize-none"
                 />
               </div>
@@ -516,7 +587,7 @@ export default function DashboardPage() {
 
             <div className="p-md">
               <p className="text-on-surface-variant leading-relaxed">
-                Are you sure you want to delete <span className="font-bold text-on-surface">"{productToDelete?.name}"</span>?
+                Are you sure you want to delete <span className="font-bold text-on-surface">"{productToDelete?.title}"</span>?
                 This action is permanent and cannot be undone.
               </p>
 

@@ -29,7 +29,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, category, price, image, badge, description, filter } = body;
+    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt } = body;
 
     const existingProduct = await prisma.product.findUnique({
       where: { id },
@@ -42,13 +42,16 @@ export async function PUT(
     const updatedProduct = await prisma.product.update({
       where: { id },
       data: {
-        name: name !== undefined ? name : existingProduct.name,
+        title: title !== undefined ? title : existingProduct.title,
+        slug: slug !== undefined ? slug : existingProduct.slug,
         category: category !== undefined ? category : existingProduct.category,
         price: price !== undefined ? price : existingProduct.price,
-        image: image !== undefined ? image : existingProduct.image,
-        badge: badge !== undefined ? (badge || null) : existingProduct.badge,
+        imageUrl: imageUrl !== undefined ? imageUrl : existingProduct.imageUrl,
         description: description !== undefined ? description : existingProduct.description,
-        filter: filter !== undefined ? filter : existingProduct.filter,
+        story: story !== undefined ? story : existingProduct.story,
+        limitBay: limitBay !== undefined ? (limitBay === null ? null : Number(limitBay)) : existingProduct.limitBay,
+        state: state !== undefined ? state : existingProduct.state,
+        publishedAt: publishedAt !== undefined ? (publishedAt ? new Date(publishedAt) : null) : existingProduct.publishedAt,
       },
     });
 

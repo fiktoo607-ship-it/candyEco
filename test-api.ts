@@ -15,13 +15,16 @@ async function runTests() {
   // 2. Test POST /api/products
   console.log('\n--- 2. Testing POST /api/products ---');
   const newProductData = {
-    name: 'كعكة الاختبار الفريدة',
+    title: 'كعكة الاختبار الفريدة',
+    slug: 'unique-test-cake',
     category: 'كعك',
     price: '$10.00',
-    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600',
-    badge: 'جديد',
+    imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600',
     description: 'كعكة لذيذة تم إنشاؤها لغرض اختبار نقطة النهاية.',
-    filter: 'cake'
+    story: 'قصة كعكة الاختبار الفريدة المليئة بالتفاصيل والنكهات.',
+    limitBay: 5,
+    state: 'exist',
+    publishedAt: new Date().toISOString()
   };
 
   const postRes = await fetch(`${BASE_URL}/api/products`, {
@@ -46,12 +49,12 @@ async function runTests() {
   }
   const product = (await getOneRes.json()) as any;
   console.log('✅ GET /api/products/[id] succeeded!');
-  console.log(`   Retrieved Name: ${product.name}`);
+  console.log(`   Retrieved Title: ${product.title}`);
 
   // 4. Test PUT /api/products/[id]
   console.log(`\n--- 4. Testing PUT /api/products/${testId} ---`);
   const updateData = {
-    name: 'كعكة الاختبار المعدلة',
+    title: 'كعكة الاختبار المعدلة',
     price: '$12.00',
   };
 
@@ -66,7 +69,7 @@ async function runTests() {
   }
   const updatedProduct = (await putRes.json()) as any;
   console.log('✅ PUT /api/products/[id] succeeded!');
-  console.log(`   Updated Name: ${updatedProduct.name}`);
+  console.log(`   Updated Title: ${updatedProduct.title}`);
   console.log(`   Updated Price: ${updatedProduct.price}`);
 
   // 5. Test DELETE /api/products/[id]

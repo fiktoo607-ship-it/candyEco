@@ -41,6 +41,9 @@ next-env.d.ts
 *.njsproj
 *.sln
 *.sw?
+/context
+/candy_html
+/.md
 
 # OS files
 .DS_Store

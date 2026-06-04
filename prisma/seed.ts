@@ -9,64 +9,88 @@ const prisma = new PrismaClient({ adapter });
 
 const initialProducts = [
   {
-    name: 'كرواسون الزبدة الكلاسيكي',
+    title: 'كرواسون الزبدة الكلاسيكي',
+    slug: 'classic-butter-croissant',
     category: 'معجنات',
     price: '$4.50',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDM9MTXZIGDFhWsfeGXHlc1DGQfGplTMBVAqGM3d39jcjh-1nF3Py0WfiKZJ8TjoMXOGWLyhlkf9KtCoVwiQateefhVgM-M0tTpAb7UOrq_WJmOSLig2soE-oAbMyWiCN8iGVnWER8yiKBLTiDO-_QOFZxtSjQxt4EOWoBJ5K2eDQPEzxU5u-KWOwHi4DIrys9YKTKVQgZ-9f1h8VACe4IktDhP_0XksWvWoOA7aZ-ihuPCfHSEk_UIP27K0HTaWotuWVfcaO425pg',
-    badge: 'الأكثر مبيعاً',
+    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDM9MTXZIGDFhWsfeGXHlc1DGQfGplTMBVAqGM3d39jcjh-1nF3Py0WfiKZJ8TjoMXOGWLyhlkf9KtCoVwiQateefhVgM-M0tTpAb7UOrq_WJmOSLig2soE-oAbMyWiCN8iGVnWER8yiKBLTiDO-_QOFZxtSjQxt4EOWoBJ5K2eDQPEzxU5u-KWOwHi4DIrys9YKTKVQgZ-9f1h8VACe4IktDhP_0XksWvWoOA7aZ-ihuPCfHSEk_UIP27K0HTaWotuWVfcaO425pg',
     description: 'رقيق، زبدِي، ومخبوز طازجاً كل صباح.',
-    filter: 'pastry'
+    story: 'نبدأ بتحضير عجينة الكرواسون الكلاسيكية على مدار 3 أيام، حيث نستخدم زبدة فرنسية فاخرة للحصول على طبقات هشة ومقرمشة تذوب في الفم.',
+    limitBay: 10,
+    state: 'exist',
+    publishedAt: new Date()
   },
   {
-    name: 'تارت التوت الموسمي',
+    title: 'تارت التوت الموسمي',
+    slug: 'seasonal-berry-tart',
     category: 'حلويات',
     price: '$6.50',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuApeW-EzB4OOUFz6lk1OYoj7vxVKMPQLi2zXPe4W0bewuxreI6zF1BN4IxqBrSh2b1q8ZrDyC_6XpPU0glnjRVyxeUgB2hQ4-b7Dm8AlrGR9_pwElGQ_95DVU13kOJK7-9zWPlTy6-y0zrhYyhpB8SGmkPocxHzjSid9yy-mteDirU3Q18zSqj3L8fUaFzFWCH-n5lV9zjA1O47DmKPJA6a3qz0fWrqLHkANeEODblNagL4CdXB938uHpj9bYPlYI3Sc7019uC8w1s',
-    badge: 'خالي من الجلوتين',
+    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuApeW-EzB4OOUFz6lk1OYoj7vxVKMPQLi2zXPe4W0bewuxreI6zF1BN4IxqBrSh2b1q8ZrDyC_6XpPU0glnjRVyxeUgB2hQ4-b7Dm8AlrGR9_pwElGQ_95DVU13kOJK7-9zWPlTy6-y0zrhYyhpB8SGmkPocxHzjSid9yy-mteDirU3Q18zSqj3L8fUaFzFWCH-n5lV9zjA1O47DmKPJA6a3qz0fWrqLHkANeEODblNagL4CdXB938uHpj9bYPlYI3Sc7019uC8w1s',
     description: 'تارت ناعم مع التوت الطازج وكريمة الفانيليا.',
-    filter: 'tart'
+    story: 'يجمع هذا التارت بين كريمة الكاسترد المخملية بنكهة فانيليا مدغشقر، وتشكيلة من التوت البري الطازج المنتقى بعناية فائقة.',
+    limitBay: 5,
+    state: 'exist',
+    publishedAt: new Date()
   },
   {
-    name: 'رغيف العجين المخمر الحرفي',
+    title: 'رغيف العجين المخمر الحرفي',
+    slug: 'artisanal-sourdough-loaf',
     category: 'مخبوزات',
     price: '$8.00',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAYX-4KJdS1MVA9rBEnGT5Ftu8wFj69SzShhv2FQbifjWWDd677Jr71886bp3budeZQJKneZ4EmOTB9BkLD3nTTgSKAMcGdB-fluvCDNcJjQ9Q9AwVjHHtW2B-NxqpOrh6nTUpcU08DSmQhmxfzyTS-ms2RLyRn1iBIjp7WpkeJYsIfPP_1dJdL8BRtPgUOB7dudIVsxfWaU4NpnMkq4eAADqt4jyb3JY4Cr2eWSKlajKJ1ITXYaca-yhIhC6Z9GbTqbaOhHzBHN9M',
+    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAYX-4KJdS1MVA9rBEnGT5Ftu8wFj69SzShhv2FQbifjWWDd677Jr71886bp3budeZQJKneZ4EmOTB9BkLD3nTTgSKAMcGdB-fluvCDNcJjQ9Q9AwVjHHtW2B-NxqpOrh6nTUpcU08DSmQhmxfzyTS-ms2RLyRn1iBIjp7WpkeJYsIfPP_1dJdL8BRtPgUOB7dudIVsxfWaU4NpnMkq4eAADqt4jyb3JY4Cr2eWSKlajKJ1ITXYaca-yhIhC6Z9GbTqbaOhHzBHN9M',
     description: 'قشرة عميقة ونكهة مخمرة ببطء.',
-    filter: 'bread'
+    story: 'رغيف يخبز بالخميرة الطبيعية التي نغذيها يومياً منذ سنوات. مخمر ببطء لمدة 24 ساعة ليعطي القشرة المقرمشة واللب الطري ذو الطعم الحامض المميز.',
+    limitBay: null,
+    state: 'exist',
+    publishedAt: new Date()
   },
   {
-    name: 'كعكة الكاكاو منتصف الليل',
+    title: 'كعكة الكاكاو منتصف الليل',
+    slug: 'midnight-cocoa-cake',
     category: 'كعك',
     price: '$45.00',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCAU0raBiNbjngNqJOWzxMIrDlrTf922c0IjNG5pokDL054UWNmhkG3KNInLDO23ADPnhhOpb6zryI1MoBeWf3OYovAabFelspt64-e3ByXRRd9xP4IZ27hbn59vDOsr_tDA6iAqlMvvdoPkS0rLSzQ9-iCcHXnxTNwGDIE-mT0vl6rnHBcEjJlzuIuJ2w8NIbJ8ukm-mauKDisW6luWQmD0deJeWS0cI4c437iZDaCFm3Wn9g9Rxh8uDkJ7wKaHksRxpwRVmFOjqE',
-    badge: 'الأكثر مبيعاً',
+    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCAU0raBiNbjngNqJOWzxMIrDlrTf922c0IjNG5pokDL054UWNmhkG3KNInLDO23ADPnhhOpb6zryI1MoBeWf3OYovAabFelspt64-e3ByXRRd9xP4IZ27hbn59vDOsr_tDA6iAqlMvvdoPkS0rLSzQ9-iCcHXnxTNwGDIE-mT0vl6rnHBcEjJlzuIuJ2w8NIbJ8ukm-mauKDisW6luWQmD0deJeWS0cI4c437iZDaCFm3Wn9g9Rxh8uDkJ7wKaHksRxpwRVmFOjqE',
     description: 'شوكولاتة داكنة وغاناش حريري بطبقات غنية.',
-    filter: 'cake'
+    story: 'كعكة الكاكاو الفاخرة التي تلبي شغف عشاق الشوكولاتة الداكنة، مغطاة بطبقات سميكة من الغاناش الغني والناعم.',
+    limitBay: 3,
+    state: 'exist',
+    publishedAt: new Date()
   },
   {
-    name: 'رقائق الشوكولاتة بملح البحر',
+    title: 'رقائق الشوكولاتة بملح البحر',
+    slug: 'sea-salt-chocolate-chips',
     category: 'بسكويت',
     price: '$24.00 / دزينة',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAEB65rxkZkbZjtn5y6kctWcwseP0PFcdRK3VIImbhLQq2fQ9F-luMRBsYhqfuBYNBtOAjbQ8fxdGlEr7CK7MuMuqGpZGw2L7lx4s_JC3xPZDyGokzDflcOOHMRpROZA5WxFLzNcUiBsv0zD19gj_gOzTKzXbiy3n3AP_9RA_A83VFFGGO3wKEIjgTT7yARcm4u4S7Pvn1wQOvp9nA7mw8RCa44EWROjD1VkMdHuyVFdl8XOYeJQbDUHfeTWIiyHFVDlQifjc2KTmo',
+    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAEB65rxkZkbZjtn5y6kctWcwseP0PFcdRK3VIImbhLQq2fQ9F-luMRBsYhqfuBYNBtOAjbQ8fxdGlEr7CK7MuMuqGpZGw2L7lx4s_JC3xPZDyGokzDflcOOHMRpROZA5WxFLzNcUiBsv0zD19gj_gOzTKzXbiy3n3AP_9RA_A83VFFGGO3wKEIjgTT7yARcm4u4S7Pvn1wQOvp9nA7mw8RCa44EWROjD1VkMdHuyVFdl8XOYeJQbDUHfeTWIiyHFVDlQifjc2KTmo',
     description: 'مراكز مطاطية ولمسة من ملح البحر لإبراز الشوكولاتة.',
-    filter: 'cookies'
+    story: 'بسكويت كلاسيكي محضر بقطع الشوكولاتة الداكنة الفاخرة، رشينا عليها ملح البحر الخشن لموازنة الحلاوة وإبراز النكهة الحقيقية.',
+    limitBay: 12,
+    state: 'exist',
+    publishedAt: new Date()
   },
   {
-    name: 'تارت الحمضيات والتوت',
+    title: 'تارت الحمضيات والتوت',
+    slug: 'citrus-berry-tart',
     category: 'حلويات',
     price: '$38.00',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuChUeRMaR_D_eLN9LCQJGVGbf0W5iyfsjuLKnG03dYBO-6A5patrXoaIILH99mcYXirznfDde6Xl99BPsvVcxk-jBUIe5OHm1_cu5Gn8G9E61vlGBrb5WITekjmHuv6W5iMNC8i8RvH6u8qvNykMgUGbztsUwgiGGMwTVvRKLjRF7SJ7np8SRxzOt6Sb4W9geuRcT5-HL92sYB14_8fEndNYD32HSv5qmJ5j-QXDYWQqFJ82NpWp4oe82F3ECvnnhCe2BNXUuU_3rc',
-    badge: 'موسمي',
+    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuChUeRMaR_D_eLN9LCQJGVGbf0W5iyfsjuLKnG03dYBO-6A5patrXoaIILH99mcYXirznfDde6Xl99BPsvVcxk-jBUIe5OHm1_cu5Gn8G9E61vlGBrb5WITekjmHuv6W5iMNC8i8RvH6u8qvNykMgUGbztsUwgiGGMwTVvRKLjRF7SJ7np8SRxzOt6Sb4W9geuRcT5-HL92sYB14_8fEndNYD32HSv5qmJ5j-QXDYWQqFJ82NpWp4oe82F3ECvnnhCe2BNXUuU_3rc',
     description: 'خثارة الليمون مع توت العليق الموسمي الطازج.',
-    filter: 'tart'
+    story: 'مزيج رائع من خثارة الليمون الحامض والمنعش والتوت البري الأحمر على قاعدة تارت مقرمشة ومغذية.',
+    limitBay: 4,
+    state: 'outofStock',
+    publishedAt: new Date()
   },
   {
-    name: 'مجموعة الماكرون الحرفية',
+    title: 'مجموعة الماكرون الحرفية',
+    slug: 'artisanal-macarons-box',
     category: 'حلويات',
     price: '$32.00 / علبة',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDEXoMgxvm_URWJxm1nRxPH2-5CpVzaQDnauLT5zLAK_uPFTNz_yysCsEoreKBleDKiwXpndp9M9ijo7PAkwSPlI_HWOAT2SrZmWO0JDjwUGxZsqgRHJ-prPNEh3HGm08wVgj9SzaIO2poFoEp9NdR2IyhXo7_LP6WpbGJwxJdehFIlcCNrxCnLUjyFABaSun-sIoDwS_A7VCP2ZdhaDchHW1JHC01AfPgyVDEXt3XiBph2Pc8bGdIhnWKFX4jQD5j304oAzIBfXNE',
+    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDEXoMgxvm_URWJxm1nRxPH2-5CpVzaQDnauLT5zLAK_uPFTNz_yysCsEoreKBleDKiwXpndp9M9ijo7PAkwSPlI_HWOAT2SrZmWO0JDjwUGxZsqgRHJ-prPNEh3HGm08wVgj9SzaIO2poFoEp9NdR2IyhXo7_LP6WpbGJwxJdehFIlcCNrxCnLUjyFABaSun-sIoDwS_A7VCP2ZdhaDchHW1JHC01AfPgyVDEXt3XiBph2Pc8bGdIhnWKFX4jQD5j304oAzIBfXNE',
     description: 'فستق وماء ورد وكراميل مملح في صندوق واحد.',
-    filter: 'macarons'
+    story: 'علبة ماكرون فرنسي مخبوز بدقة متناهية بقشرة خارجية هشة وقلب طري غني بالنكهات الحرفية المتنوعة.',
+    limitBay: 2,
+    state: 'commingSoun',
+    publishedAt: null
   }
 ];
 
