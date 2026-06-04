@@ -147,17 +147,21 @@ export default function HeroCarousel() {
       {/* Manual Navigation Buttons */}
       <button
         onClick={handlePrev}
-        className="absolute left-md top-1/2 z-30 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 p-3 text-white backdrop-blur-xs transition-all hover:bg-black/50 active:scale-90"
+        className="absolute left-md top-1/2 z-30 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 p-3 text-white backdrop-blur-xs transition-all hover:bg-black/50 active:scale-90 flex items-center justify-center"
         aria-label="Previous Slide"
       >
-        <span className="material-symbols-outlined text-2xl flex items-center justify-center">arrow_back_ios_new</span>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="h-6 w-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+        </svg>
       </button>
       <button
         onClick={handleNext}
-        className="absolute right-md top-1/2 z-30 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 p-3 text-white backdrop-blur-xs transition-all hover:bg-black/50 active:scale-90"
+        className="absolute right-md top-1/2 z-30 -translate-y-1/2 rounded-full border border-white/20 bg-black/30 p-3 text-white backdrop-blur-xs transition-all hover:bg-black/50 active:scale-90 flex items-center justify-center"
         aria-label="Next Slide"
       >
-        <span className="material-symbols-outlined text-2xl flex items-center justify-center">arrow_forward_ios</span>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="h-6 w-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+        </svg>
       </button>
 
       {/* Slide Indicator Dots */}
