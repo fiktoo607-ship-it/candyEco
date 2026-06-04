@@ -8,7 +8,8 @@
   "productCard": {
     "addToCart": "Ajouter au panier",
     "unavailable": "Indisponible",
-    "comingSoon": "Bientôt"
+    "comingSoon": "Bientôt",
+    "readMore": "En savoir plus"
   },
   "productBrowser": {
     "filters": {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCartStore } from '@/lib/cart-store';
@@ -15,11 +16,22 @@ export interface ProductCardProps {
     imageUrl: string;
     description: string;
     state: string;
+    limitBay?: number | null;
   };
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
+  const minQuantity = product.limitBay && product.limitBay > 0 ? product.limitBay : 1;
+  const [quantity, setQuantity] = useState(minQuantity);
+
+  const handleIncrease = () => {
+    setQuantity((prev) => prev + 1);
+  };
+
+  const handleDecrease = () => {
+    setQuantity((prev) => (prev > minQuantity ? prev - 1 : prev));
+  };
 
   const handleAddToCart = () => {
     addItem({
@@ -31,7 +43,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       category: product.category,
       description: product.description,
       state: product.state,
-    });
+    }, quantity);
   };
 
   let badge: string | undefined = undefined;
@@ -75,15 +87,58 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         <p className="mt-sm flex-grow text-base leading-8 text-on-surface-variant line-clamp-2">{product.description}</p>
 
-        <div className="mt-md border-t border-surface-variant pt-sm flex items-center justify-between">
-          <span className="text-xl font-bold text-primary">{product.price}</span>
-          <button
-            onClick={handleAddToCart}
-            disabled={!isActionable}
-            className="rounded-full bg-primary px-md py-xs text-xs font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {buttonText}
-          </button>
+        <div className="mt-md border-t border-surface-variant pt-sm flex flex-col gap-sm">
+          {/* Price and Read More Button */}
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-bold text-primary">{product.price}</span>
+            <Link 
+              href={`/our-product/${product.slug}`} 
+              className="group inline-flex items-center text-sm font-bold text-primary hover:text-surface-tint hover:underline transition-all"
+            >
+              {dictionary.productCard.readMore || 'Read More'}
+              <svg className="w-4 h-4 ml-1 select-none transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </Link>
+          </div>
+
+          {/* Quantity Controls & Add to Cart */}
+          <div className="flex items-center gap-xs">
+            {isActionable && (
+              <div className="flex items-center border border-outline-variant/60 rounded-full bg-surface-container-low p-0.5">
+                <button
+                  type="button"
+                  onClick={handleDecrease}
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  disabled={quantity <= minQuantity}
+                  title={`Minimum quantity is ${minQuantity}`}
+                >
+                  <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
+                  </svg>
+                </button>
+                <span className="w-10 text-center text-sm font-bold text-on-surface">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleIncrease}
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors"
+                >
+                  <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </button>
+              </div>
+            )}
+            <button
+              onClick={handleAddToCart}
+              disabled={!isActionable}
+              className="flex-grow rounded-full bg-primary py-sm text-sm font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint disabled:opacity-60 disabled:cursor-not-allowed h-11 flex items-center justify-center"
+            >
+              {buttonText}
+            </button>
+          </div>
         </div>
       </div>
     </article>

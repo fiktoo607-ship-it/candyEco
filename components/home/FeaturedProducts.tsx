@@ -10,6 +10,7 @@ interface FeaturedProduct {
   imageUrl: string;
   description: string;
   state: string;
+  limitBay?: number | null;
 }
 
 interface FeaturedProductsProps {
