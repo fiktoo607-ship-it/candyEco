@@ -1,9 +1,8 @@
 "use client";
 
-import Image from 'next/image';
-
-import { useEffect, useState } from 'react';
-import { products as fallbackProducts, getProductFilter } from '@/lib/site-data';
+import { useProducts } from '@/lib/hooks/use-products';
+import ProductCard from '@/components/ProductCard';
+import { getProductFilter, products as fallbackProducts } from '@/lib/site-data';
 import { useBakeryStore } from '@/lib/store';
 
 const filters = [
@@ -18,24 +17,10 @@ export default function ProductBrowser() {
   const activeCategory = useBakeryStore((state) => state.activeCategory);
   const setActiveCategory = useBakeryStore((state) => state.setActiveCategory);
   
-  const [displayProducts, setDisplayProducts] = useState(fallbackProducts);
+  const { data: dbProducts = [], isLoading } = useProducts();
 
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        const res = await fetch('/api/products');
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            setDisplayProducts(data);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load products from API, falling back to static data:', err);
-      }
-    }
-    loadProducts();
-  }, []);
+  // Fallback to static mock products if database is empty
+  const displayProducts = dbProducts.length > 0 ? dbProducts : fallbackProducts;
 
   const filteredProducts = activeCategory === 'all' 
     ? displayProducts 
@@ -60,36 +45,17 @@ export default function ProductBrowser() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-3">
-        {filteredProducts.map((product) => {
-          let badge: string | undefined = undefined;
-          if (product.state === 'outofStock') {
-            badge = 'غير متوفر';
-          } else if (product.state === 'commingSoun') {
-            badge = 'قريباً';
-          }
-
-          return (
-            <article key={product.title} className="overflow-hidden rounded-2xl border border-surface-variant bg-surface-container-lowest shadow-soft transition-transform duration-300 hover:-translate-y-1">
-              <div className="relative aspect-[4/3] overflow-hidden bg-surface-variant">
-                <Image src={product.imageUrl} alt={product.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 33vw" />
-                {badge ? <span className="absolute left-sm top-sm rounded-full bg-[rgba(255,174,218,0.2)] px-3 py-1 text-xs font-semibold text-on-surface backdrop-blur-sm">{badge}</span> : null}
-              </div>
-
-              <div className="flex h-full flex-col p-md">
-                <div>
-                  <p className="mb-xs text-sm font-bold uppercase tracking-[0.2em] text-primary">{product.category}</p>
-                  <h3 className="font-display text-2xl font-bold text-on-surface">{product.title}</h3>
-                </div>
-
-                <p className="mt-sm flex-1 text-base leading-8 text-on-surface-variant">{product.description}</p>
-
-                <div className="mt-md border-t border-surface-variant pt-sm text-2xl font-bold text-primary">{product.price}</div>
-              </div>
-            </article>
-          );
-        })}
-      </div>
+      {isLoading && dbProducts.length === 0 ? (
+        <div className="flex justify-center py-xl">
+          <span className="material-symbols-outlined text-4xl text-primary animate-spin">sync</span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-3">
+          {filteredProducts.map((product) => (
+            <ProductCard key={product.title} product={product} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
