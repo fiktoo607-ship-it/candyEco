@@ -134,22 +134,68 @@ export default function DashboardPage() {
     setIsModalOpen(true);
   };
 
+  const convertToWebP = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = document.createElement("img");
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("Failed to get canvas 2D context"));
+            return;
+          }
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error("Canvas WebP conversion failed"));
+              }
+            },
+            "image/webp",
+            0.85
+          );
+        };
+        img.onerror = () => reject(new Error("Failed to load image into element"));
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error("Failed to read image file"));
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError("Image size must be less than 10MB");
-      return;
-    }
-
     setIsUploading(true);
     setUploadError(null);
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
+      // Convert image to WebP format before uploading
+      const webpBlob = await convertToWebP(file);
+      
+      const originalName = file.name;
+      const dotIndex = originalName.lastIndexOf(".");
+      const baseName = dotIndex !== -1 ? originalName.substring(0, dotIndex) : originalName;
+      const webpFileName = `${baseName}.webp`;
+
+      const webpFile = new File([webpBlob], webpFileName, { type: "image/webp" });
+
+      if (webpFile.size > 10 * 1024 * 1024) {
+        setUploadError("Image size must be less than 10MB");
+        setIsUploading(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", webpFile);
+
       const res = await fetch("/api/upload", {
         method: "POST",
         body: formData,
