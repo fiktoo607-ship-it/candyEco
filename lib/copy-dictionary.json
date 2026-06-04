@@ -22,7 +22,7 @@
   "home": {
     "carousel": [
       {
-        "tagline": "Boulangerie Artisanale | Artisanal Bakery",
+        "tagline": "Délices d’Eva | Artisanal Bakery",
         "title": "Pâtisseries artisanales pour chaque instant",
         "description": "Savourez la chaleur de notre fournil matinal avec des viennoiseries et pains artisanaux cuits quotidiennement à base d'ingrédients naturels de premier choix.",
         "primaryLabel": "Acheter",
@@ -133,7 +133,7 @@
     },
     "success": {
       "title": "Commande envoyée !",
-      "description": "Merci pour votre commande. Nous avons bien reçu vos informations et notre équipe va la traiter dans les plus brefs délais.",
+      "description": "Merci pour votre commande. Nous avons bien reçu vos informations et notre équipe va la traiter dans les plus brefs délais. Votre commande sera traitée dans les 48 heures.",
       "backButton": "Retour aux produits"
     },
     "empty": {
