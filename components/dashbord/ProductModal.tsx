@@ -4,11 +4,8 @@ import { useDashboardStore } from '@/lib/dashboard-store';
 import { useCreateProduct, useUpdateProduct, useUploadImage } from '@/lib/hooks/use-products';
 
 const CATEGORIES_MAPPING = [
-  { value: 'معجنات', label: 'Viennoiseries' },
-  { value: 'كعك', label: 'Gâteaux' },
-  { value: 'بسكويت', label: 'Biscuits' },
-  { value: 'حلويات', label: 'Pâtisseries' },
-  { value: 'مخبوزات', label: 'Boulangerie' },
+  { value: 'gâteau', label: 'Gâteau' },
+  { value: 'aliments traditionnel', label: 'Aliment Traditionnel' },
 ];
 
 export default function ProductModal() {

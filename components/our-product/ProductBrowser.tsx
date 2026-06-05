@@ -8,10 +8,8 @@ import dictionary from '@/lib/copy-dictionary.json';
 
 const filters = [
   { value: 'all', label: dictionary.productBrowser.filters.all },
-  { value: 'cake', label: dictionary.productBrowser.filters.cake },
-  { value: 'cookies', label: dictionary.productBrowser.filters.cookies },
-  { value: 'tart', label: dictionary.productBrowser.filters.tart },
-  { value: 'macarons', label: dictionary.productBrowser.filters.macarons }
+  { value: 'gâteau', label: dictionary.productBrowser.filters.gateau },
+  { value: 'aliments traditionnel', label: dictionary.productBrowser.filters.traditional }
 ] as const;
 
 export default function ProductBrowser() {

@@ -1,4 +1,4 @@
-export type ProductCategory = 'all' | 'pastry' | 'dessert' | 'bread' | 'cookies' | 'tart' | 'macarons' | 'cake';
+export type ProductCategory = 'all' | 'gâteau' | 'aliments traditionnel';
 
 export type SiteLink = {
   href: string;
@@ -24,24 +24,9 @@ export type ProductCard = {
 };
 
 export function getProductFilter(category: string, slug: string): Exclude<ProductCategory, 'all'> {
-  const s = slug.toLowerCase();
-  if (s.includes('macaron')) return 'macarons';
-  if (s.includes('tart')) return 'tart';
-  
-  switch (category) {
-    case 'Viennoiseries':
-      return 'pastry';
-    case 'Gâteaux':
-      return 'cake';
-    case 'Biscuits':
-      return 'cookies';
-    case 'Boulangerie':
-      return 'bread';
-    case 'Pâtisseries':
-      return 'tart';
-    default:
-      return 'cake';
+  const normalizedCategory = category.toLowerCase().trim();
+  if (normalizedCategory === 'aliments traditionnel' || normalizedCategory.includes('traditionnel')) {
+    return 'aliments traditionnel';
   }
+  return 'gâteau';
 }
-
-

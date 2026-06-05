@@ -14,10 +14,8 @@
   "productBrowser": {
     "filters": {
       "all": "Tous",
-      "cake": "Gâteaux",
-      "cookies": "Biscuits",
-      "tart": "Tartes",
-      "macarons": "Macarons"
+      "gateau": "Gâteaux",
+      "traditional": "Aliments Traditionnels"
     }
   },
   "home": {

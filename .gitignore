@@ -45,6 +45,7 @@ next-env.d.ts
 /candy_html
 /.md
 /candy_items
+/scripts
 
 # OS files
 .DS_Store
