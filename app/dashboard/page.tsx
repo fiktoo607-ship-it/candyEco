@@ -24,15 +24,17 @@ export default function DashboardPage() {
       <section className="flex-1 flex flex-col">
         <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-outline-variant/30 bg-surface/90 backdrop-blur-md px-gutter shadow-soft">
           <h1 className="font-display text-3xl font-bold text-on-surface">
-            {activeTab === 'products' ? 'Manage Products' : 'Orders Management'}
+            {activeTab === 'products' ? 'Gérer les produits' : 'Gestion des commandes'}
           </h1>
           {activeTab === 'products' && (
             <button
               onClick={() => openCreate(CATEGORIES[0])}
               className="inline-flex items-center gap-xs rounded-full bg-primary px-md py-sm text-sm font-semibold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint hover:scale-[1.02]"
             >
-              <span className="material-symbols-outlined text-base">add</span>
-              Add New Product
+              <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Ajouter un nouveau produit
             </button>
           )}
         </header>

@@ -19,7 +19,7 @@ export default function Sidebar() {
               : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
           }`}
         >
-          Manage Products
+          Gérer les produits
         </button>
         <button
           onClick={() => setActiveTab("orders")}
@@ -29,7 +29,7 @@ export default function Sidebar() {
               : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
           }`}
         >
-          Orders
+          Commandes
         </button>
       </nav>
       <div className="mt-auto border-t border-outline-variant/30 p-md">
@@ -37,7 +37,7 @@ export default function Sidebar() {
           className="rounded-lg px-md py-sm text-on-surface-variant transition-colors hover:text-primary"
           href="#logout"
         >
-          Logout
+          Déconnexion
         </a>
       </div>
     </aside>

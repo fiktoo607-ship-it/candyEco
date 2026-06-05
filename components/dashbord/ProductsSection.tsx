@@ -51,19 +51,19 @@ export default function ProductsSection() {
         {/* Search and Filters */}
         <div className="flex flex-col gap-md border-b border-outline-variant/30 p-md lg:flex-row lg:items-center lg:justify-between">
           <label className="relative w-full lg:w-80">
-            <span className="material-symbols-outlined pointer-events-none absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">
-              search
-            </span>
+            <svg className="pointer-events-none absolute left-sm top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
             <input
               type="text"
-              placeholder="Search products..."
+              placeholder="Rechercher des produits..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-lg border border-outline-variant bg-surface-container-low py-sm pl-xl pr-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </label>
           <div className="text-sm text-on-surface-variant font-medium">
-            Total Products:{" "}
+            Total des produits :{" "}
             <span className="text-primary font-bold">{totalItems}</span>
           </div>
         </div>
@@ -71,19 +71,19 @@ export default function ProductsSection() {
         {/* Loading Indicator */}
         {isLoading ? (
           <div className="flex h-64 flex-col items-center justify-center gap-md">
-            <span className="material-symbols-outlined text-4xl text-primary animate-spin">
-              sync
-            </span>
-            <p className="text-on-surface-variant">Loading products...</p>
+            <svg className="w-10 h-10 text-primary animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+            <p className="text-on-surface-variant">Chargement des produits...</p>
           </div>
         ) : currentItems.length === 0 ? (
           <div className="flex h-64 flex-col items-center justify-center gap-sm text-on-surface-variant">
-            <span className="material-symbols-outlined text-5xl">
-              folder_open
-            </span>
-            <p className="text-lg font-semibold">No products found</p>
+            <svg className="w-12 h-12 text-on-surface-variant/60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.31c-.4 0-.785-.158-1.07-.44l-2.12-2.12z" />
+            </svg>
+            <p className="text-lg font-semibold">Aucun produit trouvé</p>
             <p className="text-sm">
-              Try adding a new product or refining your search query.
+              Essayez d'ajouter un nouveau produit ou d'affiner votre recherche.
             </p>
           </div>
         ) : (
@@ -93,11 +93,11 @@ export default function ProductsSection() {
               <thead>
                 <tr className="border-b border-outline-variant/30 bg-surface-container-low text-sm font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
                   <th className="p-md">Image</th>
-                  <th className="p-md">Title</th>
-                  <th className="p-md">Category</th>
-                  <th className="p-md">Price</th>
-                  <th className="p-md">State</th>
-                  <th className="p-md">Visibility</th>
+                  <th className="p-md">Titre</th>
+                  <th className="p-md">Catégorie</th>
+                  <th className="p-md">Prix</th>
+                  <th className="p-md">État</th>
+                  <th className="p-md">Visibilité</th>
                   <th className="p-md text-right">Actions</th>
                 </tr>
               </thead>
@@ -155,18 +155,24 @@ export default function ProductsSection() {
                       {product.visibility ?? 0}
                     </td>
                     <td className="p-md text-right">
-                      <div className="flex justify-end gap-sm">
+                      <div className="flex justify-end gap-xs">
                         <button
                           onClick={() => openEdit(product)}
-                          className="inline-flex items-center gap-xs rounded-lg px-sm py-xs text-sm font-semibold text-primary transition-all hover:bg-primary-container/10 active:scale-95"
+                          className="inline-flex items-center justify-center rounded-full p-2 text-primary transition-all hover:bg-primary-container/10 active:scale-95"
+                          title="Modifier"
                         >
-                          Edit
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                          </svg>
                         </button>
                         <button
                           onClick={() => openDelete(product)}
-                          className="inline-flex items-center gap-xs rounded-lg px-sm py-xs text-sm font-semibold text-error transition-all hover:bg-error-container/30 active:scale-95"
+                          className="inline-flex items-center justify-center rounded-full p-2 text-error transition-all hover:bg-error-container/30 active:scale-95"
+                          title="Supprimer"
                         >
-                          Delete
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-1.8c0-.661-.493-1.19-1.15-1.19h-3.78c-.657 0-1.15.529-1.15 1.19v1.8m-5.8 0h12" />
+                          </svg>
                         </button>
                       </div>
                     </td>
@@ -181,8 +187,8 @@ export default function ProductsSection() {
         {!isLoading && totalItems > 0 && (
           <div className="flex items-center justify-between border-t border-outline-variant/30 p-md">
             <span className="text-sm text-on-surface-variant font-medium">
-              Showing {indexOfFirstItem + 1} to{" "}
-              {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
+              Affichage de {indexOfFirstItem + 1} à{" "}
+              {Math.min(indexOfLastItem, totalItems)} sur {totalItems} entrées
             </span>
             <div className="flex gap-xs">
               <button

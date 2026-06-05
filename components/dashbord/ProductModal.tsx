@@ -3,7 +3,13 @@ import { convertToWebP } from '@/lib/image-utils';
 import { useDashboardStore } from '@/lib/dashboard-store';
 import { useCreateProduct, useUpdateProduct, useUploadImage } from '@/lib/hooks/use-products';
 
-const CATEGORIES = ['معجنات', 'كعك', 'بسكويت', 'حلويات', 'مخبوزات'];
+const CATEGORIES_MAPPING = [
+  { value: 'معجنات', label: 'Viennoiseries' },
+  { value: 'كعك', label: 'Gâteaux' },
+  { value: 'بسكويت', label: 'Biscuits' },
+  { value: 'حلويات', label: 'Pâtisseries' },
+  { value: 'مخبوزات', label: 'Boulangerie' },
+];
 
 export default function ProductModal() {
   const {
@@ -64,7 +70,7 @@ export default function ProductModal() {
       const webpFile = new File([webpBlob], webpFileName, { type: "image/webp" });
 
       if (webpFile.size > 10 * 1024 * 1024) {
-        setUploadError("Image size must be less than 10MB");
+        setUploadError("La taille de l'image doit être inférieure à 10 Mo");
         return;
       }
 
@@ -74,7 +80,7 @@ export default function ProductModal() {
       const data = await uploadMutation.mutateAsync(formData);
       setImageUrl(data.url);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to upload image";
+      const msg = err instanceof Error ? err.message : "Échec du chargement de l'image";
       console.error(msg);
       setUploadError(msg);
     }
@@ -83,11 +89,11 @@ export default function ProductModal() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isUploading) {
-      alert("Please wait for the image upload to complete.");
+      alert("Veuillez attendre la fin du chargement de l'image.");
       return;
     }
     if (!title || !slug || !price || !imageUrl || !description || !story) {
-      alert('Please fill in all required fields.');
+      alert('Veuillez remplir tous les champs obligatoires.');
       return;
     }
 
@@ -116,7 +122,7 @@ export default function ProductModal() {
     } catch (err) {
       console.error(err);
       const errMsg =
-        err instanceof Error ? err.message : "An error occurred while saving.";
+        err instanceof Error ? err.message : "Une erreur est survenue lors de l'enregistrement.";
       alert(errMsg);
     }
   };
@@ -126,13 +132,16 @@ export default function ProductModal() {
       <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up">
         <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low">
           <h2 className="font-display text-xl font-bold text-on-surface">
-            {modalMode === "create" ? "Add New Product" : "Edit Product"}
+            {modalMode === "create" ? "Ajouter un nouveau produit" : "Modifier le produit"}
           </h2>
           <button
+            type="button"
             onClick={() => setIsModalOpen(false)}
             className="rounded-full p-xs text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
           >
-            <span className="material-symbols-outlined">close</span>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </header>
 
@@ -143,22 +152,22 @@ export default function ProductModal() {
           <div className="grid grid-cols-2 gap-sm">
             <div className="flex flex-col gap-xs">
               <label className="text-sm font-bold text-on-surface-variant">
-                Product Title *
+                Titre du produit *
               </label>
               <input
                 type="text"
                 required
-                placeholder="e.g. كعكة الكاكاو"
+                placeholder="Ex: Gâteau au Chocolat"
                 value={title}
                 onChange={(e) => {
                   setTitle(e.target.value);
                   if (modalMode === "create") {
                     setSlug(
-                      e.target.value
-                        .toLowerCase()
-                        .trim()
-                        .replace(/\s+/g, "-")
-                        .replace(/[^a-z0-9-ء-ي]/g, ""),
+                       e.target.value
+                         .toLowerCase()
+                         .trim()
+                         .replace(/\s+/g, "-")
+                         .replace(/[^a-z0-9-ء-ي]/g, ""),
                     );
                   }
                 }}
@@ -172,7 +181,7 @@ export default function ProductModal() {
               <input
                 type="text"
                 required
-                placeholder="e.g. cocoa-cake"
+                placeholder="Ex: gateau-au-chocolat"
                 value={slug}
                 onChange={(e) =>
                   setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))
@@ -185,12 +194,12 @@ export default function ProductModal() {
           <div className="grid grid-cols-2 gap-sm">
             <div className="flex flex-col gap-xs">
               <label className="text-sm font-bold text-on-surface-variant">
-                Price *
+                Prix *
               </label>
               <input
                 type="text"
                 required
-                placeholder="e.g. $45.00"
+                placeholder="Ex: 45.00 $"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
@@ -198,16 +207,16 @@ export default function ProductModal() {
             </div>
             <div className="flex flex-col gap-xs">
               <label className="text-sm font-bold text-on-surface-variant">
-                Category *
+                Catégorie *
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary h-[38px]"
               >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
+                {CATEGORIES_MAPPING.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
                   </option>
                 ))}
               </select>
@@ -216,7 +225,7 @@ export default function ProductModal() {
 
           <div className="flex flex-col gap-sm">
             <label className="text-sm font-bold text-on-surface-variant">
-              Product Image *
+              Image du produit *
             </label>
 
             {/* File Upload Zone */}
@@ -226,7 +235,7 @@ export default function ProductModal() {
                   <div className="relative h-32 w-32 overflow-hidden rounded-lg border border-outline-variant/30 shadow-md">
                     <Image
                       src={imageUrl}
-                      alt="Product preview"
+                      alt="Aperçu du produit"
                       fill
                       className="object-cover"
                       sizes="128px"
@@ -237,19 +246,19 @@ export default function ProductModal() {
                     onClick={() => setImageUrl("")}
                     className="rounded-full bg-error/10 px-sm py-xs text-xs font-semibold text-error hover:bg-error/20 transition-colors"
                   >
-                    Remove Image
+                    Supprimer l'image
                   </button>
                 </div>
               ) : (
                 <label className="flex flex-col items-center justify-center cursor-pointer py-sm w-full">
-                  <span className="material-symbols-outlined text-4xl text-primary mb-xs">
-                    cloud_upload
-                  </span>
+                  <svg className="w-10 h-10 text-primary mb-xs" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+                  </svg>
                   <span className="text-sm font-semibold text-on-surface">
-                    Click to upload image
+                    Cliquez pour charger une image
                   </span>
                   <span className="text-xs text-on-surface-variant/80 mt-[2px]">
-                    PNG, JPG, WEBP up to 10MB
+                    PNG, JPG, WEBP jusqu'à 10 Mo
                   </span>
                   <input
                     type="file"
@@ -263,11 +272,11 @@ export default function ProductModal() {
 
               {isUploading && (
                 <div className="absolute inset-0 bg-surface-container-lowest/80 backdrop-blur-xs flex flex-col items-center justify-center gap-xs rounded-xl">
-                  <span className="material-symbols-outlined text-2xl text-primary animate-spin">
-                    sync
-                  </span>
+                  <svg className="w-8 h-8 text-primary animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                  </svg>
                   <span className="text-xs font-semibold text-primary">
-                    Uploading image...
+                    Chargement de l'image...
                   </span>
                 </div>
               )}
@@ -275,9 +284,9 @@ export default function ProductModal() {
 
             {uploadError && (
               <span className="text-xs text-error font-medium flex items-center gap-xs">
-                <span className="material-symbols-outlined text-sm">
-                  error
-                </span>
+                <svg className="w-4 h-4 text-error" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
                 {uploadError}
               </span>
             )}
@@ -286,11 +295,11 @@ export default function ProductModal() {
           <div className="grid grid-cols-3 gap-sm">
             <div className="flex flex-col gap-xs col-span-1">
               <label className="text-sm font-bold text-on-surface-variant">
-                Limit Purchase
+                Limite d'achat
               </label>
               <input
                 type="number"
-                placeholder="e.g. 5"
+                placeholder="Ex: 5"
                 value={limitBay}
                 onChange={(e) => setLimitBay(e.target.value)}
                 className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
@@ -298,21 +307,21 @@ export default function ProductModal() {
             </div>
             <div className="flex flex-col gap-xs col-span-1">
               <label className="text-sm font-bold text-on-surface-variant">
-                State *
+                État *
               </label>
               <select
                 value={state}
                 onChange={(e) => setState(e.target.value as 'exist' | 'outofStock' | 'commingSoun')}
                 className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary h-[38px]"
               >
-                <option value="exist">Exist</option>
-                <option value="outofStock">Out of Stock</option>
-                <option value="commingSoun">Coming Soon</option>
+                <option value="exist">Disponible</option>
+                <option value="outofStock">Indisponible</option>
+                <option value="commingSoun">Bientôt</option>
               </select>
             </div>
             <div className="flex flex-col gap-xs col-span-1">
               <label className="text-sm font-bold text-on-surface-variant">
-                Publish Date
+                Date de publication
               </label>
               <input
                 type="date"
@@ -325,11 +334,11 @@ export default function ProductModal() {
 
           <div className="flex flex-col gap-xs">
             <label className="text-sm font-bold text-on-surface-variant">
-              Visibility Score
+              Score de visibilité
             </label>
             <input
               type="number"
-              placeholder="e.g. 10 (higher score = better visibility on home page)"
+              placeholder="Ex: 10 (un score plus élevé = meilleure visibilité sur l'accueil)"
               value={visibility}
               onChange={(e) => setVisibility(e.target.value)}
               className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
@@ -343,7 +352,7 @@ export default function ProductModal() {
             <textarea
               required
               rows={2}
-              placeholder="Describe the product shortly..."
+              placeholder="Décrivez brièvement le produit..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary resize-none"
@@ -352,12 +361,12 @@ export default function ProductModal() {
 
           <div className="flex flex-col gap-xs">
             <label className="text-sm font-bold text-on-surface-variant">
-              Story *
+              Histoire *
             </label>
             <textarea
               required
               rows={2}
-              placeholder="Tell the story/heritage of the product..."
+              placeholder="Racontez l'histoire/l'héritage du produit..."
               value={story}
               onChange={(e) => setStory(e.target.value)}
               className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary resize-none"
@@ -370,7 +379,7 @@ export default function ProductModal() {
               onClick={() => setIsModalOpen(false)}
               className="rounded-lg border border-outline-variant px-md py-sm font-semibold hover:bg-surface-container-low"
             >
-              Cancel
+              Annuler
             </button>
             <button
               type="submit"
@@ -378,11 +387,11 @@ export default function ProductModal() {
               className="rounded-lg bg-primary px-md py-sm font-semibold text-white hover:bg-surface-tint disabled:opacity-60 flex items-center gap-xs"
             >
               {(isSubmitting || isUploading) && (
-                <span className="material-symbols-outlined text-sm animate-spin">
-                  sync
-                </span>
+                <svg className="w-4 h-4 text-white animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
               )}
-              {modalMode === "create" ? "Create" : "Save Changes"}
+              {modalMode === "create" ? "Créer" : "Enregistrer les modifications"}
             </button>
           </footer>
         </form>
