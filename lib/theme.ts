@@ -3,7 +3,7 @@ export interface BrandContact {
   address: string;
   email: string;
   hours: string;
-  socialLinks: Array<{ label: string; href: string }>;
+  socialLinks: Array<{ label: string; href: string; username?: string }>;
 }
 
 export interface BrandConfig {
@@ -28,14 +28,13 @@ export const THEME_CONFIG: ThemeConfig = {
     logoText: "Délices d’Eva",
     description: "Une Délices d’Eva de tradition, bio et engagée.",
     contact: {
-      phone: "(555) 123-4567",
+      phone: "+33695049833",
       address: "124 Rue Baker, Quartier des Artisans, New York, NY 10001",
       email: "contact@boulangerie-artisanale.fr",
       hours: "Lundi - Samedi : 7h00 - 18h00 | Dimanche : Fermé",
       socialLinks: [
-        { label: "Facebook", href: "#" },
-        { label: "Instagram", href: "#" },
-        { label: "Pinterest", href: "#" },
+        { label: "Instagram", href: "https://www.instagram.com/lesdelices.d.eva?igsh=aDQwZGYyMXNpeG5n", username: "lesdelices.d.eva" },
+        { label: "TikTok", href: "https://www.tiktok.com/@les.delices.d.eva?_r=1&_t=ZS-96y0UWvpi3o", username: "les.delices.d.eva" }
       ],
     },
   },

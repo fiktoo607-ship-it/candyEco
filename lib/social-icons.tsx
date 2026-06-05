@@ -1,4 +1,4 @@
-type SocialLabel = 'Facebook' | 'Instagram' | 'Pinterest';
+type SocialLabel = 'Facebook' | 'Instagram' | 'Pinterest' | 'TikTok';
 
 interface SocialIconProps {
   label: SocialLabel;
@@ -32,6 +32,14 @@ function PinterestIcon({ className }: { className?: string }) {
   );
 }
 
+function TikTokIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+    </svg>
+  );
+}
+
 export function SocialIcon({ label, className }: SocialIconProps) {
   switch (label) {
     case 'Facebook':
@@ -40,5 +48,7 @@ export function SocialIcon({ label, className }: SocialIconProps) {
       return <InstagramIcon className={className} />;
     case 'Pinterest':
       return <PinterestIcon className={className} />;
+    case 'TikTok':
+      return <TikTokIcon className={className} />;
   }
 }
