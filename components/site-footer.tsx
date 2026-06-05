@@ -1,9 +1,24 @@
+"use client";
+
 import Link from 'next/link';
 import { THEME_CONFIG } from '@/lib/theme';
 import { SocialIcon } from '@/lib/social-icons';
 import dictionary from '@/lib/copy-dictionary.json';
+import { useConfig } from '@/lib/hooks/use-config';
 
 export default function SiteFooter() {
+  const { data: configs } = useConfig();
+
+  // Fallback values from THEME_CONFIG if database config is not yet loaded
+  const hours = configs?.contact_hours || THEME_CONFIG.brand.contact.hours;
+  const instagramHref = configs?.contact_social_instagram || THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'Instagram')?.href || '#';
+  const tiktokHref = configs?.contact_social_tiktok || THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'TikTok')?.href || '#';
+
+  const socialLinks = [
+    { label: 'Instagram', href: instagramHref },
+    { label: 'TikTok', href: tiktokHref }
+  ];
+
   return (
     <footer className="mt-auto border-t border-outline-variant/20 bg-surface-container-low py-xl">
       <div className="mx-auto flex max-w-container-max flex-col gap-lg px-gutter md:flex-row md:items-start md:justify-between md:gap-0">
@@ -17,7 +32,7 @@ export default function SiteFooter() {
         <div className="flex flex-col gap-sm">
           <span className="text-sm font-semibold uppercase tracking-[0.2em] text-on-surface-variant">{dictionary.footer.followUs}</span>
           <div className="flex flex-col gap-xs">
-            {THEME_CONFIG.brand.contact.socialLinks.map((link) => (
+            {socialLinks.map((link) => (
               <Link key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-base text-on-surface-variant transition-colors hover:text-primary">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-surface-container text-primary">
                   <SocialIcon label={link.label as 'Facebook' | 'Instagram' | 'Pinterest' | 'TikTok'} className="h-4 w-4" />
@@ -26,7 +41,7 @@ export default function SiteFooter() {
               </Link>
             ))}
           </div>
-          <p className="text-base text-on-surface-variant">{dictionary.footer.hours} {THEME_CONFIG.brand.contact.hours}</p>
+          <p className="text-base text-on-surface-variant">{dictionary.footer.hours} {hours}</p>
         </div>
       </div>
     </footer>

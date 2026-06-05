@@ -1,0 +1,172 @@
+import fs from 'fs';
+import path from 'path';
+import { THEME_CONFIG } from './theme';
+
+const getFilePath = () => path.join(process.cwd(), 'lib', 'copy-dictionary.json');
+
+export function getDictionary() {
+  const filePath = getFilePath();
+  return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+}
+
+export function saveDictionary(data: any) {
+  const filePath = getFilePath();
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+// Default configuration fallbacks
+export const DEFAULT_CONFIGS: Record<string, any> = {
+  carousel_products: [
+    'chakhchoukhat-dfer',
+    'tajine-zitoun-avec-khobz-el-dar',
+    'sables-a-la-confiture',
+    'dziriettes'
+  ],
+  homepage_story_title: "Fait Main, sans Raccourci",
+  homepage_story_description: "Nous cuisons avec la rigueur de l'artisanat : fermentation lente, ingrédients d'exception et cuisson précise. Le résultat ? Des créations authentiques au goût incomparable.",
+  
+  about_hero_title: "Un voyage ancré dans la passion et la tradition",
+  about_hero_description: "Tout a commencé dans un petit atelier fariné où l'air embaumait constamment la levure et le beurre caramélisé. Nous croyons que le véritable artisanat demande du temps.",
+  about_heritage_title: "Héritage Boulanger",
+  about_heritage_desc1: "Nous ne faisons pas que cuire du pain ; nous créons des expériences. En honorant les techniques ancestrales tout en y apportant une touche de créativité moderne, nous confectionnons des gourmandises à la fois réconfortantes et inattendues.",
+  about_heritage_desc2: "Nourrir le levain naturel, feuilleter les viennoiseries avec précision et façonner chaque miche à la main sont les détails qui donnent à nos créations leur caractère unique.",
+
+  contact_phone: THEME_CONFIG.brand.contact.phone,
+  contact_email: THEME_CONFIG.brand.contact.email,
+  contact_address: THEME_CONFIG.brand.contact.address,
+  contact_hours: THEME_CONFIG.brand.contact.hours,
+
+  contact_social_instagram: THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'Instagram')?.href || 'https://www.instagram.com/lesdelices.d.eva?igsh=aDQwZGYyMXNpeG5n',
+  contact_social_instagram_user: THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'Instagram')?.username || 'lesdelices.d.eva',
+  contact_social_tiktok: THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'TikTok')?.href || 'https://www.tiktok.com/@les.delices.d.eva?_r=1&_t=ZS-96y0UWvpi3o',
+  contact_social_tiktok_user: THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'TikTok')?.username || 'les.delices.d.eva'
+};
+
+export const CMS_MAP: Record<string, string> = {
+  carousel_products: 'cms.carousel_products',
+  homepage_story_title: 'home.story.title',
+  homepage_story_description: 'home.story.description',
+  about_hero_title: 'about.hero.title',
+  about_hero_description: 'about.hero.description',
+  about_heritage_title: 'about.heritage.title',
+  about_heritage_desc1: 'about.heritage.description1',
+  about_heritage_desc2: 'about.heritage.description2',
+  contact_phone: 'contact.visit.phone_value',
+  contact_address: 'contact.visit.address_value',
+  contact_hours: 'contact.visit.hours_value',
+  contact_email: 'contact.visit.email_value',
+  contact_social_instagram: 'contact.social.instagram',
+  contact_social_instagram_user: 'contact.social.instagram_user',
+  contact_social_tiktok: 'contact.social.tiktok',
+  contact_social_tiktok_user: 'contact.social.tiktok_user',
+};
+
+function getNestedValue(obj: any, path: string): any {
+  const keys = path.split('.');
+  let current = obj;
+  for (const key of keys) {
+    if (current === undefined || current === null) {
+      return undefined;
+    }
+    current = current[key];
+  }
+  return current;
+}
+
+function setNestedValue(obj: any, path: string, value: any) {
+  const keys = path.split('.');
+  let current = obj;
+  for (let i = 0; i < keys.length - 1; i++) {
+    const key = keys[i];
+    if (current[key] === undefined || current[key] === null || typeof current[key] !== 'object') {
+      current[key] = {};
+    }
+    current = current[key];
+  }
+  current[keys[keys.length - 1]] = value;
+}
+
+export function initCmsConfigIfNeeded() {
+  const dict = getDictionary();
+  let modified = false;
+
+  for (const key of Object.keys(CMS_MAP)) {
+    const path = CMS_MAP[key];
+    const currentVal = getNestedValue(dict, path);
+    if (currentVal === undefined) {
+      setNestedValue(dict, path, DEFAULT_CONFIGS[key]);
+      modified = true;
+    }
+  }
+
+  // Ensure cms object and carousel_products exist
+  if (!dict.cms) {
+    dict.cms = {};
+    modified = true;
+  }
+  if (!dict.cms.carousel_products) {
+    dict.cms.carousel_products = DEFAULT_CONFIGS.carousel_products;
+    modified = true;
+  }
+
+  if (modified) {
+    saveDictionary(dict);
+  }
+  return dict;
+}
+
+/**
+ * Retrieves a site configuration value by key, falling back to static defaults.
+ */
+export async function getSiteConfig<T>(key: string): Promise<T> {
+  try {
+    const dict = initCmsConfigIfNeeded();
+    const path = CMS_MAP[key];
+    if (path) {
+      const val = getNestedValue(dict, path);
+      if (val !== undefined) {
+        return val as T;
+      }
+    }
+  } catch (error) {
+    console.error(`[Config Service] Error reading key "${key}":`, error);
+  }
+  return DEFAULT_CONFIGS[key] as T;
+}
+
+/**
+ * Saves or updates a site configuration key with value.
+ */
+export async function saveSiteConfig(key: string, value: any): Promise<void> {
+  try {
+    const dict = initCmsConfigIfNeeded();
+    const path = CMS_MAP[key];
+    if (path) {
+      setNestedValue(dict, path, value);
+      saveDictionary(dict);
+    }
+  } catch (error) {
+    console.error(`[Config Service] Error saving key "${key}":`, error);
+  }
+}
+
+/**
+ * Retrieves the complete set of configurations.
+ */
+export async function getAllSiteConfigs(): Promise<Record<string, any>> {
+  const configs: Record<string, any> = {};
+  
+  try {
+    const dict = initCmsConfigIfNeeded();
+    for (const key of Object.keys(DEFAULT_CONFIGS)) {
+      const path = CMS_MAP[key];
+      const val = path ? getNestedValue(dict, path) : undefined;
+      configs[key] = val !== undefined ? val : DEFAULT_CONFIGS[key];
+    }
+  } catch (error) {
+    console.error('[Config Service] Error reading all configurations, using defaults:', error);
+    return { ...DEFAULT_CONFIGS };
+  }
+  
+  return configs;
+}

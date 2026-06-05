@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import ProductCard from "../ProductCard";
 import dictionary from "@/lib/copy-dictionary.json";
 
@@ -22,20 +22,73 @@ interface FeaturedProductsProps {
 
 export default function FeaturedProducts({ products }: FeaturedProductsProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [dragStartX, setDragStartX] = useState<number | null>(null);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const itemsPerSlide = 6;
   const slidesCount = Math.ceil(products.length / itemsPerSlide) || 1;
 
-  const handlePrev = () => {
-    setCurrentSlide((prev) => (prev - 1 + slidesCount) % slidesCount);
+  const startAutoCycle = () => {
+    stopAutoCycle();
+    timerRef.current = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slidesCount);
+    }, 5000);
   };
 
-  const handleNext = () => {
-    setCurrentSlide((prev) => (prev + 1) % slidesCount);
+  const stopAutoCycle = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    startAutoCycle();
+    return () => stopAutoCycle();
+  }, [slidesCount]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setDragStartX(e.clientX);
+    setIsDragging(true);
+    setDragOffset(0);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || dragStartX === null) return;
+    const currentX = e.clientX;
+    const diff = currentX - dragStartX;
+    setDragOffset(diff);
+  };
+
+  const handleMouseUpOrLeave = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    setDragStartX(null);
+
+    // Reset the 5-second automatic timer on active swipe
+    startAutoCycle();
+
+    const threshold = 80;
+    if (dragOffset < -threshold) {
+      // Swipe left -> Next slide
+      setCurrentSlide((prev) => (prev + 1) % slidesCount);
+    } else if (dragOffset > threshold) {
+      // Swipe right -> Prev slide
+      setCurrentSlide((prev) => (prev - 1 + slidesCount) % slidesCount);
+    }
+    setDragOffset(0);
   };
 
   return (
-    <section className="mx-auto max-w-container-max px-gutter py-xl relative">
+    <section 
+      className="mx-auto max-w-container-max px-gutter py-xl relative select-none"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUpOrLeave}
+      onMouseLeave={handleMouseUpOrLeave}
+    >
       {/* Title Header */}
       <div className="mb-lg text-center flex flex-col items-center justify-center relative">
         <h2 className="font-display text-4xl font-bold text-on-surface">
@@ -74,30 +127,27 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
         })}
       </div>
 
-      {/* Carousel Navigation Buttons at the Bottom */}
+      {/* Dotted Slide Indicators (Replaces Manual Arrow Buttons) */}
       {slidesCount > 1 && (
-        <div className="mt-lg flex justify-center gap-xs items-center z-20 relative">
-          <button
-            onClick={handlePrev}
-            className="rounded-full border border-outline-variant/60 bg-surface-container-low p-2 text-on-surface hover:bg-surface-variant transition-all hover:scale-105 active:scale-95 flex items-center justify-center shadow-sm"
-            aria-label="Previous Products"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="h-4 w-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-            </svg>
-          </button>
-          <span className="text-sm font-bold text-on-surface-variant px-sm select-none">
-            {currentSlide + 1} / {slidesCount}
-          </span>
-          <button
-            onClick={handleNext}
-            className="rounded-full border border-outline-variant/60 bg-surface-container-low p-2 text-on-surface hover:bg-surface-variant transition-all hover:scale-105 active:scale-95 flex items-center justify-center shadow-sm"
-            aria-label="Next Products"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="h-4 w-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-            </svg>
-          </button>
+        <div className="mt-lg flex gap-1.5 justify-center items-center z-20 relative">
+          {Array.from({ length: slidesCount }).map((_, index) => {
+            const isActive = index === currentSlide;
+            return (
+              <button
+                key={index}
+                onClick={() => {
+                  setCurrentSlide(index);
+                  startAutoCycle();
+                }}
+                className={`h-1.5 rounded-full transition-all duration-500 ease-out ${
+                  isActive
+                    ? "w-6 bg-primary shadow-sm shadow-primary/30"
+                    : "w-1.5 bg-neutral-300 hover:bg-neutral-400"
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            );
+          })}
         </div>
       )}
     </section>

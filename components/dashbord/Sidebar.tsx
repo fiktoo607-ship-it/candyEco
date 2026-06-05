@@ -31,6 +31,16 @@ export default function Sidebar() {
         >
           Commandes
         </button>
+        <button
+          onClick={() => setActiveTab("cms")}
+          className={`rounded-lg px-md py-sm text-left transition-colors font-semibold ${
+            activeTab === "cms"
+              ? "bg-primary-container/10 text-primary"
+              : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+          }`}
+        >
+          Gestion de Contenu (CMS)
+        </button>
       </nav>
       <div className="mt-auto border-t border-outline-variant/30 p-md">
         <a

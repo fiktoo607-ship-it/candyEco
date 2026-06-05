@@ -3,6 +3,7 @@
 import Sidebar from '@/components/dashbord/Sidebar';
 import ProductsSection from '@/components/dashbord/ProductsSection';
 import OrdersSection from '@/components/dashbord/OrdersSection';
+import CmsSection from '@/components/dashbord/CmsSection';
 import ProductModal from '@/components/dashbord/ProductModal';
 import DeleteModal from '@/components/dashbord/DeleteModal';
 import { useDashboardStore } from '@/lib/dashboard-store';
@@ -24,7 +25,11 @@ export default function DashboardPage() {
       <section className="flex-1 flex flex-col">
         <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-outline-variant/30 bg-surface/90 backdrop-blur-md px-gutter shadow-soft">
           <h1 className="font-display text-3xl font-bold text-on-surface">
-            {activeTab === 'products' ? 'Gérer les produits' : 'Gestion des commandes'}
+            {activeTab === 'products'
+              ? 'Gérer les produits'
+              : activeTab === 'orders'
+              ? 'Gestion des commandes'
+              : 'Configuration du site (CMS)'}
           </h1>
           {activeTab === 'products' && (
             <button
@@ -40,7 +45,13 @@ export default function DashboardPage() {
         </header>
 
         <div className="mx-auto w-full max-w-container-max flex-1 p-gutter">
-          {activeTab === 'products' ? <ProductsSection /> : <OrdersSection />}
+          {activeTab === 'products' ? (
+            <ProductsSection />
+          ) : activeTab === 'orders' ? (
+            <OrdersSection />
+          ) : (
+            <CmsSection />
+          )}
         </div>
       </section>
 

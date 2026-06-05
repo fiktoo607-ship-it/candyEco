@@ -4,10 +4,15 @@ import HeroCarousel from '@/components/home/HeroCarousel';
 import FeaturedProducts from '@/components/home/FeaturedProducts';
 import StorySection from '@/components/home/StorySection';
 import { prisma } from '@/lib/prisma';
+import { getDictionary, initCmsConfigIfNeeded } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
+  // Ensure config is initialized in JSON first
+  initCmsConfigIfNeeded();
+  const dictionary = getDictionary();
+
   let displayFeatured: any[] = [];
   try {
     const dbFeatured = await prisma.product.findMany({
@@ -37,23 +42,24 @@ export default async function HomePage() {
   }
 
   let carouselProducts: any[] = [];
+  let storyTitle = "";
+  let storyDescription = "";
+
   try {
-    const carouselSlugs = [
-      'chakhchoukhat-dfer',
-      'tajine-zitoun-avec-khobz-el-dar',
-      'sables-a-la-confiture',
-      'dziriettes'
-    ];
+    const carouselSlugs = (dictionary.cms?.carousel_products || []) as string[];
     const dbCarouselProducts = await prisma.product.findMany({
       where: {
         slug: { in: carouselSlugs }
       }
     });
     carouselProducts = carouselSlugs
-      .map(slug => dbCarouselProducts.find(p => p.slug === slug))
+      .map((slug: string) => dbCarouselProducts.find(p => p.slug === slug))
       .filter(Boolean);
+
+    storyTitle = dictionary.home?.story?.title || "";
+    storyDescription = dictionary.home?.story?.description || "";
   } catch (err) {
-    console.error('Failed to fetch carousel products from database:', err);
+    console.error('Failed to fetch carousel products/stories from database:', err);
   }
 
   return (
@@ -62,7 +68,7 @@ export default async function HomePage() {
       <main className="flex-1">
         <HeroCarousel products={carouselProducts} />
         <FeaturedProducts products={displayFeatured} />
-        <StorySection />
+        <StorySection title={storyTitle} description={storyDescription} />
       </main>
       <SiteFooter />
     </div>
