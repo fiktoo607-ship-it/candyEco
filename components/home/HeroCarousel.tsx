@@ -2,38 +2,80 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import dictionary from '@/lib/copy-dictionary.json';
+import { Product } from "@prisma/client";
 
 interface Slide {
   imageUrl: string;
-  tagline: string;
   title: string;
   description: string;
   primaryLink: { href: string; label: string };
-  secondaryLink: { href: string; label: string };
 }
 
-const imageUrls = [
-  "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=1200",
-  "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1200",
-  "https://images.unsplash.com/photo-1550617931-e17a7b70dce2?q=80&w=1200",
-];
+interface HeroCarouselProps {
+  products?: Product[];
+}
 
-const slides: Slide[] = dictionary.home.carousel.map((item, index) => ({
-  imageUrl: imageUrls[index],
-  tagline: item.tagline,
-  title: item.title,
-  description: item.description,
-  primaryLink: { href: '/our-product', label: item.primaryLabel },
-  secondaryLink: { 
-    href: index === 0 || index === 2 ? '/about' : '/contact', 
-    label: item.secondaryLabel 
-  }
-}));
-
-export default function HeroCarousel() {
+export default function HeroCarousel({ products = [] }: HeroCarouselProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const slides: Slide[] =
+    products.length > 0
+      ? products.map((product) => ({
+          imageUrl: product.imageUrl,
+          title: product.title,
+          description: product.description,
+          primaryLink: {
+            href: `/our-product/${product.slug}`,
+            label: "Savoir plus",
+          },
+        }))
+      : [
+          {
+            imageUrl:
+              "https://res.cloudinary.com/dr8buntcb/image/upload/v1780692653/carousel/hyss2jjjyh6ichchm3c8.jpg",
+            title: "Chakhchoukhat Dfer",
+            description:
+              "Un plat traditionnel de l'Est algérien à base de petites pâtes coupées à la main, arrosées d'une sauce rouge piquante et garnies de viande et de pois chiches.",
+            primaryLink: {
+              href: "/our-product/chakhchoukhat-dfer",
+              label: "Savoir plus",
+            },
+          },
+          {
+            imageUrl:
+              "https://res.cloudinary.com/dr8buntcb/image/upload/v1780692654/carousel/tkafu2szdsqqjxrgzrin.jpg",
+            title: "Tajine Zitoun avec Khobz El Dar",
+            description:
+              "Un ragoût algérien classique aux olives vertes et poulet mijotés dans une sauce au citron, accompagné d'un pain maison moelleux.",
+            primaryLink: {
+              href: "/our-product/tajine-zitoun-avec-khobz-el-dar",
+              label: "Savoir plus",
+            },
+          },
+          {
+            imageUrl:
+              "https://res.cloudinary.com/dr8buntcb/image/upload/v1780692654/carousel/wqw7mqlukeroz9e87fbx.jpg",
+            title: "Sablés à la confiture",
+            description:
+              "Biscuits secs algériens incontourbables, très fondants, saupoudrés de sucre glace et assemblés avec de la confiture au centre.",
+            primaryLink: {
+              href: "/our-product/sables-a-la-confiture",
+              label: "Savoir plus",
+            },
+          },
+          {
+            imageUrl:
+              "https://res.cloudinary.com/dr8buntcb/image/upload/v1780692655/carousel/trjzocbatbpsbuu794ng.jpg",
+            title: "Dziriettes",
+            description:
+              "Une pâtisserie algéroise raffinée, composée d'une fine pâte croustillante farcie d'amandes parfumées au citron, puis généreusement trempée dans le miel.",
+            primaryLink: {
+              href: "/our-product/dziriettes",
+              label: "Savoir plus",
+            },
+          },
+        ];
 
   const startTimer = () => {
     stopTimer();
@@ -52,7 +94,7 @@ export default function HeroCarousel() {
   useEffect(() => {
     startTimer();
     return () => stopTimer();
-  }, []);
+  }, [slides.length]);
 
   const handleNext = () => {
     stopTimer();
@@ -91,7 +133,7 @@ export default function HeroCarousel() {
               <img
                 src={slide.imageUrl}
                 alt={slide.title}
-                className={`h-full w-full object-cover object-center transition-transform duration-[6000ms] ease-out ${
+                className={`absolute inset-0 h-full w-full object-cover object-center transition-transform duration-[6000ms] ease-out ${
                   isActive ? "scale-100" : "scale-110"
                 }`}
               />
@@ -102,15 +144,9 @@ export default function HeroCarousel() {
               {/* Text & Content Overlay in a Glassmorphic block */}
               <div className="relative mx-auto flex h-full max-w-container-max items-center px-gutter py-xl z-20">
                 <div
-                  className="w-full max-w-2xl text-left text-white rounded-3xl border border-white/10 bg-neutral-950/40 p-md md:p-12 backdrop-blur-md shadow-2xl transition-all duration-500 hover:border-white/20"
+                  className="w-full max-w-2xl text-left text-white rounded-3xl  p-md md:p-12  transition-all duration-500 hover:border-white/20"
                   dir="ltr"
                 >
-                  {/* Glassmorphic Tagline Badge */}
-                  <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs font-bold uppercase tracking-[0.2em] text-[#e8dfff] backdrop-blur-md shadow-sm">
-                    <span className="flex h-2 w-2 rounded-full bg-[#e8dfff] animate-pulse" />
-                    {slide.tagline}
-                  </div>
-
                   {/* Elegant Typography */}
                   <h1 className="mt-md font-display text-4xl font-black leading-tight md:text-5xl lg:text-6xl tracking-tight text-white drop-shadow-sm">
                     {slide.title}
@@ -127,12 +163,6 @@ export default function HeroCarousel() {
                       className="rounded-xl bg-primary px-xl py-md text-base font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] hover:bg-surface-tint active:scale-[0.98]"
                     >
                       {slide.primaryLink.label}
-                    </Link>
-                    <Link
-                      href={slide.secondaryLink.href}
-                      className="rounded-xl border border-white/20 bg-white/10 px-xl py-md text-base font-bold text-white backdrop-blur-md transition-all hover:scale-[1.02] hover:bg-white/20 active:scale-[0.98]"
-                    >
-                      {slide.secondaryLink.label}
                     </Link>
                   </div>
                 </div>

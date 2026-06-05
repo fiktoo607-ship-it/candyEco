@@ -36,11 +36,31 @@ export default async function HomePage() {
     console.error('Failed to fetch featured products from database, using fallback:', err);
   }
 
+  let carouselProducts: any[] = [];
+  try {
+    const carouselSlugs = [
+      'chakhchoukhat-dfer',
+      'tajine-zitoun-avec-khobz-el-dar',
+      'sables-a-la-confiture',
+      'dziriettes'
+    ];
+    const dbCarouselProducts = await prisma.product.findMany({
+      where: {
+        slug: { in: carouselSlugs }
+      }
+    });
+    carouselProducts = carouselSlugs
+      .map(slug => dbCarouselProducts.find(p => p.slug === slug))
+      .filter(Boolean);
+  } catch (err) {
+    console.error('Failed to fetch carousel products from database:', err);
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <main className="flex-1">
-        <HeroCarousel />
+        <HeroCarousel products={carouselProducts} />
         <FeaturedProducts products={displayFeatured} />
         <StorySection />
       </main>
