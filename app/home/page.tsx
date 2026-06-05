@@ -15,7 +15,7 @@ export default async function HomePage() {
         { visibility: 'desc' },
         { createdAt: 'desc' }
       ],
-      take: 3
+      take: 12
     });
     if (dbFeatured && dbFeatured.length > 0) {
       displayFeatured = dbFeatured.map(p => ({
