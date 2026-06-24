@@ -39,25 +39,50 @@ export default async function HomePage() {
     console.error('Failed to fetch featured products from database, using fallback:', err);
   }
 
-  let carouselProducts: any[] = [];
+  let carouselSlides: any[] = [];
   let storyTitle = "";
   let storyDescription = "";
 
   try {
-    const carouselSlugs = (dictionary.cms?.carousel_products || []) as string[];
-    const dbCarouselProducts = await prisma.product.findMany({
-      where: {
-        slug: { in: carouselSlugs }
-      }
+    const selectedSlugs = dictionary.cms?.carousel_products || [];
+    const maxSlides = Number(dictionary.cms?.carousel_max_slides ?? 5);
+
+    let productSlides: any[] = [];
+    if (selectedSlugs.length > 0) {
+      const selectedProducts = await prisma.product.findMany({
+        where: {
+          slug: { in: selectedSlugs },
+        },
+      });
+      productSlides = selectedSlugs
+        .map((slug: string) => selectedProducts.find((p: any) => p.slug === slug))
+        .filter((p: any): p is any => !!p)
+        .map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          imageUrl: p.imageUrl,
+          linkUrl: `/our-product/${p.slug}`,
+        }));
+    }
+
+    const customSlides = await prisma.carouselSlide.findMany({
+      orderBy: { order: 'asc' },
     });
-    carouselProducts = carouselSlugs
-      .map((slug: string) => dbCarouselProducts.find(p => p.slug === slug))
-      .filter(Boolean);
+    const formattedCustomSlides = customSlides.map((slide) => ({
+      id: slide.id,
+      title: slide.title,
+      description: slide.description,
+      imageUrl: slide.imageUrl,
+      linkUrl: slide.linkUrl,
+    }));
+
+    carouselSlides = [...productSlides, ...formattedCustomSlides].slice(0, maxSlides);
 
     storyTitle = dictionary.home?.story?.title || "";
     storyDescription = dictionary.home?.story?.description || "";
   } catch (err) {
-    console.error('Failed to fetch carousel products/stories from database:', err);
+    console.error('Failed to fetch carousel slides/stories from database:', err);
   }
 
   return (
@@ -68,7 +93,7 @@ export default async function HomePage() {
           initialFeaturedProducts={displayFeatured}
           storyTitle={storyTitle}
           storyDescription={storyDescription}
-          carouselProducts={carouselProducts}
+          carouselSlides={carouselSlides}
         />
       </main>
       <SiteFooter />

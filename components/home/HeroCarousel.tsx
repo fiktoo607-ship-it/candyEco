@@ -2,33 +2,47 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Product } from "@prisma/client";
+
+export interface CarouselSlide {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  linkUrl?: string | null;
+  order?: number;
+}
 
 interface Slide {
   imageUrl: string;
   title: string;
   description: string;
-  primaryLink: { href: string; label: string };
+  primaryLink?: { href: string; label: string };
 }
 
 interface HeroCarouselProps {
-  products?: Product[];
+  slides?: CarouselSlide[];
 }
 
-export default function HeroCarousel({ products = [] }: HeroCarouselProps) {
+export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const slides: Slide[] =
-    products.length > 0
-      ? products.map((product) => ({
-          imageUrl: product.imageUrl,
-          title: product.title,
-          description: product.description,
-          primaryLink: {
-            href: `/our-product/${product.slug}`,
-            label: "Savoir plus",
-          },
+  // Touch Swipe gesture states
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+
+  const displaySlides: Slide[] =
+    slides.length > 0
+      ? slides.map((slide) => ({
+          imageUrl: slide.imageUrl,
+          title: slide.title,
+          description: slide.description,
+          primaryLink: slide.linkUrl
+            ? {
+                href: slide.linkUrl,
+                label: "Savoir plus",
+              }
+            : undefined,
         }))
       : [
           {
@@ -80,7 +94,7 @@ export default function HeroCarousel({ products = [] }: HeroCarouselProps) {
   const startTimer = () => {
     stopTimer();
     timerRef.current = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
+      setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
     }, 6000); // cycles slides every 6 seconds
   };
 
@@ -94,17 +108,17 @@ export default function HeroCarousel({ products = [] }: HeroCarouselProps) {
   useEffect(() => {
     startTimer();
     return () => stopTimer();
-  }, [slides.length]);
+  }, [displaySlides.length]);
 
   const handleNext = () => {
     stopTimer();
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
     startTimer();
   };
 
   const handlePrev = () => {
     stopTimer();
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    setCurrentSlide((prev) => (prev - 1 + displaySlides.length) % displaySlides.length);
     startTimer();
   };
 
@@ -114,11 +128,38 @@ export default function HeroCarousel({ products = [] }: HeroCarouselProps) {
     startTimer();
   };
 
+  // Touch handlers for swiping
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX || !touchEndX) return;
+    const diff = touchStartX - touchEndX;
+    const threshold = 50; // Swipe threshold in px
+    if (diff > threshold) {
+      handleNext();
+    } else if (diff < -threshold) {
+      handlePrev();
+    }
+    setTouchStartX(null);
+    setTouchEndX(null);
+  };
+
   return (
-    <section className="relative isolate h-[680px] w-full overflow-hidden bg-neutral-950">
+    <section 
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="relative isolate h-[calc(100vh-80px)] lg:h-[680px] w-full overflow-hidden bg-neutral-950"
+    >
       {/* Slides Container */}
       <div className="absolute inset-0 h-full w-full">
-        {slides.map((slide, index) => {
+        {displaySlides.map((slide, index) => {
           const isActive = index === currentSlide;
           return (
             <div
@@ -139,12 +180,12 @@ export default function HeroCarousel({ products = [] }: HeroCarouselProps) {
               />
 
               {/* Directional Gradient Mask (Premium Dark Overlay) */}
-              <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/95 via-neutral-950/50 to-transparent z-10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-transparent lg:bg-gradient-to-r lg:from-neutral-950/95 lg:via-neutral-950/50 lg:to-transparent z-10" />
 
               {/* Text & Content Overlay in a Glassmorphic block */}
-              <div className="relative mx-auto flex h-full max-w-container-max items-center px-gutter py-xl z-20">
+              <div className="relative mx-auto flex h-full max-w-container-max items-end lg:items-center px-gutter pb-28 lg:pb-0 lg:py-xl z-20">
                 <div
-                  className="w-full max-w-2xl text-left text-white rounded-3xl  p-md md:p-12  transition-all duration-500 hover:border-white/20"
+                  className="w-full max-w-2xl text-left text-white rounded-3xl p-md md:p-12 transition-all duration-500 hover:border-white/20"
                   dir="ltr"
                 >
                   {/* Elegant Typography */}
@@ -152,19 +193,21 @@ export default function HeroCarousel({ products = [] }: HeroCarouselProps) {
                     {slide.title}
                   </h1>
 
-                  <p className="mt-md max-w-xl text-base md:text-lg leading-relaxed text-white/80 font-medium">
+                  <p className="mt-md max-w-xl text-base md:text-lg leading-relaxed text-white/80 font-medium line-clamp-4 lg:line-clamp-none">
                     {slide.description}
                   </p>
 
                   {/* Action Buttons */}
-                  <div className="mt-lg flex flex-wrap gap-sm">
-                    <Link
-                      href={slide.primaryLink.href}
-                      className="rounded-xl bg-primary px-xl py-md text-base font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] hover:bg-surface-tint active:scale-[0.98]"
-                    >
-                      {slide.primaryLink.label}
-                    </Link>
-                  </div>
+                  {slide.primaryLink && (
+                    <div className="mt-lg flex flex-wrap gap-sm">
+                      <Link
+                        href={slide.primaryLink.href}
+                        className="rounded-xl bg-primary px-xl py-md text-base font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] hover:bg-surface-tint active:scale-[0.98]"
+                      >
+                        {slide.primaryLink.label}
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -172,21 +215,20 @@ export default function HeroCarousel({ products = [] }: HeroCarouselProps) {
         })}
       </div>
 
-      {/* Unified Bottom Control Bar */}
-      <div className=" opacity-70 absolute bottom-md left-1/2 z-30 flex -translate-x-1/2 items-center gap-sm rounded-full border border-white/10 bg-neutral-900/60 px-sm py-1.5 backdrop-blur-md shadow-lg transition-all duration-300 hover:bg-neutral-900/80 hover:border-white/20">
-        {/* Prev Button */}
+      {/* Left/Prev Edge Button */}
+      {displaySlides.length > 1 && (
         <button
           onClick={handlePrev}
-          className="rounded-full p-1 text-white/40 hover:text-white hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
+          className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-30 flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border border-white/10 bg-neutral-900/40 text-white/70 backdrop-blur-md transition-all duration-300 hover:bg-primary hover:border-primary hover:text-white hover:scale-110 active:scale-95 shadow-lg shadow-black/20"
           aria-label="Previous Slide"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
-            strokeWidth={3}
+            strokeWidth={2.5}
             stroke="currentColor"
-            className="h-4 w-4"
+            className="h-5 w-5 md:h-6 md:w-6"
           >
             <path
               strokeLinecap="round"
@@ -195,10 +237,36 @@ export default function HeroCarousel({ products = [] }: HeroCarouselProps) {
             />
           </svg>
         </button>
+      )}
 
-        {/* Slide Indicator Pills */}
-        <div className="flex gap-1.5 items-center">
-          {slides.map((_, index) => {
+      {/* Right/Next Edge Button */}
+      {displaySlides.length > 1 && (
+        <button
+          onClick={handleNext}
+          className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-30 flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border border-white/10 bg-neutral-900/40 text-white/70 backdrop-blur-md transition-all duration-300 hover:bg-primary hover:border-primary hover:text-white hover:scale-110 active:scale-95 shadow-lg shadow-black/20"
+          aria-label="Next Slide"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2.5}
+            stroke="currentColor"
+            className="h-5 w-5 md:h-6 md:w-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="m8.25 4.5 7.5 7.5-7.5 7.5"
+            />
+          </svg>
+        </button>
+      )}
+
+      {/* Slide Indicator Pills centered at the bottom */}
+      {displaySlides.length > 1 && (
+        <div className="absolute bottom-md left-1/2 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-white/10 bg-neutral-900/65 px-md py-2 backdrop-blur-md shadow-lg">
+          {displaySlides.map((_, index) => {
             const isActive = index === currentSlide;
             return (
               <button
@@ -214,29 +282,7 @@ export default function HeroCarousel({ products = [] }: HeroCarouselProps) {
             );
           })}
         </div>
-
-        {/* Next Button */}
-        <button
-          onClick={handleNext}
-          className="rounded-full p-1 text-white/40 hover:text-white hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
-          aria-label="Next Slide"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={3}
-            stroke="currentColor"
-            className="h-4 w-4"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m8.25 4.5 7.5 7.5-7.5 7.5"
-            />
-          </svg>
-        </button>
-      </div>
+      )}
     </section>
   );
 }

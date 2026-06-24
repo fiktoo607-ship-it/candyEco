@@ -13,14 +13,14 @@ interface HomeProductSectionProps {
   initialFeaturedProducts: any[];
   storyTitle: string;
   storyDescription: string;
-  carouselProducts: any[];
+  carouselSlides: any[];
 }
 
 export default function HomeProductSection({
   initialFeaturedProducts,
   storyTitle,
   storyDescription,
-  carouselProducts,
+  carouselSlides,
 }: HomeProductSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: allProducts = [], isLoading } = useProducts();
@@ -34,7 +34,7 @@ export default function HomeProductSection({
     <div className="space-y-md">
       {!isSearchActive ? (
         <>
-          <HeroCarousel products={carouselProducts} />
+          <HeroCarousel slides={carouselSlides} />
           <div className="mx-auto max-w-container-max px-gutter py-sm">
             <div className="mx-auto max-w-xl">
               <SearchBar value={searchQuery} onChange={setSearchQuery} />

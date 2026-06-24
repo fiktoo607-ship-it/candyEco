@@ -18,7 +18,21 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Validate carousel products limit if present in request
+    // Validate carousel products limit and max slides
+    let maxSlides = 5;
+    if (body.carousel_max_slides !== undefined) {
+      maxSlides = parseInt(body.carousel_max_slides, 10);
+      if (isNaN(maxSlides) || maxSlides < 1) {
+        return NextResponse.json(
+          { error: 'Le nombre maximum de diapositives doit être un entier supérieur ou égal à 1.' },
+          { status: 400 }
+        );
+      }
+    } else {
+      const currentConfig = await getAllSiteConfigs();
+      maxSlides = currentConfig.carousel_max_slides || 5;
+    }
+
     if (body.carousel_products !== undefined) {
       if (!Array.isArray(body.carousel_products)) {
         return NextResponse.json(
@@ -26,9 +40,9 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      if (body.carousel_products.length > 4) {
+      if (body.carousel_products.length > maxSlides) {
         return NextResponse.json(
-          { error: 'You can select a maximum of 4 products for the homepage carousel' },
+          { error: `Vous ne pouvez pas sélectionner plus de ${maxSlides} produits pour le carousel.` },
           { status: 400 }
         );
       }

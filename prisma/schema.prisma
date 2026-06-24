@@ -97,3 +97,14 @@ model SiteConfig {
   value String
 }
 
+model CarouselSlide {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  imageUrl    String
+  linkUrl     String?  // Optional link to product or external URL
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
