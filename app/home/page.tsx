@@ -1,8 +1,6 @@
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import HeroCarousel from '@/components/home/HeroCarousel';
-import FeaturedProducts from '@/components/home/FeaturedProducts';
-import StorySection from '@/components/home/StorySection';
+import HomeProductSection from '@/components/home/HomeProductSection';
 import { prisma } from '@/lib/prisma';
 import { getDictionary, initCmsConfigIfNeeded } from '@/lib/config';
 
@@ -66,9 +64,12 @@ export default async function HomePage() {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <main className="flex-1">
-        <HeroCarousel products={carouselProducts} />
-        <FeaturedProducts products={displayFeatured} />
-        <StorySection title={storyTitle} description={storyDescription} />
+        <HomeProductSection
+          initialFeaturedProducts={displayFeatured}
+          storyTitle={storyTitle}
+          storyDescription={storyDescription}
+          carouselProducts={carouselProducts}
+        />
       </main>
       <SiteFooter />
     </div>

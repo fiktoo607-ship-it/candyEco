@@ -40,6 +40,7 @@ next-env.d.ts
 *.ntvs*
 *.njsproj
 *.sln
+*.txt
 *.sw?
 /context
 /candy_html
@@ -54,3 +55,7 @@ Thumbs.db
 # Prisma / Custom
 /generated/
 /generated/prisma
+
+
+
+/prompt
