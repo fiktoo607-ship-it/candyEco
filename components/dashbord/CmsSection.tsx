@@ -16,6 +16,7 @@ import {
 interface FormValues {
   carousel_products: string[];
   carousel_max_slides: number;
+  new_products_limit: number;
   homepage_story_title: string;
   homepage_story_description: string;
   
@@ -287,14 +288,25 @@ export default function CmsSection() {
         )}
 
         {/* Slide Controls Inputs */}
-        <div className="flex flex-col gap-xs max-w-xs">
-          <label className="text-sm font-bold text-on-surface-variant">Nombre maximum de diapositives</label>
-          <input
-            type="number"
-            min={1}
-            {...register('carousel_max_slides', { required: true, min: 1, valueAsNumber: true })}
-            className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary w-full"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-sm max-w-lg">
+          <div className="flex flex-col gap-xs">
+            <label className="text-sm font-bold text-on-surface-variant">Nombre maximum de diapositives</label>
+            <input
+              type="number"
+              min={1}
+              {...register('carousel_max_slides', { required: true, min: 1, valueAsNumber: true })}
+              className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary w-full"
+            />
+          </div>
+          <div className="flex flex-col gap-xs">
+            <label className="text-sm font-bold text-on-surface-variant">Limite des nouveaux produits</label>
+            <input
+              type="number"
+              min={1}
+              {...register('new_products_limit', { required: true, min: 1, valueAsNumber: true })}
+              className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary w-full"
+            />
+          </div>
         </div>
 
         {/* Subsection A: Product Selection Checklist */}

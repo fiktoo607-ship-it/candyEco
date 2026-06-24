@@ -6,11 +6,15 @@ import FeaturedProducts from "./FeaturedProducts";
 import StorySection from "./StorySection";
 import SearchBar from "../SearchBar";
 import ProductCard from "../ProductCard";
+import NewProductsSection from "./NewProductsSection";
+import PopularProductsSection from "./PopularProductsSection";
 import { useProducts } from "@/lib/hooks/use-products";
 import { filterProductsByTitle } from "@/lib/products";
 
 interface HomeProductSectionProps {
   initialFeaturedProducts: any[];
+  initialNewProducts: any[];
+  initialPopularProducts: any[];
   storyTitle: string;
   storyDescription: string;
   carouselSlides: any[];
@@ -18,6 +22,8 @@ interface HomeProductSectionProps {
 
 export default function HomeProductSection({
   initialFeaturedProducts,
+  initialNewProducts,
+  initialPopularProducts,
   storyTitle,
   storyDescription,
   carouselSlides,
@@ -35,6 +41,8 @@ export default function HomeProductSection({
       {!isSearchActive ? (
         <>
           <HeroCarousel slides={carouselSlides} />
+          <NewProductsSection products={initialNewProducts} />
+          <PopularProductsSection products={initialPopularProducts} />
           <div className="mx-auto max-w-container-max px-gutter py-sm">
             <div className="mx-auto max-w-xl">
               <SearchBar value={searchQuery} onChange={setSearchQuery} />

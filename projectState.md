@@ -55,14 +55,32 @@
   - `app/api/products/route.ts` & `app/api/products/[id]/route.ts`: Added conditional rating and ratingCount omission unless `dashboard=true` query parameter is set.
   - `app/api/products/[id]/route.ts`: Implemented `POST` handler for user rating submissions, calculating running average.
 
+### 6. Homepage New Products Section
+- **Description**: Displays the newest products on the homepage directly below the Hero Carousel, using a responsive slider/grid layout and a configurable limit from the admin dashboard.
+- **Components**:
+  - `components/home/NewProductsSection.tsx`: Renders the products using a responsive grid layout on desktop, transitioning to a touch-swipeable horizontal scroll container on mobile and tablet.
+  - `components/home/HomeProductSection.tsx`: Configured to receive the list of new products and render the new section directly below `HeroCarousel`.
+  - `components/dashbord/CmsSection.tsx`: Form interface updated to allow configuring `new_products_limit` with standard validation.
+- **APIs & Database**:
+  - `lib/config.ts` & `lib/hooks/use-config.ts` & `lib/copy-dictionary.json`: Added `new_products_limit` to defaults and CMS maps.
+  - `app/api/config/route.ts`: Configured POST handler to validate that the new products limit is a positive integer >= 1.
+  - `app/home/page.tsx`: Queries the database for products ordered by `createdAt` desc, filtering for active products (`state: 'exist'`), using the configured limit.
+
+### 7. Homepage Popular Products Section
+- **Description**: Displays the most ordered products on the homepage directly below the New Products section, automatically updating based on orders count.
+- **Components**:
+  - `components/home/PopularProductsSection.tsx`: Renders the products using a responsive grid layout on desktop, transitioning to a touch-swipeable horizontal scroll container on mobile and tablet.
+  - `components/home/HomeProductSection.tsx`: Configured to receive the list of popular products and render the new section directly below `NewProductsSection`.
+- **APIs & Database**:
+  - `app/home/page.tsx`: Queries database order statistics using `Prisma` aggregation (`groupBy` on `OrderItem` by `productId` summing `quantity` in desc order) to fetch the top 4 most ordered products, falling back to general active products if necessary.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
-- **Unit Tests**:
+- **Unit & Integration Tests**:
   - Created `tests/products-filter.test.ts` to test case-insensitive filtering, trimming, empty queries, and non-matching states.
   - Created `tests/api/products-pagination.test.ts` to test API-level pagination, category filtering, search title filtering, and tag filtering.
   - Created `tests/api/carousel-slides.test.ts` to test GET, POST, PUT, and DELETE Carousel Slides endpoints.
+  - Created `tests/api/config.test.ts` to test GET and POST endpoint operations for configurations and validate parameter boundaries (`carousel_max_slides`, `new_products_limit`, and array limits).
   - Updated `tests/api/products.test.ts` to cover conditional rating/ratingCount visibility, rating updates in admin endpoints, and user rating submissions (calculating running average and validation bounds).
-  - All 57 tests pass successfully under `vitest`.
-
-
+  - All 63 tests pass successfully under `vitest`.

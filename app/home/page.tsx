@@ -39,6 +39,111 @@ export default async function HomePage() {
     console.error('Failed to fetch featured products from database, using fallback:', err);
   }
 
+  let displayNewProducts: any[] = [];
+  try {
+    const newProductsLimit = Number(dictionary.cms?.new_products_limit ?? 4);
+    const dbNewProducts = await prisma.product.findMany({
+      where: { state: 'exist' },
+      orderBy: { createdAt: 'desc' },
+      take: newProductsLimit,
+      include: {
+        tags: true
+      }
+    });
+    if (dbNewProducts && dbNewProducts.length > 0) {
+      displayNewProducts = dbNewProducts.map(p => ({
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
+        category: p.category,
+        price: p.price,
+        imageUrl: p.imageUrl,
+        description: p.description,
+        story: p.story,
+        limitBay: p.limitBay,
+        state: p.state as any,
+        publishedAt: p.publishedAt,
+        tags: p.tags.map(t => t.name)
+      }));
+    }
+  } catch (err) {
+    console.error('Failed to fetch new products from database:', err);
+  }
+
+  let displayPopularProducts: any[] = [];
+  try {
+    const popularLimit = 4;
+    const mostOrderedItems = await prisma.orderItem.groupBy({
+      by: ['productId'],
+      _sum: {
+        quantity: true
+      },
+      orderBy: {
+        _sum: {
+          quantity: 'desc'
+        }
+      },
+      take: popularLimit
+    });
+
+    const orderedProductIds = mostOrderedItems.map(item => item.productId);
+
+    let popularProducts = [];
+    if (orderedProductIds.length > 0) {
+      const fetchedProducts = await prisma.product.findMany({
+        where: {
+          id: { in: orderedProductIds },
+          state: 'exist'
+        },
+        include: {
+          tags: true
+        }
+      });
+      
+      popularProducts = orderedProductIds
+        .map(id => fetchedProducts.find(p => p.id === id))
+        .filter((p): p is any => !!p);
+    }
+
+    if (popularProducts.length < popularLimit) {
+      const remainingCount = popularLimit - popularProducts.length;
+      const fallbackProducts = await prisma.product.findMany({
+        where: {
+          state: 'exist',
+          id: { notIn: popularProducts.map(p => p.id) }
+        },
+        orderBy: [
+          { visibility: 'desc' },
+          { createdAt: 'desc' }
+        ],
+        take: remainingCount,
+        include: {
+          tags: true
+        }
+      });
+      popularProducts = [...popularProducts, ...fallbackProducts];
+    }
+
+    if (popularProducts.length > 0) {
+      displayPopularProducts = popularProducts.map(p => ({
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
+        category: p.category,
+        price: p.price,
+        imageUrl: p.imageUrl,
+        description: p.description,
+        story: p.story,
+        limitBay: p.limitBay,
+        state: p.state as any,
+        publishedAt: p.publishedAt,
+        tags: p.tags.map((t: any) => t.name)
+      }));
+    }
+  } catch (err) {
+    console.error('Failed to fetch popular products from database:', err);
+  }
+
   let carouselSlides: any[] = [];
   let storyTitle = "";
   let storyDescription = "";
@@ -91,6 +196,8 @@ export default async function HomePage() {
       <main className="flex-1">
         <HomeProductSection
           initialFeaturedProducts={displayFeatured}
+          initialNewProducts={displayNewProducts}
+          initialPopularProducts={displayPopularProducts}
           storyTitle={storyTitle}
           storyDescription={storyDescription}
           carouselSlides={carouselSlides}

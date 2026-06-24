@@ -33,6 +33,17 @@ export async function POST(request: NextRequest) {
       maxSlides = currentConfig.carousel_max_slides || 5;
     }
 
+    // Validate new products section limit
+    if (body.new_products_limit !== undefined) {
+      const newProductsLimit = parseInt(body.new_products_limit, 10);
+      if (isNaN(newProductsLimit) || newProductsLimit < 1) {
+        return NextResponse.json(
+          { error: 'La limite des nouveaux produits doit être un entier supérieur ou égal à 1.' },
+          { status: 400 }
+        );
+      }
+    }
+
     if (body.carousel_products !== undefined) {
       if (!Array.isArray(body.carousel_products)) {
         return NextResponse.json(

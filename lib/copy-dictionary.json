@@ -52,6 +52,12 @@
     "featured": {
       "title": "Créations Vedettes"
     },
+    "newProducts": {
+      "title": "Nouveautés"
+    },
+    "popularProducts": {
+      "title": "Produits Populaires"
+    },
     "story": {
       "title": "Fait Main, sans Raccourci",
       "description": "Nous cuisons avec la rigueur de l'artisanat : fermentation lente, ingrédients d'exception et cuisson précise. Le résultat ? Des créations authentiques au goût incomparable.",
@@ -187,6 +193,7 @@
     "contact_social_instagram_user": "lesdelices.d.eva",
     "contact_social_tiktok": "https://www.tiktok.com/@les.delices.d.eva?_r=1&_t=ZS-96y0UWvpi3o",
     "contact_social_tiktok_user": "les.delices.d.eva",
-    "carousel_max_slides": 6
+    "carousel_max_slides": 6,
+    "new_products_limit": 4
   }
 }

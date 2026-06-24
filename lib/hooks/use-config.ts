@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 export interface SiteConfigs {
   carousel_products: string[];
   carousel_max_slides: number;
+  new_products_limit: number;
   homepage_story_title: string;
   homepage_story_description: string;
   

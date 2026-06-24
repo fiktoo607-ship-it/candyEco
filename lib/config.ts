@@ -23,6 +23,7 @@ export const DEFAULT_CONFIGS: Record<string, any> = {
     'dziriettes'
   ],
   carousel_max_slides: 5,
+  new_products_limit: 4,
   homepage_story_title: "Fait Main, sans Raccourci",
   homepage_story_description: "Nous cuisons avec la rigueur de l'artisanat : fermentation lente, ingrédients d'exception et cuisson précise. Le résultat ? Des créations authentiques au goût incomparable.",
   
@@ -46,6 +47,7 @@ export const DEFAULT_CONFIGS: Record<string, any> = {
 export const CMS_MAP: Record<string, string> = {
   carousel_products: 'cms.carousel_products',
   carousel_max_slides: 'cms.carousel_max_slides',
+  new_products_limit: 'cms.new_products_limit',
   homepage_story_title: 'home.story.title',
   homepage_story_description: 'home.story.description',
   about_hero_title: 'about.hero.title',
