@@ -12,6 +12,7 @@ export interface Product {
   limitBay: number | null;
   state: 'exist' | 'outofStock' | 'commingSoun';
   visibility: number;
+  tags: string[];
   publishedAt: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -28,6 +29,7 @@ export interface ProductInput {
   limitBay: number | null;
   state: 'exist' | 'outofStock' | 'commingSoun';
   visibility: number;
+  tags?: string[];
   publishedAt: string | null;
 }
 

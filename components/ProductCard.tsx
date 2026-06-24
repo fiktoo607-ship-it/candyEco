@@ -17,6 +17,7 @@ export interface ProductCardProps {
     description: string;
     state: string;
     limitBay?: number | null;
+    tags?: string[];
   };
 }
 
@@ -83,6 +84,19 @@ export default function ProductCard({ product }: ProductCardProps) {
           <Link href={`/our-product/${product.slug}`} className="hover:text-primary transition-colors">
             <h3 className="font-display text-2xl font-bold text-on-surface line-clamp-1">{product.title}</h3>
           </Link>
+          {/* Product Tags (up to 3) */}
+          {product.tags && product.tags.length > 0 && (
+            <div className="flex flex-wrap gap-xs mt-xs">
+              {product.tags.slice(0, 3).map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary border border-primary/20"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <p className="mt-sm flex-grow text-base leading-8 text-on-surface-variant line-clamp-2">{product.description}</p>

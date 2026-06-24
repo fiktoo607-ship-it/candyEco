@@ -29,7 +29,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const product = await prisma.product.findUnique({
-    where: { slug }
+    where: { slug },
+    include: { tags: true }
   });
 
   if (!product) {
@@ -42,6 +43,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     publishedAt: product.publishedAt ? product.publishedAt.toISOString() : null,
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
+    tags: product.tags.map(t => t.name),
   };
 
   return (

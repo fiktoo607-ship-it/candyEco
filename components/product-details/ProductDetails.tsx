@@ -15,6 +15,7 @@ interface ProductData {
   story: string;
   limitBay: number | null;
   state: string;
+  tags?: string[];
 }
 
 export default function ProductDetails({ product }: { product: ProductData }) {
@@ -56,9 +57,16 @@ export default function ProductDetails({ product }: { product: ProductData }) {
       {/* Product Details Column */}
       <div className="flex flex-col justify-center gap-md" dir="ltr">
         <div>
-          <span className="rounded-full bg-secondary-container/20 px-sm py-xs text-sm text-primary font-bold border border-outline-variant/30">
-            {product.category}
-          </span>
+          <div className="flex flex-wrap gap-xs items-center">
+            <span className="rounded-full bg-secondary-container/20 px-sm py-xs text-sm text-primary font-bold border border-outline-variant/30 capitalize">
+              {product.category}
+            </span>
+            {product.tags && product.tags.length > 0 && product.tags.map((tag) => (
+              <span key={tag} className="rounded-full bg-primary/10 px-sm py-xs text-xs text-primary font-semibold border border-primary/20">
+                #{tag}
+              </span>
+            ))}
+          </div>
           <h1 className="font-display text-4xl font-bold text-on-surface mt-sm">
             {product.title}
           </h1>

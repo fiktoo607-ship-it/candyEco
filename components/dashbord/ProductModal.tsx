@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Image from 'next/image';
 import { convertToWebP } from '@/lib/image-utils';
 import { useDashboardStore } from '@/lib/dashboard-store';
@@ -38,7 +39,30 @@ export default function ProductModal() {
     setCategory,
     visibility,
     setVisibility,
+    tags,
+    setTags,
   } = useDashboardStore();
+
+  const [newTagInput, setNewTagInput] = useState("");
+
+  const handleAddTag = () => {
+    const trimmed = newTagInput.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags([...tags, trimmed]);
+      setNewTagInput("");
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter((t) => t !== tagToRemove));
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
 
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
@@ -105,6 +129,7 @@ export default function ProductModal() {
       limitBay: limitBay.trim() === '' ? null : Number(limitBay),
       state,
       visibility: visibility.trim() === '' ? 0 : Number(visibility),
+      tags,
       publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
     };
 
@@ -340,6 +365,52 @@ export default function ProductModal() {
               onChange={(e) => setVisibility(e.target.value)}
               className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
             />
+          </div>
+
+          {/* Tags Field Editor */}
+          <div className="flex flex-col gap-xs">
+            <label className="text-sm font-bold text-on-surface-variant">
+              Mots-clés (Tags)
+            </label>
+            <div className="flex gap-xs">
+              <input
+                type="text"
+                placeholder="Ex: لوز, شوكولا, زيت..."
+                value={newTagInput}
+                onChange={(e) => setNewTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                className="flex-1 rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
+              />
+              <button
+                type="button"
+                onClick={handleAddTag}
+                className="rounded-lg bg-secondary-container px-md py-xs text-sm font-semibold text-on-secondary-container hover:bg-outline-variant/30 transition-colors"
+              >
+                Ajouter
+              </button>
+            </div>
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-xs mt-xs border border-outline-variant/30 rounded-xl p-xs bg-surface-container-low/40">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-xs rounded-full bg-primary/10 border border-primary/20 px-sm py-0.5 text-xs font-semibold text-primary transition-all animate-scale-up"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(tag)}
+                      className="rounded-full p-[2px] text-primary/60 hover:bg-primary/20 hover:text-primary transition-colors flex items-center justify-center"
+                      title="Supprimer"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-xs">

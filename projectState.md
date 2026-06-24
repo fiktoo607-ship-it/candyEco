@@ -29,13 +29,26 @@
   - `app/api/carousel-slides/route.ts` & `app/api/carousel-slides/[id]/route.ts`: Built GET, POST, PUT, DELETE endpoints for slides management.
   - `app/api/config/route.ts`: Validates dynamic max slides limits.
 
+### 4. Product Tags & Filtering (Dedicated Tag Model)
+- **Description**: Migrated product tags to a dedicated database `Tag` model with a many-to-many relationship to `Product`. Seeding has been applied to assign 2 to 6 random tags for every existing product in the database. Built an autocomplete tag search widget at the top of the product browser to allow filtering products by multiple tags dynamically.
+- **Components**:
+  - `components/our-product/ProductBrowser.tsx`: Repositioned the main search bar to the top. Added a search input for tags next to it, complete with a dropdown displaying matching suggestions matching the user's typing (fetched from `/api/tags?q=...`). Supports multi-select, displaying selected tags as premium, deletable pills.
+  - `components/dashbord/ProductModal.tsx`: Maintained compatibility with a chip-based tags editor, mapping `tags: string[]` in POST/PUT API request/response payloads to/from the database relation.
+  - `components/product-details/ProductDetails.tsx`: Displays tags prefixed with `#` next to the product category.
+  - `components/ProductCard.tsx`: Displays up to 3 tags as styled badges below the product title.
+- **APIs & Database**:
+  - `prisma/schema.prisma`: Replaced the string array with a many-to-many relationship using a dedicated `Tag` model (`tags Tag[]` on Product, `products Product[]` on Tag).
+  - `scripts/migrate-tags.ts`: A one-off script that populated `Tag` tables and associated 2 to 6 random tags with all products.
+  - `app/api/tags/route.ts`: Rewritten to query the `Tag` table and support case-insensitive prefix search (`?q=ل` returns matching tags like `لوز`, `حليب`, `لحم`).
+  - `app/api/products/route.ts` & `app/api/products/[id]/route.ts`: Updated GET, POST, and PUT handlers to link tags relation and map returned tags to `string[]` for frontend compatibility. GET queries support intersection filter via multiple nested `AND` conditions.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit Tests**:
   - Created `tests/products-filter.test.ts` to test case-insensitive filtering, trimming, empty queries, and non-matching states.
-  - Created `tests/api/products-pagination.test.ts` to test API-level pagination, category filtering, and search title filtering.
+  - Created `tests/api/products-pagination.test.ts` to test API-level pagination, category filtering, search title filtering, and tag filtering.
   - Created `tests/api/carousel-slides.test.ts` to test GET, POST, PUT, and DELETE Carousel Slides endpoints.
-  - All 49 tests (33 existing + 16 new) pass successfully under `vitest`.
+  - All 50 tests pass successfully under `vitest`.
 
 

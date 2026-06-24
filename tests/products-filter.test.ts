@@ -15,6 +15,7 @@ const mockProducts: Product[] = [
     limitBay: 1,
     state: 'exist',
     visibility: 1,
+    tags: [],
     publishedAt: null,
   },
   {
@@ -29,6 +30,7 @@ const mockProducts: Product[] = [
     limitBay: null,
     state: 'exist',
     visibility: 2,
+    tags: [],
     publishedAt: null,
   },
   {
@@ -43,6 +45,7 @@ const mockProducts: Product[] = [
     limitBay: null,
     state: 'exist',
     visibility: 3,
+    tags: [],
     publishedAt: null,
   }
 ];

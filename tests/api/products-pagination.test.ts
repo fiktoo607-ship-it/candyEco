@@ -31,6 +31,7 @@ describe('Products API - Pagination & Filtering', () => {
       ],
       skip: 6,
       take: 6,
+      include: { tags: true }
     });
   });
 
@@ -50,6 +51,7 @@ describe('Products API - Pagination & Filtering', () => {
       ],
       skip: undefined,
       take: undefined,
+      include: { tags: true }
     });
   });
 
@@ -69,6 +71,7 @@ describe('Products API - Pagination & Filtering', () => {
       ],
       skip: undefined,
       take: undefined,
+      include: { tags: true }
     });
   });
 
@@ -86,6 +89,28 @@ describe('Products API - Pagination & Filtering', () => {
         { visibility: 'desc' },
         { createdAt: 'desc' },
       ],
+      include: { tags: true }
+    });
+  });
+
+  it('should pass correct tags filter when tags query is specified', async () => {
+    vi.mocked(prisma.product.findMany).mockResolvedValueOnce([]);
+
+    const req = new NextRequest('http://localhost/api/products?tags=لوز,شوكولا');
+    await getProducts(req);
+
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      where: {
+        AND: [
+          { tags: { some: { name: 'لوز' } } },
+          { tags: { some: { name: 'شوكولا' } } }
+        ]
+      },
+      orderBy: [
+        { visibility: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      include: { tags: true }
     });
   });
 
@@ -100,6 +125,7 @@ describe('Products API - Pagination & Filtering', () => {
         { visibility: 'desc' },
         { createdAt: 'desc' },
       ],
+      include: { tags: true }
     });
   });
 });

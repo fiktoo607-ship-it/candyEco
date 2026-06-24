@@ -16,6 +16,7 @@ export async function GET(request?: NextRequest) {
       const limitStr = searchParams.get('limit');
       const category = searchParams.get('category');
       const search = searchParams.get('search');
+      const tagsParam = searchParams.get('tags');
 
       const where: any = {};
       let hasWhere = false;
@@ -34,6 +35,20 @@ export async function GET(request?: NextRequest) {
         where.title = { contains: search.trim(), mode: 'insensitive' };
       }
 
+      if (tagsParam && tagsParam.trim() !== '') {
+        hasWhere = true;
+        const tagsList = tagsParam.split(',').map(t => t.trim()).filter(Boolean);
+        if (tagsList.length > 0) {
+          where.AND = tagsList.map(tag => ({
+            tags: {
+              some: {
+                name: tag
+              }
+            }
+          }));
+        }
+      }
+
       if (hasWhere) {
         queryOptions.where = where;
       }
@@ -46,8 +61,21 @@ export async function GET(request?: NextRequest) {
       }
     }
 
-    const products = await prisma.product.findMany(queryOptions);
-    return NextResponse.json(products);
+    const products = await prisma.product.findMany({
+      ...queryOptions,
+      include: {
+        tags: true
+      }
+    });
+
+    const mappedProducts = products.map((p: any) => ({
+      ...p,
+      tags: Array.isArray(p.tags)
+        ? p.tags.map((t: any) => typeof t === 'string' ? t : t.name)
+        : []
+    }));
+
+    return NextResponse.json(mappedProducts);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch products';
     console.error('Error fetching products:', error);
@@ -58,7 +86,7 @@ export async function GET(request?: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt, visibility } = body;
+    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt, visibility, tags } = body;
 
     if (!title || !slug || !price || !category || !imageUrl || !description || !story) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -76,11 +104,25 @@ export async function POST(request: NextRequest) {
         limitBay: limitBay !== undefined ? (limitBay === null ? null : Number(limitBay)) : null,
         state: state || 'exist',
         visibility: visibility !== undefined ? Number(visibility) : 0,
+        tags: {
+          connectOrCreate: (Array.isArray(tags) ? tags : []).map((name: string) => ({
+            where: { name },
+            create: { name },
+          }))
+        },
         publishedAt: publishedAt ? new Date(publishedAt) : null,
       },
+      include: {
+        tags: true
+      }
     });
 
-    return NextResponse.json(newProduct, { status: 201 });
+    return NextResponse.json({
+      ...newProduct,
+      tags: Array.isArray(newProduct.tags)
+        ? newProduct.tags.map((t: any) => typeof t === 'string' ? t : t.name)
+        : []
+    }, { status: 201 });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to create product';
     console.error('Error creating product:', error);

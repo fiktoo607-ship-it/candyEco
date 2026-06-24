@@ -10,13 +10,19 @@ export async function GET(
     const { id } = await params;
     const product = await prisma.product.findUnique({
       where: { id },
+      include: { tags: true }
     });
 
     if (!product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    return NextResponse.json(product);
+    return NextResponse.json({
+      ...product,
+      tags: Array.isArray(product.tags)
+        ? product.tags.map((t: any) => typeof t === 'string' ? t : t.name)
+        : []
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch product';
     console.error('Error fetching product:', error);
@@ -31,7 +37,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt, visibility } = body;
+    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt, visibility, tags } = body;
 
     const existingProduct = await prisma.product.findUnique({
       where: { id },
@@ -63,11 +69,26 @@ export async function PUT(
         limitBay: limitBay !== undefined ? (limitBay === null ? null : Number(limitBay)) : existingProduct.limitBay,
         state: state !== undefined ? state : existingProduct.state,
         visibility: visibility !== undefined ? Number(visibility) : existingProduct.visibility,
+        tags: tags !== undefined ? {
+          set: [],
+          connectOrCreate: (Array.isArray(tags) ? tags : []).map((name: string) => ({
+            where: { name },
+            create: { name },
+          }))
+        } : undefined,
         publishedAt: publishedAt !== undefined ? (publishedAt ? new Date(publishedAt) : null) : existingProduct.publishedAt,
       },
+      include: {
+        tags: true
+      }
     });
 
-    return NextResponse.json(updatedProduct);
+    return NextResponse.json({
+      ...updatedProduct,
+      tags: Array.isArray(updatedProduct.tags)
+        ? updatedProduct.tags.map((t: any) => typeof t === 'string' ? t : t.name)
+        : []
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to update product';
     console.error('Error updating product:', error);

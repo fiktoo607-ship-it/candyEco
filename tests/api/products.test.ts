@@ -69,6 +69,7 @@ describe('Products API', () => {
     limitBay: 5,
     state: 'exist',
     visibility: 2,
+    tags: [] as string[],
     publishedAt: new Date('2026-06-04T10:00:00Z'),
     createdAt: new Date('2026-06-04T10:00:00Z'),
     updatedAt: new Date('2026-06-04T10:00:00Z'),
@@ -96,6 +97,7 @@ describe('Products API', () => {
           { visibility: 'desc' },
           { createdAt: 'desc' },
         ],
+        include: { tags: true }
       });
     });
 
@@ -157,7 +159,13 @@ describe('Products API', () => {
           limitBay: 10,
           state: 'exist',
           visibility: 3,
+          tags: {
+            connectOrCreate: [],
+          },
           publishedAt: new Date(validBody.publishedAt),
+        },
+        include: {
+          tags: true,
         },
       });
     });
@@ -221,7 +229,13 @@ describe('Products API', () => {
           limitBay: null,
           state: 'exist',
           visibility: 0,
+          tags: {
+            connectOrCreate: [],
+          },
           publishedAt: null,
+        },
+        include: {
+          tags: true,
         },
       });
     });
@@ -255,6 +269,7 @@ describe('Products API', () => {
       expect(data).toEqual(mockProductJson);
       expect(prisma.product.findUnique).toHaveBeenCalledWith({
         where: { id: mockProduct.id },
+        include: { tags: true }
       });
     });
 
@@ -334,7 +349,11 @@ describe('Products API', () => {
           limitBay: mockProduct.limitBay,
           state: mockProduct.state,
           visibility: mockProduct.visibility,
+          tags: undefined,
           publishedAt: mockProduct.publishedAt,
+        },
+        include: {
+          tags: true,
         },
       });
     });
