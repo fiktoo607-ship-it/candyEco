@@ -11,9 +11,18 @@
   - `app/home/page.tsx`: Embedded `HomeProductSection` instead of rendering featured products/story sections directly.
   - `components/our-product/ProductBrowser.tsx`: Integrated the search bar at the top, filtering the product grid instantly.
 
+### 2. Product Lazy Loading
+- **Description**: Progressive loading / infinite scrolling on the product listing page.
+- **Components**:
+  - `components/our-product/ProductBrowser.tsx`: Integrated `useInfiniteQuery` from React Query, loading skeletons, and Intersection Observer to load products in batches of 6.
+- **APIs**:
+  - `app/api/products/route.ts`: Updated the GET route to support pagination parameters (`page`, `limit`) and filters (`category`, `search`), maintaining full backward compatibility.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit Tests**:
   - Created `tests/products-filter.test.ts` to test case-insensitive filtering, trimming, empty queries, and non-matching states.
-  - All 39 tests (33 existing + 6 new) pass successfully under `vitest`.
+  - Created `tests/api/products-pagination.test.ts` to test API-level pagination, category filtering, and search title filtering.
+  - All 44 tests (33 existing + 11 new) pass successfully under `vitest`.
+
