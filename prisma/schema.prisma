@@ -18,6 +18,8 @@ model Product {
   limitBay    Int?
   state       String      @default("exist")
   visibility  Int         @default(0)
+  rating      Float       @default(0.0)
+  ratingCount Int         @default(0)
   tags        Tag[]
   publishedAt DateTime?
   createdAt   DateTime    @default(now())

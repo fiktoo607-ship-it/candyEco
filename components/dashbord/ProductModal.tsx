@@ -39,6 +39,8 @@ export default function ProductModal() {
     setCategory,
     visibility,
     setVisibility,
+    rating,
+    setRating,
     tags,
     setTags,
   } = useDashboardStore();
@@ -129,6 +131,7 @@ export default function ProductModal() {
       limitBay: limitBay.trim() === '' ? null : Number(limitBay),
       state,
       visibility: visibility.trim() === '' ? 0 : Number(visibility),
+      rating: rating.trim() === '' ? 0.0 : Number(rating),
       tags,
       publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
     };
@@ -354,17 +357,35 @@ export default function ProductModal() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-xs">
-            <label className="text-sm font-bold text-on-surface-variant">
-              Score de visibilité
-            </label>
-            <input
-              type="number"
-              placeholder="Ex: 10 (un score plus élevé = meilleure visibilité sur l'accueil)"
-              value={visibility}
-              onChange={(e) => setVisibility(e.target.value)}
-              className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
-            />
+          <div className="grid grid-cols-2 gap-sm">
+            <div className="flex flex-col gap-xs">
+              <label className="text-sm font-bold text-on-surface-variant">
+                Score de visibilité
+              </label>
+              <input
+                type="number"
+                placeholder="Ex: 10"
+                value={visibility}
+                onChange={(e) => setVisibility(e.target.value)}
+                className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
+              />
+            </div>
+            <div className="flex flex-col gap-xs">
+              <label className="text-sm font-bold text-on-surface-variant">
+                Note (Rating) *
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="5"
+                required
+                placeholder="Ex: 4.5"
+                value={rating}
+                onChange={(e) => setRating(e.target.value)}
+                className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary"
+              />
+            </div>
           </div>
 
           {/* Tags Field Editor */}

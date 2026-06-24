@@ -1,11 +1,12 @@
 import Image from 'next/image';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useProducts } from '@/lib/hooks/use-products';
 import { useDashboardStore } from '@/lib/dashboard-store';
 
 export default function ProductsSection() {
-  const { data: products = [], isLoading, error: productsError } = useProducts();
+  const { data: products = [], isLoading, error: productsError } = useProducts(true);
   const error = productsError instanceof Error ? productsError.message : null;
+  const [sortBy, setSortBy] = useState<'default' | 'rating-desc' | 'rating-asc'>('default');
 
   const {
     searchQuery,
@@ -26,12 +27,23 @@ export default function ProductsSection() {
       p.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Sort products
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === 'rating-desc') {
+      return (b.rating ?? 0) - (a.rating ?? 0);
+    }
+    if (sortBy === 'rating-asc') {
+      return (a.rating ?? 0) - (b.rating ?? 0);
+    }
+    return 0;
+  });
+
   // Pagination calculations
-  const totalItems = filteredProducts.length;
+  const totalItems = sortedProducts.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = sortedProducts.slice(indexOfFirstItem, indexOfLastItem);
 
   // Reset page when query changes
   useEffect(() => {
@@ -50,18 +62,29 @@ export default function ProductsSection() {
       <div className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-soft border border-outline-variant/10">
         {/* Search and Filters */}
         <div className="flex flex-col gap-md border-b border-outline-variant/30 p-md lg:flex-row lg:items-center lg:justify-between">
-          <label className="relative w-full lg:w-80">
-            <svg className="pointer-events-none absolute left-sm top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Rechercher des produits..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-outline-variant bg-surface-container-low py-sm pl-xl pr-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-            />
-          </label>
+          <div className="flex flex-col gap-sm sm:flex-row sm:items-center w-full lg:w-auto">
+            <label className="relative w-full lg:w-80">
+              <svg className="pointer-events-none absolute left-sm top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Rechercher des produits..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-lg border border-outline-variant bg-surface-container-low py-sm pl-xl pr-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer h-[38px] md:w-56"
+            >
+              <option value="default">Tri par défaut</option>
+              <option value="rating-desc">Note : Élevée à Faible</option>
+              <option value="rating-asc">Note : Faible à Élevée</option>
+            </select>
+          </div>
           <div className="text-sm text-on-surface-variant font-medium">
             Total des produits :{" "}
             <span className="text-primary font-bold">{totalItems}</span>
@@ -98,6 +121,7 @@ export default function ProductsSection() {
                   <th className="p-md">Prix</th>
                   <th className="p-md">État</th>
                   <th className="p-md">Visibilité</th>
+                  <th className="p-md">Note</th>
                   <th className="p-md text-right">Actions</th>
                 </tr>
               </thead>
@@ -153,6 +177,12 @@ export default function ProductsSection() {
                     </td>
                     <td className="p-md font-semibold text-on-surface-variant">
                       {product.visibility ?? 0}
+                    </td>
+                    <td className="p-md">
+                      <div className="flex items-center gap-xs font-semibold text-on-surface-variant">
+                        <span className="material-symbols-outlined text-amber-500 text-lg">star</span>
+                        <span>{product.rating !== undefined ? Number(product.rating).toFixed(1) : '0.0'}</span>
+                      </div>
                     </td>
                     <td className="p-md text-right">
                       <div className="flex justify-end gap-xs">

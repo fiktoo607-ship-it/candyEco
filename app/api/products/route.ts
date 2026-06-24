@@ -10,8 +10,11 @@ export async function GET(request?: NextRequest) {
       ],
     };
 
+    let isDashboard = false;
+
     if (request) {
       const { searchParams } = new URL(request.url);
+      isDashboard = searchParams.get('dashboard') === 'true';
       const pageStr = searchParams.get('page');
       const limitStr = searchParams.get('limit');
       const category = searchParams.get('category');
@@ -68,12 +71,19 @@ export async function GET(request?: NextRequest) {
       }
     });
 
-    const mappedProducts = products.map((p: any) => ({
-      ...p,
-      tags: Array.isArray(p.tags)
-        ? p.tags.map((t: any) => typeof t === 'string' ? t : t.name)
-        : []
-    }));
+    const mappedProducts = products.map((p: any) => {
+      const mapped = {
+        ...p,
+        tags: Array.isArray(p.tags)
+          ? p.tags.map((t: any) => typeof t === 'string' ? t : t.name)
+          : []
+      };
+      if (!isDashboard) {
+        delete mapped.rating;
+        delete mapped.ratingCount;
+      }
+      return mapped;
+    });
 
     return NextResponse.json(mappedProducts);
   } catch (error) {
@@ -86,7 +96,7 @@ export async function GET(request?: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt, visibility, tags } = body;
+    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt, visibility, tags, rating, ratingCount } = body;
 
     if (!title || !slug || !price || !category || !imageUrl || !description || !story) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -104,6 +114,8 @@ export async function POST(request: NextRequest) {
         limitBay: limitBay !== undefined ? (limitBay === null ? null : Number(limitBay)) : null,
         state: state || 'exist',
         visibility: visibility !== undefined ? Number(visibility) : 0,
+        rating: rating !== undefined ? Number(rating) : 0.0,
+        ratingCount: ratingCount !== undefined ? Number(ratingCount) : 0,
         tags: {
           connectOrCreate: (Array.isArray(tags) ? tags : []).map((name: string) => ({
             where: { name },

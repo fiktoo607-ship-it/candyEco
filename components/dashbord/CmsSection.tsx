@@ -41,7 +41,7 @@ export default function CmsSection() {
   const updateMutation = useUpdateConfig();
 
   // Products query hook for selection
-  const { data: products = [], isLoading: isProductsLoading } = useProducts();
+  const { data: products = [], isLoading: isProductsLoading } = useProducts(true);
 
   // Carousel query hooks
   const { data: slides = [], isLoading: isSlidesLoading } = useCarouselSlides();

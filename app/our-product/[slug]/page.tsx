@@ -45,6 +45,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     updatedAt: product.updatedAt.toISOString(),
     tags: product.tags.map(t => t.name),
   };
+  delete (serializableProduct as any).rating;
+  delete (serializableProduct as any).ratingCount;
 
   return (
     <div className="flex min-h-screen flex-col">

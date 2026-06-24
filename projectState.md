@@ -42,6 +42,19 @@
   - `app/api/tags/route.ts`: Rewritten to query the `Tag` table and support case-insensitive prefix search (`?q=ل` returns matching tags like `لوز`, `حليب`, `لحم`).
   - `app/api/products/route.ts` & `app/api/products/[id]/route.ts`: Updated GET, POST, and PUT handlers to link tags relation and map returned tags to `string[]` for frontend compatibility. GET queries support intersection filter via multiple nested `AND` conditions.
 
+### 5. Product Rating System
+- **Description**: Storing, editing and sorting products by ratings inside the admin dashboard while hiding ratings from customer views, plus allowing customers to rate products from the details page.
+- **Components**:
+  - `components/dashbord/ProductsSection.tsx`: Enabled dashboard-specific query parameter and added Note column with rating sort select dropdown.
+  - `components/dashbord/ProductModal.tsx`: Added note rating input field for creating and editing products.
+  - `components/dashbord/CmsSection.tsx`: Enabled dashboard-specific query parameter.
+  - `components/product-details/ProductDetails.tsx`: Embedded interactive star rating selection widget allowing customers to submit a rating.
+  - `app/our-product/[slug]/page.tsx`: Explicitly stripped rating and ratingCount before rendering product details for customers.
+- **APIs & Database**:
+  - `prisma/schema.prisma`: Added `rating Float @default(0.0)` and `ratingCount Int @default(0)` fields to `Product`.
+  - `app/api/products/route.ts` & `app/api/products/[id]/route.ts`: Added conditional rating and ratingCount omission unless `dashboard=true` query parameter is set.
+  - `app/api/products/[id]/route.ts`: Implemented `POST` handler for user rating submissions, calculating running average.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
@@ -49,6 +62,7 @@
   - Created `tests/products-filter.test.ts` to test case-insensitive filtering, trimming, empty queries, and non-matching states.
   - Created `tests/api/products-pagination.test.ts` to test API-level pagination, category filtering, search title filtering, and tag filtering.
   - Created `tests/api/carousel-slides.test.ts` to test GET, POST, PUT, and DELETE Carousel Slides endpoints.
-  - All 50 tests pass successfully under `vitest`.
+  - Updated `tests/api/products.test.ts` to cover conditional rating/ratingCount visibility, rating updates in admin endpoints, and user rating submissions (calculating running average and validation bounds).
+  - All 57 tests pass successfully under `vitest`.
 
 

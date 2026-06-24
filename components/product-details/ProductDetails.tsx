@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useCartStore } from '@/lib/cart-store';
 import dictionary from '@/lib/copy-dictionary.json';
@@ -20,6 +21,41 @@ interface ProductData {
 
 export default function ProductDetails({ product }: { product: ProductData }) {
   const addItem = useCartStore((state) => state.addItem);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [hasRated, setHasRated] = useState(false);
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const rated = localStorage.getItem(`rated-${product.id}`);
+      if (rated === 'true') {
+        setHasRated(true);
+      }
+    }
+  }, [product.id]);
+
+  const handleRate = async (value: number) => {
+    setIsSubmittingRating(true);
+    try {
+      const res = await fetch(`/api/products/${product.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: value }),
+      });
+      if (res.ok) {
+        setHasRated(true);
+        localStorage.setItem(`rated-${product.id}`, 'true');
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Erreur lors de l\'évaluation');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Une erreur est survenue.');
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
 
   let badge: string | undefined = undefined;
   let isActionable = true;
@@ -87,6 +123,37 @@ export default function ProductDetails({ product }: { product: ProductData }) {
           <p className="mt-xs text-base leading-8 text-on-surface-variant italic">
             {product.story}
           </p>
+        </div>
+
+        <div className="border-t border-outline-variant/20 pt-md">
+          <h2 className="text-lg font-bold text-on-surface-variant">Évaluer ce produit</h2>
+          {hasRated ? (
+            <p className="mt-xs text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-xs">
+              <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400">check_circle</span>
+              Merci pour votre évaluation !
+            </p>
+          ) : (
+            <div className="flex items-center gap-sm mt-xs">
+              <div className="flex items-center gap-xs">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => handleRate(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    disabled={isSubmittingRating}
+                    className="text-amber-500 hover:scale-110 transition-transform focus:outline-none disabled:opacity-50"
+                  >
+                    <span className="material-symbols-outlined text-2xl select-none">
+                      {star <= (hoverRating || 0) ? 'star' : 'star_outline'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {isSubmittingRating && <span className="text-xs text-on-surface-variant animate-pulse">Envoi...</span>}
+            </div>
+          )}
         </div>
 
         <div className="mt-lg border-t border-outline-variant/20 pt-md">

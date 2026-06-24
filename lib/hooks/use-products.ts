@@ -12,6 +12,8 @@ export interface Product {
   limitBay: number | null;
   state: 'exist' | 'outofStock' | 'commingSoun';
   visibility: number;
+  rating?: number;
+  ratingCount?: number;
   tags: string[];
   publishedAt: string | null;
   createdAt?: string;
@@ -29,15 +31,18 @@ export interface ProductInput {
   limitBay: number | null;
   state: 'exist' | 'outofStock' | 'commingSoun';
   visibility: number;
+  rating?: number;
+  ratingCount?: number;
   tags?: string[];
   publishedAt: string | null;
 }
 
-export function useProducts() {
+export function useProducts(isDashboard?: boolean) {
   return useQuery<Product[]>({
-    queryKey: ['products'],
+    queryKey: ['products', isDashboard],
     queryFn: async () => {
-      const res = await fetch('/api/products');
+      const url = isDashboard ? '/api/products?dashboard=true' : '/api/products';
+      const res = await fetch(url);
       if (!res.ok) {
         throw new Error('Failed to load products');
       }

@@ -8,6 +8,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const isDashboard = searchParams.get('dashboard') === 'true';
+
     const product = await prisma.product.findUnique({
       where: { id },
       include: { tags: true }
@@ -17,12 +20,19 @@ export async function GET(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    return NextResponse.json({
+    const mappedProduct = {
       ...product,
       tags: Array.isArray(product.tags)
         ? product.tags.map((t: any) => typeof t === 'string' ? t : t.name)
         : []
-    });
+    };
+
+    if (!isDashboard) {
+      delete (mappedProduct as any).rating;
+      delete (mappedProduct as any).ratingCount;
+    }
+
+    return NextResponse.json(mappedProduct);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch product';
     console.error('Error fetching product:', error);
@@ -37,7 +47,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt, visibility, tags } = body;
+    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt, visibility, tags, rating, ratingCount } = body;
 
     const existingProduct = await prisma.product.findUnique({
       where: { id },
@@ -69,6 +79,8 @@ export async function PUT(
         limitBay: limitBay !== undefined ? (limitBay === null ? null : Number(limitBay)) : existingProduct.limitBay,
         state: state !== undefined ? state : existingProduct.state,
         visibility: visibility !== undefined ? Number(visibility) : existingProduct.visibility,
+        rating: rating !== undefined ? Number(rating) : existingProduct.rating,
+        ratingCount: ratingCount !== undefined ? Number(ratingCount) : existingProduct.ratingCount,
         tags: tags !== undefined ? {
           set: [],
           connectOrCreate: (Array.isArray(tags) ? tags : []).map((name: string) => ({
@@ -128,6 +140,52 @@ export async function DELETE(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to delete product';
     console.error('Error deleting product:', error);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  }
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const { rating } = body;
+
+    if (rating === undefined || typeof rating !== 'number' || rating < 1 || rating > 5) {
+      return NextResponse.json({ error: 'Invalid rating value. Must be a number between 1 and 5.' }, { status: 400 });
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id }
+    });
+
+    if (!product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    const currentRating = product.rating ?? 0.0;
+    const currentCount = product.ratingCount ?? 0;
+    const newCount = currentCount + 1;
+    const newRating = ((currentRating * currentCount) + rating) / newCount;
+
+    const updatedProduct = await prisma.product.update({
+      where: { id },
+      data: {
+        rating: parseFloat(newRating.toFixed(2)),
+        ratingCount: newCount
+      }
+    });
+
+    return NextResponse.json({
+      message: 'Rating submitted successfully',
+      rating: updatedProduct.rating,
+      ratingCount: updatedProduct.ratingCount
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to submit rating';
+    console.error('Error submitting rating:', error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
