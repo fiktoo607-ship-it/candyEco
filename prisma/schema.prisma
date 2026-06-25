@@ -60,6 +60,7 @@ model Order {
   totalAmount        Float               // Numeric price for calculations and points
   customerName       String?
   customerPhone      String?
+  customerEmail      String?
   shippingAddress    String?             // Customer's location
   pointsEarned       Int                 @default(0)
   

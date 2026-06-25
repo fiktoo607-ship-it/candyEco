@@ -1,6 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { POST as createOrder, GET as getOrders } from '@/app/api/orders/route';
-import { PUT as updateOrder } from '@/app/api/orders/[id]/route';
+import { PUT as updateOrder, GET as getOrderDetail } from '@/app/api/orders/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 
@@ -70,6 +70,7 @@ describe('Orders API', () => {
     const validPayload = {
       customerName: 'John Doe',
       customerPhone: '1234567890',
+      customerEmail: 'john@example.com',
       shippingAddress: '123 Main St, Candy Land',
       sessionId: 'sess-abc-123',
       items: [
@@ -96,6 +97,7 @@ describe('Orders API', () => {
         totalAmount: 20.00,
         customerName: validPayload.customerName,
         customerPhone: validPayload.customerPhone,
+        customerEmail: validPayload.customerEmail,
         shippingAddress: validPayload.shippingAddress,
         pointsEarned: 20,
         items: [
@@ -146,6 +148,7 @@ describe('Orders API', () => {
           totalAmount: 20.00,
           customerName: validPayload.customerName,
           customerPhone: validPayload.customerPhone,
+          customerEmail: validPayload.customerEmail,
           shippingAddress: validPayload.shippingAddress,
           pointsEarned: 20,
           userId: null,
@@ -186,11 +189,81 @@ describe('Orders API', () => {
       });
     });
 
+    it('should place an order successfully with NO email (optional)', async () => {
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
+
+      const payloadWithoutEmail = {
+        ...validPayload,
+        customerEmail: undefined,
+      };
+
+      const expectedOrder = {
+        id: 'order-uuid-123',
+        sessionId: payloadWithoutEmail.sessionId,
+        status: 'PENDING',
+        totalPrice: '$20.00',
+        totalAmount: 20.00,
+        customerName: payloadWithoutEmail.customerName,
+        customerPhone: payloadWithoutEmail.customerPhone,
+        customerEmail: null,
+        shippingAddress: payloadWithoutEmail.shippingAddress,
+        pointsEarned: 20,
+      };
+
+      vi.mocked(prisma.order.create).mockResolvedValueOnce(expectedOrder as any);
+      vi.mocked(prisma.pointsTransaction.create).mockResolvedValueOnce({} as any);
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payloadWithoutEmail),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(201);
+    });
+
+    it('should return 400 when phone number format is invalid', async () => {
+      const invalidPhonePayload = {
+        ...validPayload,
+        customerPhone: 'invalid-phone-number-123', // contains letters
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invalidPhonePayload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data).toEqual({ error: 'Invalid phone number format' });
+    });
+
+    it('should return 400 when email format is invalid', async () => {
+      const invalidEmailPayload = {
+        ...validPayload,
+        customerEmail: 'notanemail',
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invalidEmailPayload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data).toEqual({ error: 'Invalid email format' });
+    });
+
     it('should return 400 when customer data or cart items are missing/invalid', async () => {
       const invalidPayloads = [
-        { customerPhone: '12345', shippingAddress: 'Addr', items: [{ productId: 'p1', quantity: 1 }] }, // Missing name
+        { customerPhone: '1234567', shippingAddress: 'Addr', items: [{ productId: 'p1', quantity: 1 }] }, // Missing name
         { customerName: 'Name', shippingAddress: 'Addr', items: [] }, // Empty items
-        { customerName: 'Name', customerPhone: '123', shippingAddress: 'Addr' }, // Missing items field
+        { customerName: 'Name', customerPhone: '1234567', shippingAddress: 'Addr' }, // Missing items field
       ];
 
       for (const payload of invalidPayloads) {
@@ -352,6 +425,7 @@ describe('Orders API', () => {
         OR: [
           { customerName: { contains: 'Bob', mode: 'insensitive' } },
           { customerPhone: { contains: 'Bob', mode: 'insensitive' } },
+          { customerEmail: { contains: 'Bob', mode: 'insensitive' } },
           { shippingAddress: { contains: 'Bob', mode: 'insensitive' } },
           { id: { contains: 'Bob', mode: 'insensitive' } },
         ],
@@ -455,6 +529,68 @@ describe('Orders API', () => {
 
       const data = await response.json();
       expect(data).toEqual({ error: 'Update failed' });
+    });
+  });
+
+  describe('GET /api/orders/[id]', () => {
+    const mockOrder = {
+      id: 'order-1',
+      customerName: 'John',
+      status: 'PENDING',
+      items: [],
+    };
+
+    it('should retrieve a single order by ID successfully', async () => {
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockOrder as any);
+
+      const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
+        method: 'GET',
+      });
+
+      const response = await getOrderDetail(req, { params: Promise.resolve({ id: mockOrder.id }) });
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+      expect(data).toEqual(mockOrder);
+
+      expect(prisma.order.findUnique).toHaveBeenCalledWith({
+        where: { id: mockOrder.id },
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      });
+    });
+
+    it('should return 404 if the order is not found', async () => {
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(null);
+
+      const req = new NextRequest(`http://localhost/api/orders/unknown-id`, {
+        method: 'GET',
+      });
+
+      const response = await getOrderDetail(req, { params: Promise.resolve({ id: 'unknown-id' }) });
+      expect(response.status).toBe(404);
+
+      const data = await response.json();
+      expect(data).toEqual({ error: 'Order not found' });
+    });
+
+    it('should return 500 when fetching order fails in database', async () => {
+      vi.mocked(prisma.order.findUnique).mockRejectedValueOnce(new Error('Fetch failed'));
+
+      const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
+        method: 'GET',
+      });
+
+      const response = await getOrderDetail(req, { params: Promise.resolve({ id: mockOrder.id }) });
+      expect(response.status).toBe(500);
+
+      const data = await response.json();
+      expect(data).toEqual({ error: 'Fetch failed' });
     });
   });
 });

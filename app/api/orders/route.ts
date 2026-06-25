@@ -11,10 +11,22 @@ interface RequestItem {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { customerName, customerPhone, shippingAddress, items, sessionId, deliveryMethod } = body;
+    const { customerName, customerPhone, customerEmail, shippingAddress, items, sessionId, deliveryMethod } = body;
 
     if (!customerName || !customerPhone || !shippingAddress || !items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Missing required guest customer or cart information' }, { status: 400 });
+    }
+
+    const phoneRegex = /^\+?[0-9\s\-()]{6,25}$/;
+    if (!phoneRegex.test(customerPhone)) {
+      return NextResponse.json({ error: 'Invalid phone number format' }, { status: 400 });
+    }
+
+    if (customerEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(customerEmail)) {
+        return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+      }
     }
 
     // 1. Fetch products from database to ensure pricing integrity
@@ -81,6 +93,7 @@ export async function POST(request: NextRequest) {
           totalAmount,
           customerName,
           customerPhone,
+          customerEmail: customerEmail || null,
           shippingAddress,
           pointsEarned,
           userId,
@@ -139,6 +152,7 @@ export async function GET(request: NextRequest) {
       OR?: Array<{
         customerName?: { contains: string; mode: 'insensitive' };
         customerPhone?: { contains: string; mode: 'insensitive' };
+        customerEmail?: { contains: string; mode: 'insensitive' };
         shippingAddress?: { contains: string; mode: 'insensitive' };
         id?: { contains: string; mode: 'insensitive' };
       }>;
@@ -154,6 +168,7 @@ export async function GET(request: NextRequest) {
       where.OR = [
         { customerName: { contains: query, mode: 'insensitive' } },
         { customerPhone: { contains: query, mode: 'insensitive' } },
+        { customerEmail: { contains: query, mode: 'insensitive' } },
         { shippingAddress: { contains: query, mode: 'insensitive' } },
         { id: { contains: query, mode: 'insensitive' } },
       ];

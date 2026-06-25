@@ -183,7 +183,7 @@ describe('Delivery Method Selection API Tests', () => {
 
       const payload = {
         customerName: 'John',
-        customerPhone: '12345',
+        customerPhone: '123456',
         shippingAddress: 'Main Street',
         deliveryMethod: 'Home Delivery',
         items: [{ productId: 'prod-1', quantity: 2 }],

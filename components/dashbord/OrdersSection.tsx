@@ -161,6 +161,9 @@ export default function OrdersSection() {
                   </td>
                   <td className="p-md">
                     <div className="font-semibold text-on-surface">{order.customerName}</div>
+                    {order.customerEmail && (
+                      <div className="text-xs text-on-surface-variant break-all">{order.customerEmail}</div>
+                    )}
                   </td>
                   <td className="p-md">
                     <div className="flex flex-col gap-xs text-xs text-on-surface max-w-[250px]">
@@ -195,18 +198,35 @@ export default function OrdersSection() {
                         className={`rounded-lg border px-sm py-xs text-xs font-bold outline-none cursor-pointer focus:border-primary disabled:opacity-50 ${
                           order.status === 'PENDING'
                             ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900'
+                            : order.status === 'ACCEPTED'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
                             : order.status === 'SHIPPED'
                             ? 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900'
                             : order.status === 'DELIVERED'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
+                            ? 'bg-teal-50 text-teal-800 border-teal-300 dark:bg-teal-950/20 dark:text-teal-400 dark:border-teal-900'
                             : 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900'
                         }`}
                       >
                         <option value="PENDING">En attente</option>
+                        <option value="ACCEPTED">Acceptée</option>
                         <option value="SHIPPED">Expédié</option>
                         <option value="DELIVERED">Livré</option>
                         <option value="CANCELLED">Annulé</option>
                       </select>
+                      {order.status === 'PENDING' && (
+                        <button
+                          onClick={() => {
+                            updateStatusMutation.mutate({
+                              id: order.id,
+                              status: 'ACCEPTED',
+                            });
+                          }}
+                          disabled={updateStatusMutation.isPending}
+                          className="rounded-lg bg-emerald-600 px-sm py-xs text-xs font-bold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                        >
+                          Accepter
+                        </button>
+                      )}
                       <button
                         onClick={() => setSelectedOrder(order)}
                         className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors"
@@ -298,6 +318,10 @@ export default function OrdersSection() {
                     <span className="text-xs text-on-surface-variant block">Téléphone</span>
                     <span className="text-sm font-semibold text-on-surface">{selectedOrder.customerPhone}</span>
                   </div>
+                  <div>
+                    <span className="text-xs text-on-surface-variant block">Email</span>
+                    <span className="text-sm font-semibold text-on-surface">{selectedOrder.customerEmail || '—'}</span>
+                  </div>
                   {selectedOrder.shippingAddress && (
                     <div className="md:col-span-2">
                       <span className="text-xs text-on-surface-variant block">Adresse de livraison</span>
@@ -365,25 +389,45 @@ export default function OrdersSection() {
                   <span className="text-xs text-on-surface-variant block">Date</span>
                   <span className="text-xs font-medium text-on-surface block mt-xs">{formatFrenchDate(selectedOrder.createdAt)}</span>
                 </div>
-                <div>
-                  <span className="text-xs text-on-surface-variant block">Statut</span>
-                  <span className={`inline-block mt-xs rounded-full px-sm py-[2px] text-xs font-bold uppercase ${
-                    selectedOrder.status === 'PENDING'
-                      ? 'bg-amber-100 text-amber-800'
-                      : selectedOrder.status === 'SHIPPED'
-                      ? 'bg-blue-100 text-blue-800'
-                      : selectedOrder.status === 'DELIVERED'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-rose-100 text-rose-800'
-                  }`}>
-                    {selectedOrder.status === 'PENDING' ? 'En attente' : selectedOrder.status === 'SHIPPED' ? 'Expédié' : selectedOrder.status === 'DELIVERED' ? 'Livré' : 'Annulé'}
-                  </span>
-                </div>
+                  <div>
+                    <span className="text-xs text-on-surface-variant block">Statut</span>
+                    <span className={`inline-block mt-xs rounded-full px-sm py-[2px] text-xs font-bold uppercase ${
+                      selectedOrder.status === 'PENDING'
+                        ? 'bg-amber-100 text-amber-800'
+                        : selectedOrder.status === 'ACCEPTED'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : selectedOrder.status === 'SHIPPED'
+                        ? 'bg-blue-100 text-blue-800'
+                        : selectedOrder.status === 'DELIVERED'
+                        ? 'bg-teal-100 text-teal-800'
+                        : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      {selectedOrder.status === 'PENDING' ? 'En attente' : selectedOrder.status === 'ACCEPTED' ? 'Acceptée' : selectedOrder.status === 'SHIPPED' ? 'Expédié' : selectedOrder.status === 'DELIVERED' ? 'Livré' : 'Annulé'}
+                    </span>
+                  </div>
               </div>
             </div>
 
             {/* Footer */}
             <div className="flex justify-end gap-sm border-t border-outline-variant/30 p-md bg-surface-container-low">
+              {selectedOrder.status === 'PENDING' && (
+                <button
+                  onClick={() => {
+                    updateStatusMutation.mutate({
+                      id: selectedOrder.id,
+                      status: 'ACCEPTED',
+                    });
+                    setSelectedOrder({
+                      ...selectedOrder,
+                      status: 'ACCEPTED',
+                    });
+                  }}
+                  disabled={updateStatusMutation.isPending}
+                  className="rounded-lg bg-emerald-600 px-md py-sm text-sm font-semibold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                >
+                  Accepter la commande
+                </button>
+              )}
               <button
                 onClick={() => setSelectedOrder(null)}
                 className="rounded-lg border border-outline-variant bg-surface-container-low px-md py-sm text-sm font-semibold text-on-surface hover:bg-surface-container-high transition-colors"

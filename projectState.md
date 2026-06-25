@@ -132,13 +132,33 @@
   - `app/api/delivery-methods/route.ts` & `app/api/delivery-methods/[id]/route.ts`: Built endpoints for delivery methods.
   - `app/api/orders/route.ts`: Refactored to accept `deliveryMethod` and save it to database orders.
 
+### 13. Email & Phone During Checkout
+- **Description**: Enabled optional email input and required phone number input during checkout. Added validation checks on both frontend and backend and displays customer emails in the admin dashboard orders list/details view.
+- **Components**:
+  - `components/cart/CheckoutForm.tsx`: Added form fields for phone and email, validated formats before submission, and displayed localized input errors.
+  - `components/dashbord/OrdersSection.tsx`: Extended admin order items table and order details modal to show customer email.
+- **APIs & Database**:
+  - `prisma/schema.prisma`: Added optional `customerEmail` field to `Order` model.
+  - `app/api/orders/route.ts`: Validates required phone (6-25 characters) and optional email patterns in POST. Support searching orders by email in GET.
+  - `lib/hooks/use-orders.ts`: Extended payload/response TypeScript interfaces.
+
+### 14. Order Status Workflow
+- **Description**: Implemented order acceptance workflow allowing order status transitions from "Pending" to "Accepted". Created "Accept Order" action button for admins updating instantly, and a customer tracking page.
+- **Components**:
+  - `components/dashbord/OrdersSection.tsx`: Rendered "Accepter" (Accept) button for pending orders in the table and modal view, updating statuses instantly.
+  - `app/orders/[id]/page.tsx`: Added customer tracking page displaying a visual stepper timeline (Pending -> Accepted -> Shipped -> Delivered) and order details.
+  - `app/cart/page.tsx`: Handled created order IDs upon checkout success and linked customers to their tracking page.
+- **APIs & Database**:
+  - `app/api/orders/[id]/route.ts`: Added GET endpoint to retrieve order tracking information by ID for customer access.
+  - `lib/hooks/use-orders.ts`: Integrated `deliveryMethod` into `Order` type interfaces.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
   - Created `tests/api/auth.test.ts` to test signIn, jwt, and session callbacks.
-  - Created `tests/api/verification.test.ts` to test local sign-up input validation, token generation, SMTP email dispatching, expiration, and database cleaning (including user deletion actions).
+  - Created `tests/api/verification.test.ts` to test local sign-up input validation, token generation, SMTP email dispatching, expiration, and database cleaning.
   - Created `tests/api/trust.test.ts` to verify session linkage during order creation, trust score calculations, and users list sorting.
   - Created `tests/api/delivery.test.ts` to verify delivery methods CRUD API endpoints and order integration.
-  - Mocked `getServerSession` across all other API test modules to isolate authentication during endpoint operations.
-  - All 105 tests pass successfully under `vitest`.
+  - Updated `tests/api/orders.test.ts` to verify email optionality, phone layout requirements, validation rules, order details query handler, and ACCEPTED transitions.
+  - All 111 tests pass successfully under `vitest`.

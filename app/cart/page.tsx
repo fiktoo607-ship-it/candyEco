@@ -12,6 +12,7 @@ import dictionary from '@/lib/copy-dictionary.json';
 export default function CartPage() {
   const { items } = useCartStore();
   const [isSuccess, setIsSuccess] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   // Prevent SSR hydration issues
@@ -31,6 +32,11 @@ export default function CartPage() {
     );
   }
 
+  const handleCheckoutSuccess = (orderId: string) => {
+    setCreatedOrderId(orderId);
+    setIsSuccess(true);
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
@@ -47,12 +53,22 @@ export default function CartPage() {
             <p className="mt-md text-on-surface-variant leading-relaxed">
               {dictionary.cart.success.description}
             </p>
-            <Link
-              href="/our-product"
-              className="mt-lg inline-block rounded-xl bg-primary px-xl py-sm font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint"
-            >
-              {dictionary.cart.success.backButton}
-            </Link>
+            <div className="mt-lg flex flex-col sm:flex-row justify-center gap-sm">
+              {createdOrderId && (
+                <Link
+                  href={`/orders/${createdOrderId}`}
+                  className="rounded-xl bg-primary px-xl py-sm font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint"
+                >
+                  Suivre ma commande
+                </Link>
+              )}
+              <Link
+                href="/our-product"
+                className="rounded-xl border border-outline-variant bg-surface-container-low px-xl py-sm font-bold text-on-surface hover:bg-surface-container-high transition-transform active:scale-95"
+              >
+                {dictionary.cart.success.backButton}
+              </Link>
+            </div>
           </div>
         ) : items.length === 0 ? (
           <div className="mx-auto max-w-md text-center py-xl">
@@ -75,7 +91,7 @@ export default function CartPage() {
 
             {/* Guest Checkout Form & Summary */}
             <div className="lg:col-span-1">
-              <CheckoutForm onSuccess={() => setIsSuccess(true)} />
+              <CheckoutForm onSuccess={handleCheckoutSuccess} />
             </div>
           </div>
         )}

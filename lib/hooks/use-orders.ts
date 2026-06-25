@@ -8,6 +8,7 @@ export interface OrderItemInput {
 export interface OrderPayload {
   customerName: string;
   customerPhone: string;
+  customerEmail?: string;
   shippingAddress: string;
   items: OrderItemInput[];
   sessionId?: string;
@@ -49,11 +50,13 @@ export interface Order {
   totalAmount: number;
   customerName: string | null;
   customerPhone: string | null;
+  customerEmail: string | null;
   shippingAddress: string | null;
   pointsEarned: number;
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
+  deliveryMethod: string | null;
 }
 
 export interface OrdersResponse {

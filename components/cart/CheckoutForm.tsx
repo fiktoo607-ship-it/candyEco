@@ -4,7 +4,7 @@ import { useSubmitOrder } from '@/lib/hooks/use-orders';
 import dictionary from '@/lib/copy-dictionary.json';
 
 interface CheckoutFormProps {
-  onSuccess: () => void;
+  onSuccess: (orderId: string) => void;
 }
 
 interface DeliveryMethod {
@@ -21,9 +21,13 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
   const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState('');
+  
+  const [phoneError, setPhoneError] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   useEffect(() => {
     const fetchMethods = async () => {
@@ -63,9 +67,27 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
       return;
     }
 
+    setPhoneError('');
+    setEmailError('');
+
+    const phoneRegex = /^\+?[0-9\s\-()]{6,25}$/;
+    if (!phoneRegex.test(customerPhone)) {
+      setPhoneError('Veuillez saisir un numéro de téléphone valide.');
+      return;
+    }
+
+    if (customerEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(customerEmail)) {
+        setEmailError('Veuillez saisir une adresse e-mail valide.');
+        return;
+      }
+    }
+
     const payload = {
       customerName,
       customerPhone,
+      customerEmail: customerEmail || undefined,
       shippingAddress,
       deliveryMethod: selectedMethod,
       items: items.map((item) => ({
@@ -75,9 +97,9 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
     };
 
     try {
-      await submitOrderMutation.mutateAsync(payload);
+      const createdOrder = await submitOrderMutation.mutateAsync(payload);
       clearCart();
-      onSuccess();
+      onSuccess(createdOrder.id);
     } catch (err) {
       console.error(err);
       alert(err instanceof Error ? err.message : dictionary.cart.form.submitError);
@@ -119,10 +141,35 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
             required
             placeholder={dictionary.cart.form.phonePlaceholder}
             value={customerPhone}
-            onChange={(e) => setCustomerPhone(e.target.value)}
-            className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary text-left"
+            onChange={(e) => {
+              setCustomerPhone(e.target.value);
+              if (phoneError) setPhoneError('');
+            }}
+            className={`w-full rounded-lg border bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary text-left ${
+              phoneError ? 'border-error' : 'border-outline-variant'
+            }`}
             dir="ltr"
           />
+          {phoneError && <p className="text-xs text-error mt-xs">{phoneError}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-on-surface-variant mb-xs">
+            Adresse E-mail (Optionnel)
+          </label>
+          <input
+            type="email"
+            placeholder="Ex: client@example.com"
+            value={customerEmail}
+            onChange={(e) => {
+              setCustomerEmail(e.target.value);
+              if (emailError) setEmailError('');
+            }}
+            className={`w-full rounded-lg border bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary ${
+              emailError ? 'border-error' : 'border-outline-variant'
+            }`}
+          />
+          {emailError && <p className="text-xs text-error mt-xs">{emailError}</p>}
         </div>
 
         <div>
