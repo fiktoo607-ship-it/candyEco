@@ -1,4 +1,5 @@
 import { useDashboardStore } from '@/lib/dashboard-store';
+import { signOut } from 'next-auth/react';
 
 export default function Sidebar() {
   const { activeTab, setActiveTab } = useDashboardStore();
@@ -52,13 +53,13 @@ export default function Sidebar() {
           Questions & Réponses
         </button>
       </nav>
-      <div className="mt-auto border-t border-outline-variant/30 p-md">
-        <a
-          className="rounded-lg px-md py-sm text-on-surface-variant transition-colors hover:text-primary"
-          href="#logout"
+      <div className="mt-auto border-t border-outline-variant/30 p-md flex flex-col">
+        <button
+          className="rounded-lg px-md py-sm text-left text-on-surface-variant transition-colors hover:text-error font-semibold"
+          onClick={() => signOut({ callbackUrl: '/home' })}
         >
           Déconnexion
-        </a>
+        </button>
       </div>
     </aside>
   );

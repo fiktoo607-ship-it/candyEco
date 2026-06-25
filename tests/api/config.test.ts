@@ -10,6 +10,13 @@ vi.mock('@/lib/config', () => ({
   initCmsConfigIfNeeded: vi.fn(),
 }));
 
+// Mock next-auth session
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn().mockResolvedValue({
+    user: { id: 'admin-uuid', role: 'admin', name: 'Admin', email: 'admin@example.com' },
+  }),
+}));
+
 describe('Config API', () => {
   const mockConfigs = {
     carousel_products: ['p1', 'p2'],

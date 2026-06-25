@@ -9,6 +9,13 @@ vi.mock('@/lib/cloudinary', () => ({
   deleteImage: vi.fn().mockResolvedValue({ result: 'ok' }),
 }));
 
+// Mock next-auth session
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn().mockResolvedValue({
+    user: { id: 'admin-uuid', role: 'admin', name: 'Admin', email: 'admin@example.com' },
+  }),
+}));
+
 // Mock Prisma client
 vi.mock('@/lib/prisma', () => {
   const mockPrisma = {

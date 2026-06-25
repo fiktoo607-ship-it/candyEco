@@ -4,6 +4,13 @@ import { PUT as updateFaq, DELETE as deleteFaq } from '@/app/api/faqs/[id]/route
 import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 
+// Mock next-auth session
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn().mockResolvedValue({
+    user: { id: 'admin-uuid', role: 'admin', name: 'Admin', email: 'admin@example.com' },
+  }),
+}));
+
 // Mock Prisma client
 vi.mock('@/lib/prisma', () => {
   const mockPrisma = {

@@ -85,14 +85,22 @@
   - `prisma/schema.prisma`: Added `Faq` model.
   - `app/api/faqs/route.ts` & `app/api/faqs/[id]/route.ts`: Built GET, POST, PUT, DELETE endpoints for FAQs.
 
+### 9. Google Authentication & Protected Routes
+- **Description**: Secure role-based Google Sign-In, Sign-Up, and session management using NextAuth and a PostgreSQL Prisma adapter. Restricts access to the admin dashboard and mutative REST endpoints to users with the `"admin"` role.
+- **Components**:
+  - `app/login/page.tsx`: Glassmorphic, responsive Google Sign-In screen with error boundaries.
+  - `middleware.ts`: Intercepts and validates `/dashboard` routing.
+  - `components/site-header.tsx`: Renders session avatar, sign-in/out toggles, and dashboard redirection dynamically.
+  - `components/dashbord/Sidebar.tsx`: Handles dashboard sidebar log-out integration.
+- **APIs & Database**:
+  - `prisma/schema.prisma`: Added NextAuth schema support (`User`, `Account`, `Session`, `VerificationToken`).
+  - `lib/auth.ts` & `app/api/auth/[...nextauth]/route.ts`: Core NextAuth handler, session mapper, and role updates (auto-promoting specified email lists or the first user in the database).
+  - Multi-endpoint protection: Injected session and role validators in products, FAQs, slides, configs, and file upload API endpoints.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - Created `tests/products-filter.test.ts` to test case-insensitive filtering, trimming, empty queries, and non-matching states.
-  - Created `tests/api/products-pagination.test.ts` to test API-level pagination, category filtering, search title filtering, and tag filtering.
-  - Created `tests/api/carousel-slides.test.ts` to test GET, POST, PUT, and DELETE Carousel Slides endpoints.
-  - Created `tests/api/config.test.ts` to test GET and POST endpoint operations for configurations and validate parameter boundaries (`carousel_max_slides`, `new_products_limit`, and array limits).
-  - Updated `tests/api/products.test.ts` to cover conditional rating/ratingCount visibility, rating updates in admin endpoints, and user rating submissions (calculating running average and validation bounds).
-  - Created `tests/api/qna.test.ts` to test GET, POST, PUT, and DELETE operations for general FAQs.
-  - All 74 tests pass successfully under `vitest`.
+  - Created `tests/api/auth.test.ts` to test signIn, jwt, and session callbacks.
+  - Mocked `getServerSession` across all other API test modules to isolate authentication during endpoint operations.
+  - All 80 tests pass successfully under `vitest`.

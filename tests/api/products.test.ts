@@ -17,6 +17,13 @@ vi.mock('@/lib/cloudinary', () => ({
   getPublicIdFromUrl: vi.fn().mockReturnValue('products/mock'),
 }));
 
+// Mock next-auth session
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn().mockResolvedValue({
+    user: { id: 'admin-uuid', role: 'admin', name: 'Admin', email: 'admin@example.com' },
+  }),
+}));
+
 // Mock Prisma client
 vi.mock('@/lib/prisma', () => {
   const mockPrisma = {

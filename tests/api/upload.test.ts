@@ -10,6 +10,13 @@ vi.mock('@/lib/cloudinary', () => ({
   getPublicIdFromUrl: vi.fn(),
 }));
 
+// Mock next-auth session
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn().mockResolvedValue({
+    user: { id: 'admin-uuid', role: 'admin', name: 'Admin', email: 'admin@example.com' },
+  }),
+}));
+
 describe('Upload API', () => {
   beforeEach(() => {
     vi.clearAllMocks();

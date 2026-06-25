@@ -9,6 +9,7 @@ import { useBakeryStore } from '@/lib/store';
 import { useCartStore } from '@/lib/cart-store';
 import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
+import { useSession, signOut } from 'next-auth/react';
 
 const navigationLinks = [
   { href: '/home', label: dictionary.navigation.home },
@@ -48,6 +49,7 @@ export default function SiteHeader() {
   const closeMobileMenu = useBakeryStore((state) => state.closeMobileMenu);
 
   const totalItemsCount = useCartStore((state) => state.getTotalItemsCount());
+  const { data: session, status } = useSession();
 
   // Prevent SSR hydration mismatch on cart count
   const [mounted, setMounted] = useState(false);
@@ -98,6 +100,49 @@ export default function SiteHeader() {
               </span>
             )}
           </Link>
+
+          {mounted && status === 'authenticated' && session && (
+            <>
+              {session.user.role === 'admin' && (
+                <Link
+                  href="/dashboard"
+                  className="rounded-full bg-primary/10 px-md py-sm text-sm font-semibold text-primary hover:bg-primary/20 transition-colors ml-sm"
+                >
+                  Tableau de bord
+                </Link>
+              )}
+              <div className="flex items-center gap-xs ml-sm border-l border-outline-variant/30 pl-sm">
+                {session.user.image ? (
+                  <Image
+                    src={session.user.image}
+                    alt={session.user.name || 'User'}
+                    width={32}
+                    height={32}
+                    className="h-8 w-8 rounded-full object-cover border border-outline"
+                  />
+                ) : (
+                  <span className="material-symbols-outlined text-2xl text-on-surface-variant select-none">
+                    account_circle
+                  </span>
+                )}
+                <button
+                  onClick={() => signOut({ callbackUrl: '/home' })}
+                  className="text-sm font-semibold text-on-surface-variant hover:text-error transition-colors px-sm py-sm"
+                >
+                  Déconnecter
+                </button>
+              </div>
+            </>
+          )}
+
+          {mounted && status === 'unauthenticated' && (
+            <Link
+              href="/login"
+              className="rounded-full bg-primary px-md py-sm text-sm font-semibold text-white hover:bg-surface-tint hover:scale-[1.02] active:scale-95 transition-all ml-sm"
+            >
+              Connexion
+            </Link>
+          )}
         </div>
 
         {/* Mobile Actions */}
@@ -137,6 +182,54 @@ export default function SiteHeader() {
                 </Link>
               );
             })}
+
+            {mounted && status === 'authenticated' && session && (
+              <>
+                {session.user.role === 'admin' && (
+                  <Link
+                    href="/dashboard"
+                    className="rounded-xl px-md py-sm text-base font-semibold text-primary bg-primary/10 hover:bg-primary/20 transition-colors text-center"
+                  >
+                    Tableau de bord
+                  </Link>
+                )}
+                <div className="flex items-center justify-between border-t border-outline-variant/20 pt-sm mt-xs px-md">
+                  <div className="flex items-center gap-sm">
+                    {session.user.image ? (
+                      <Image
+                        src={session.user.image}
+                        alt={session.user.name || 'User'}
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 rounded-full object-cover border border-outline"
+                      />
+                    ) : (
+                      <span className="material-symbols-outlined text-2xl text-on-surface-variant select-none">
+                        account_circle
+                      </span>
+                    )}
+                    <span className="text-sm font-medium text-on-surface truncate max-w-[120px]">
+                      {session.user.name || 'Mon Compte'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => signOut({ callbackUrl: '/home' })}
+                    className="text-sm font-semibold text-error hover:underline"
+                  >
+                    Déconnexion
+                  </button>
+                </div>
+              </>
+            )}
+
+            {mounted && status === 'unauthenticated' && (
+              <Link
+                href="/login"
+                className="rounded-xl bg-primary px-md py-sm text-base font-semibold text-white text-center hover:bg-surface-tint transition-colors"
+              >
+                Connexion
+              </Link>
+            )}
           </nav>
         </div>
       ) : null}
