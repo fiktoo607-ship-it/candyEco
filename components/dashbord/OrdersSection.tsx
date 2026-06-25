@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useOrders, useUpdateOrderStatus, Order } from '@/lib/hooks/use-orders';
 import { useDashboardStore } from '@/lib/dashboard-store';
 
@@ -29,6 +30,9 @@ export default function OrdersSection() {
     setOrderCurrentPage,
   } = useDashboardStore();
 
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+
   const ordersPerPage = 5;
 
   const { data: ordersData, isLoading: isOrdersLoading, error: ordersError } = useOrders({
@@ -36,6 +40,8 @@ export default function OrdersSection() {
     limit: ordersPerPage,
     query: orderSearchQuery,
     status: orderStatusFilter,
+    sortBy,
+    sortOrder,
   });
 
   const updateStatusMutation = useUpdateOrderStatus();
@@ -75,6 +81,32 @@ export default function OrdersSection() {
             <option value="DELIVERED">Livré</option>
             <option value="CANCELLED">Annulé</option>
           </select>
+
+          <div className="flex items-center gap-xs">
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setOrderCurrentPage(1);
+              }}
+              className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary h-[46px]"
+            >
+              <option value="createdAt">Trier par Date</option>
+              <option value="trustScore">Trier par Score Trust</option>
+            </select>
+
+            <select
+              value={sortOrder}
+              onChange={(e) => {
+                setSortOrder(e.target.value);
+                setOrderCurrentPage(1);
+              }}
+              className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary h-[46px]"
+            >
+              <option value="desc">Décroissant</option>
+              <option value="asc">Croissant</option>
+            </select>
+          </div>
         </div>
 
         <div className="text-sm text-on-surface-variant font-medium">
@@ -129,6 +161,14 @@ export default function OrdersSection() {
                   </td>
                   <td className="p-md">
                     <div className="font-semibold text-on-surface">{order.customerName}</div>
+                    {(order as any).customerTrustScore !== undefined && (
+                      <div className="mt-xs">
+                        <span className="inline-flex items-center gap-xs rounded-full bg-emerald-500/10 px-xs py-[2px] text-[10px] font-bold text-emerald-600">
+                          <span className="material-symbols-outlined text-[10px] select-none">verified_user</span>
+                          Trust: {(order as any).customerTrustScore}
+                        </span>
+                      </div>
+                    )}
                     <div className="text-xs text-on-surface-variant mt-[2px]">{order.customerPhone}</div>
                     <div className="text-xs text-on-surface-variant mt-[2px] line-clamp-1 max-w-[200px]" title={order.shippingAddress || undefined}>
                       {order.shippingAddress}

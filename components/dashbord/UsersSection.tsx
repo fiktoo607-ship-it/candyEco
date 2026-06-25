@@ -9,6 +9,27 @@ interface User {
   email: string | null;
   role: string;
   emailVerified: string | null;
+  completedOrderCount: number;
+  trustScore: number;
+  latestActivity: string;
+}
+
+function formatFrenchDate(dateInput: Date | string): string {
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime()) || date.getTime() === 0) return '—';
+  
+  const day = date.getDate();
+  const months = [
+    'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
+    'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'
+  ];
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  
+  return `${day} ${month} ${year}, ${hours}:${minutes}`;
 }
 
 export default function UsersSection() {
@@ -17,16 +38,18 @@ export default function UsersSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('trustScore');
+  const [sortOrder, setSortOrder] = useState('desc');
   
   // Deletion state
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (activeSortBy = sortBy, activeSortOrder = sortOrder) => {
     try {
       setLoading(true);
-      const res = await fetch('/api/users');
+      const res = await fetch(`/api/users?sortBy=${activeSortBy}&sortOrder=${activeSortOrder}`);
       if (!res.ok) {
         throw new Error('Impossible de charger les utilisateurs.');
       }
@@ -40,8 +63,8 @@ export default function UsersSection() {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    fetchUsers(sortBy, sortOrder);
+  }, [sortBy, sortOrder]);
 
   const handleDeleteUser = async (id: string) => {
     try {
@@ -96,19 +119,42 @@ export default function UsersSection() {
 
   return (
     <div className="flex flex-col gap-md animate-fade-in">
-      {/* Search Widget */}
+      {/* Search & Sort Widget */}
       <div className="flex flex-col gap-sm md:flex-row md:items-center md:justify-between">
-        <div className="relative max-w-sm flex-1">
-          <span className="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant select-none text-xl">
-            search
-          </span>
-          <input
-            type="text"
-            placeholder="Rechercher par nom ou email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-full border border-outline-variant bg-surface-container-low py-sm pl-xl pr-md text-sm outline-none transition-all focus:border-primary focus:bg-surface-container-lowest"
-          />
+        <div className="flex flex-col gap-xs sm:flex-row sm:items-center w-full md:w-auto flex-1 max-w-2xl">
+          <div className="relative flex-1 max-w-sm">
+            <span className="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant select-none text-xl">
+              search
+            </span>
+            <input
+              type="text"
+              placeholder="Rechercher par nom ou email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-full border border-outline-variant bg-surface-container-low py-sm pl-xl pr-md text-sm outline-none transition-all focus:border-primary focus:bg-surface-container-lowest"
+            />
+          </div>
+
+          <div className="flex items-center gap-xs">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-semibold text-on-surface outline-none focus:border-primary h-[38px]"
+            >
+              <option value="trustScore">Confiance (Commandes complétées)</option>
+              <option value="latestActivity">Dernière activité</option>
+              <option value="email">Adresse E-mail</option>
+            </select>
+
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-semibold text-on-surface outline-none focus:border-primary h-[38px]"
+            >
+              <option value="desc">Décroissant</option>
+              <option value="asc">Croissant</option>
+            </select>
+          </div>
         </div>
         <div className="text-sm text-on-surface-variant font-semibold">
           Total : {filteredUsers.length} utilisateur(s)
@@ -131,14 +177,16 @@ export default function UsersSection() {
                 <th className="px-lg py-md">Nom</th>
                 <th className="px-lg py-md">Adresse E-mail</th>
                 <th className="px-lg py-md">Rôle</th>
-                <th className="px-lg py-md">Statut E-mail</th>
+                <th className="px-lg py-md">Commandes</th>
+                <th className="px-lg py-md">Score Trust</th>
+                <th className="px-lg py-md">Dernière Activité</th>
                 <th className="px-lg py-md text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/20 text-sm">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-lg py-xl text-center text-on-surface-variant">
+                  <td colSpan={7} className="px-lg py-xl text-center text-on-surface-variant">
                     Aucun utilisateur trouvé.
                   </td>
                 </tr>
@@ -164,18 +212,17 @@ export default function UsersSection() {
                         </span>
                       )}
                     </td>
+                    <td className="px-lg py-md font-bold text-on-surface-variant">
+                      {user.completedOrderCount}
+                    </td>
                     <td className="px-lg py-md">
-                      {user.emailVerified ? (
-                        <span className="inline-flex items-center gap-xs rounded-full bg-emerald-500/10 px-sm py-xs text-xs font-bold text-emerald-600">
-                          <span className="material-symbols-outlined text-xs select-none">check_circle</span>
-                          Vérifié
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-xs rounded-full bg-rose-500/10 px-sm py-xs text-xs font-bold text-rose-600">
-                          <span className="material-symbols-outlined text-xs select-none">cancel</span>
-                          Non vérifié
-                        </span>
-                      )}
+                      <span className="inline-flex items-center gap-xs rounded-full bg-emerald-500/10 px-sm py-xs text-xs font-bold text-emerald-600">
+                        <span className="material-symbols-outlined text-xs select-none">verified_user</span>
+                        {user.trustScore}
+                      </span>
+                    </td>
+                    <td className="px-lg py-md text-on-surface-variant text-xs">
+                      {formatFrenchDate(user.latestActivity)}
                     </td>
                     <td className="px-lg py-md text-right">
                       {session?.user?.id === user.id ? (

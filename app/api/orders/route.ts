@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 interface RequestItem {
   productId: string;
@@ -66,6 +68,9 @@ export async function POST(request: NextRequest) {
     // 1 point per $1 spent
     const pointsEarned = Math.floor(totalAmount);
 
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id || null;
+
     // 3. Atomically write Order, OrderItems, and PointsTransaction
     const newOrder = await prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
@@ -78,6 +83,7 @@ export async function POST(request: NextRequest) {
           customerPhone,
           shippingAddress,
           pointsEarned,
+          userId,
           items: {
             create: orderItemsData,
           },
@@ -121,6 +127,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '5');
     const query = searchParams.get('query') || '';
     const status = searchParams.get('status') || '';
+    const sortBy = searchParams.get('sortBy') || 'createdAt';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     const skip = (page - 1) * limit;
 
@@ -150,6 +158,73 @@ export async function GET(request: NextRequest) {
       ];
     }
 
+    // Fetch completed order counts grouped by customerPhone
+    const completedOrdersByPhone = await prisma.order.groupBy({
+      by: ['customerPhone'],
+      where: {
+        status: { in: ['DELIVERED', 'COMPLETED'] },
+        customerPhone: { not: null },
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    // Also fetch completed order counts grouped by userId
+    const completedOrdersByUser = await prisma.order.groupBy({
+      by: ['userId'],
+      where: {
+        status: { in: ['DELIVERED', 'COMPLETED'] },
+        userId: { not: null },
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    const phoneCountMap = new Map(completedOrdersByPhone.map(g => [g.customerPhone!, g._count.id]));
+    const userCountMap = new Map(completedOrdersByUser.map(g => [g.userId!, g._count.id]));
+
+    if (sortBy === 'trustScore') {
+      const allMatchingOrders = await prisma.order.findMany({
+        where,
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      });
+
+      const mapped = allMatchingOrders.map((order) => {
+        const trustScore = order.userId
+          ? (userCountMap.get(order.userId) || 0)
+          : (order.customerPhone ? (phoneCountMap.get(order.customerPhone) || 0) : 0);
+        return {
+          ...order,
+          customerTrustScore: trustScore,
+        };
+      });
+
+      mapped.sort((a, b) => {
+        const diff = a.customerTrustScore - b.customerTrustScore;
+        return sortOrder === 'desc' ? -diff : diff;
+      });
+
+      const paginated = mapped.slice(skip, skip + limit);
+
+      return NextResponse.json({
+        data: paginated,
+        meta: {
+          total: allMatchingOrders.length,
+          page,
+          limit,
+          totalPages: Math.ceil(allMatchingOrders.length / limit) || 1,
+        },
+      });
+    }
+
     // Fetch in parallel
     const [total, orders] = await prisma.$transaction([
       prisma.order.count({ where }),
@@ -158,7 +233,7 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         orderBy: {
-          createdAt: 'desc',
+          createdAt: sortOrder as 'asc' | 'desc',
         },
         include: {
           items: {
@@ -170,10 +245,20 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
+    const mapped = orders.map((order) => {
+      const trustScore = order.userId
+        ? (userCountMap.get(order.userId) || 0)
+        : (order.customerPhone ? (phoneCountMap.get(order.customerPhone) || 0) : 0);
+      return {
+        ...order,
+        customerTrustScore: trustScore,
+      };
+    });
+
     const totalPages = Math.ceil(total / limit) || 1;
 
     return NextResponse.json({
-      data: orders,
+      data: mapped,
       meta: {
         total,
         page,

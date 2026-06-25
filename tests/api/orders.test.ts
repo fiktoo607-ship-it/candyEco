@@ -4,6 +4,12 @@ import { PUT as updateOrder } from '@/app/api/orders/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 
+// Mock next-auth session
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn().mockResolvedValue(null),
+}));
+
+
 // Mock Prisma client
 vi.mock('@/lib/prisma', () => {
   const mockPrisma = {
@@ -20,6 +26,7 @@ vi.mock('@/lib/prisma', () => {
       create: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+      groupBy: vi.fn().mockResolvedValue([]),
     },
     pointsTransaction: {
       create: vi.fn(),
@@ -141,6 +148,7 @@ describe('Orders API', () => {
           customerPhone: validPayload.customerPhone,
           shippingAddress: validPayload.shippingAddress,
           pointsEarned: 20,
+          userId: null,
           items: {
             create: [
               {
@@ -293,7 +301,10 @@ describe('Orders API', () => {
       },
     ];
 
-    const mockOrdersJson = JSON.parse(JSON.stringify(mockOrders));
+    const mockOrdersJson = JSON.parse(JSON.stringify(mockOrders)).map((o: any) => ({
+      ...o,
+      customerTrustScore: 0,
+    }));
 
     it('should support pagination metadata and return paginated orders list', async () => {
       vi.mocked(prisma.order.count).mockResolvedValueOnce(12);

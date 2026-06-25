@@ -85,7 +85,7 @@ export function useSubmitOrder() {
   });
 }
 
-export function useOrders(params: { page: number; limit: number; query?: string; status?: string }) {
+export function useOrders(params: { page: number; limit: number; query?: string; status?: string; sortBy?: string; sortOrder?: string }) {
   return useQuery<OrdersResponse>({
     queryKey: ['orders', params],
     queryFn: async () => {
@@ -95,6 +95,8 @@ export function useOrders(params: { page: number; limit: number; query?: string;
       });
       if (params.query) searchParams.append('query', params.query);
       if (params.status) searchParams.append('status', params.status);
+      if (params.sortBy) searchParams.append('sortBy', params.sortBy);
+      if (params.sortOrder) searchParams.append('sortOrder', params.sortOrder);
 
       const res = await fetch(`/api/orders?${searchParams.toString()}`);
       if (!res.ok) {
