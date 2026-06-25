@@ -129,6 +129,27 @@ async function main() {
     });
     console.log(`Created product with id: ${product.id}`);
   }
+
+  // Clear and seed FAQs
+  await prisma.faq.deleteMany({});
+  const initialFaqs = [
+    {
+      question: "Quels sont vos horaires d'ouverture ?",
+      answer: "Nous sommes ouverts du lundi au samedi de 8h00 à 20h00.",
+    },
+    {
+      question: "Proposez-vous des options sans gluten ?",
+      answer: "Oui, nous proposons une sélection de gâteaux et d'aliments traditionnels sans gluten préparés dans un espace dédié.",
+    },
+    {
+      question: "Comment puis-je passer une commande personnalisée ?",
+      answer: "Vous pouvez nous contacter directement via notre page de contact ou nous appeler pour discuter de vos besoins de personnalisation.",
+    }
+  ];
+  for (const faq of initialFaqs) {
+    await prisma.faq.create({ data: faq });
+  }
+
   console.log('Seeding finished.');
 }
 

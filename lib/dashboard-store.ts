@@ -2,8 +2,8 @@ import { create } from 'zustand';
 import { Product } from './hooks/use-products';
 
 interface DashboardState {
-  activeTab: 'products' | 'orders' | 'cms';
-  setActiveTab: (tab: 'products' | 'orders' | 'cms') => void;
+  activeTab: 'products' | 'orders' | 'cms' | 'qna';
+  setActiveTab: (tab: 'products' | 'orders' | 'cms' | 'qna') => void;
 
   // Orders Search & Pagination
   orderSearchQuery: string;

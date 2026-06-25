@@ -74,6 +74,17 @@
 - **APIs & Database**:
   - `app/home/page.tsx`: Queries database order statistics using `Prisma` aggregation (`groupBy` on `OrderItem` by `productId` summing `quantity` in desc order) to fetch the top 4 most ordered products, falling back to general active products if necessary.
 
+### 8. General Q&A (FAQ) System
+- **Description**: Interactive FAQ/QA accordion section at the bottom of the home page showing recurring questions and responses. Admins can create, edit, and delete FAQ questions and responses from a dedicated tab in the dashboard.
+- **Components**:
+  - `components/home/FaqSection.tsx`: Responsive client-side accordion component rendering the list of FAQs.
+  - `components/home/HomeProductSection.tsx`: Integrates the `<FaqSection />` component at the bottom of the home page.
+  - `components/dashbord/QnaSection.tsx`: Admin panel interface to manage general FAQ items.
+  - `components/dashbord/Sidebar.tsx` & `app/dashboard/page.tsx` & `lib/dashboard-store.ts`: Added routing and navigation for the "Questions & Réponses" dashboard tab.
+- **APIs & Database**:
+  - `prisma/schema.prisma`: Added `Faq` model.
+  - `app/api/faqs/route.ts` & `app/api/faqs/[id]/route.ts`: Built GET, POST, PUT, DELETE endpoints for FAQs.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
@@ -83,4 +94,5 @@
   - Created `tests/api/carousel-slides.test.ts` to test GET, POST, PUT, and DELETE Carousel Slides endpoints.
   - Created `tests/api/config.test.ts` to test GET and POST endpoint operations for configurations and validate parameter boundaries (`carousel_max_slides`, `new_products_limit`, and array limits).
   - Updated `tests/api/products.test.ts` to cover conditional rating/ratingCount visibility, rating updates in admin endpoints, and user rating submissions (calculating running average and validation bounds).
-  - All 63 tests pass successfully under `vitest`.
+  - Created `tests/api/qna.test.ts` to test GET, POST, PUT, and DELETE operations for general FAQs.
+  - All 74 tests pass successfully under `vitest`.

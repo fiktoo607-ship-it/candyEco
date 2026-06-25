@@ -190,6 +190,20 @@ export default async function HomePage() {
     console.error('Failed to fetch carousel slides/stories from database:', err);
   }
 
+  let displayFaqs: any[] = [];
+  try {
+    const dbFaqs = await prisma.faq.findMany({
+      orderBy: { createdAt: 'asc' },
+    });
+    displayFaqs = dbFaqs.map((faq) => ({
+      id: faq.id,
+      question: faq.question,
+      answer: faq.answer,
+    }));
+  } catch (err) {
+    console.error('Failed to fetch FAQs from database:', err);
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
@@ -201,6 +215,7 @@ export default async function HomePage() {
           storyTitle={storyTitle}
           storyDescription={storyDescription}
           carouselSlides={carouselSlides}
+          initialFaqs={displayFaqs}
         />
       </main>
       <SiteFooter />

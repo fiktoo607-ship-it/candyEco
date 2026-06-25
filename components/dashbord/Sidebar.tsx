@@ -41,6 +41,16 @@ export default function Sidebar() {
         >
           Gestion de Contenu (CMS)
         </button>
+        <button
+          onClick={() => setActiveTab("qna")}
+          className={`rounded-lg px-md py-sm text-left transition-colors font-semibold ${
+            activeTab === "qna"
+              ? "bg-primary-container/10 text-primary"
+              : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+          }`}
+        >
+          Questions & Réponses
+        </button>
       </nav>
       <div className="mt-auto border-t border-outline-variant/30 p-md">
         <a

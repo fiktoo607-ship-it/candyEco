@@ -10,6 +10,7 @@ import NewProductsSection from "./NewProductsSection";
 import PopularProductsSection from "./PopularProductsSection";
 import { useProducts } from "@/lib/hooks/use-products";
 import { filterProductsByTitle } from "@/lib/products";
+import FaqSection from "./FaqSection";
 
 interface HomeProductSectionProps {
   initialFeaturedProducts: any[];
@@ -18,6 +19,7 @@ interface HomeProductSectionProps {
   storyTitle: string;
   storyDescription: string;
   carouselSlides: any[];
+  initialFaqs: any[];
 }
 
 export default function HomeProductSection({
@@ -27,6 +29,7 @@ export default function HomeProductSection({
   storyTitle,
   storyDescription,
   carouselSlides,
+  initialFaqs = [],
 }: HomeProductSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: allProducts = [], isLoading } = useProducts();
@@ -50,6 +53,7 @@ export default function HomeProductSection({
           </div>
           <FeaturedProducts products={initialFeaturedProducts} />
           <StorySection title={storyTitle} description={storyDescription} />
+          <FaqSection faqs={initialFaqs} />
         </>
       ) : (
         <div className="mx-auto max-w-container-max px-gutter py-md space-y-lg">
