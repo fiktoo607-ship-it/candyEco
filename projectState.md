@@ -97,10 +97,25 @@
   - `lib/auth.ts` & `app/api/auth/[...nextauth]/route.ts`: Core NextAuth handler, session mapper, and role updates (auto-promoting specified email lists or the first user in the database).
   - Multi-endpoint protection: Injected session and role validators in products, FAQs, slides, configs, and file upload API endpoints.
 
+### 10. Email Verification (Nodemailer) & Credentials Auth
+- **Description**: Enabled local email/password registration, password hashing using `bcryptjs`, and email verification using Nodemailer. Unverified users are blocked from signing in. Verified users are reported in the admin dashboard.
+- **Components**:
+  - `app/register/page.tsx`: Sign-up screen with name, email, password, and confirmations.
+  - `app/verify-email/page.tsx`: Token processor rendering activation success or failure states.
+  - `app/login/page.tsx`: Integrated credentials input forms and verification warning flags alongside Google login.
+  - `components/dashbord/UsersSection.tsx`: Searchable user table in the dashboard reporting credentials roles and verification status badges.
+- **APIs & Database**:
+  - `prisma/schema.prisma`: Added `password String?` to the `User` model.
+  - `lib/email.ts`: Nodemailer SMTP transporter and HTML validation email dispatch helper.
+  - `app/api/auth/register/route.ts`: Hashes credentials, persists profiles, generates secure tokens, and dispatches verification emails.
+  - `app/api/auth/verify/route.ts`: Validates tokens, marks users as verified, and deletes tokens.
+  - `app/api/users/route.ts` & `app/api/users/[id]/route.ts`: Restricted users lookup and deletion API endpoints returning verification lists and handling admin deletion.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
   - Created `tests/api/auth.test.ts` to test signIn, jwt, and session callbacks.
+  - Created `tests/api/verification.test.ts` to test local sign-up input validation, token generation, SMTP email dispatching, expiration, and database cleaning (including user deletion actions).
   - Mocked `getServerSession` across all other API test modules to isolate authentication during endpoint operations.
-  - All 80 tests pass successfully under `vitest`.
+  - All 92 tests pass successfully under `vitest`.

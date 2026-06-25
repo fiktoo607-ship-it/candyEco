@@ -52,6 +52,16 @@ export default function Sidebar() {
         >
           Questions & Réponses
         </button>
+        <button
+          onClick={() => setActiveTab("users")}
+          className={`rounded-lg px-md py-sm text-left transition-colors font-semibold ${
+            activeTab === "users"
+              ? "bg-primary-container/10 text-primary"
+              : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+          }`}
+        >
+          Utilisateurs
+        </button>
       </nav>
       <div className="mt-auto border-t border-outline-variant/30 p-md flex flex-col">
         <button

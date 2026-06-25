@@ -1,7 +1,9 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -12,6 +14,33 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || process.env.Client_ID || "dummy-client-id",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || "dummy-client-secret",
+    }),
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "text" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("MissingCredentials");
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email.toLowerCase() }
+        });
+
+        if (!user || !user.password) {
+          throw new Error("InvalidCredentials");
+        }
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) {
+          throw new Error("InvalidCredentials");
+        }
+
+        return user;
+      }
     }),
   ],
   callbacks: {
@@ -41,7 +70,16 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async signIn({ user }) {
+    async signIn({ user, account }) {
+      if (account?.provider === "credentials") {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email! }
+        });
+        if (!dbUser?.emailVerified) {
+          throw new Error("EmailNotVerified");
+        }
+      }
+
       if (!user.email) return false;
 
       const adminEmailsEnv = process.env.ADMIN_EMAILS || "";

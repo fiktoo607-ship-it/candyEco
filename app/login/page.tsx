@@ -11,7 +11,12 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const errorType = searchParams.get("error");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
 
   useEffect(() => {
     if (status === "authenticated" && session) {
@@ -31,24 +36,59 @@ function LoginContent() {
         setErrorMessage("Impossible de créer un compte avec cette adresse e-mail. Veuillez réessayer.");
       } else if (errorType === "Callback") {
         setErrorMessage("La connexion a été refusée. Assurez-vous d'utiliser un compte autorisé.");
+      } else if (errorType === "EmailNotVerified") {
+        setErrorMessage("Votre adresse e-mail n'a pas encore été vérifiée. Veuillez vérifier votre boîte de réception.");
+      } else if (errorType === "CredentialsSignin") {
+        setErrorMessage("Adresse e-mail ou mot de passe incorrect.");
       } else {
         setErrorMessage("Une erreur inattendue s'est produite. Veuillez réessayer.");
       }
     }
   }, [errorType]);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCredentialsLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage("");
+    setLoading(true);
+
+    try {
+      const result = await signIn("credentials", {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        if (result.error === "EmailNotVerified" || result.error.includes("EmailNotVerified")) {
+          setErrorMessage("Votre adresse e-mail n'a pas encore été vérifiée. Veuillez vérifier votre boîte de réception.");
+        } else {
+          setErrorMessage("Adresse e-mail ou mot de passe incorrect.");
+        }
+        setLoading(false);
+      }
+    } catch (err) {
+      setErrorMessage("Une erreur réseau s'est produite. Veuillez réessayer.");
+      setLoading(false);
+    }
+  };
+
   const handleGoogleLogin = async () => {
     try {
-      setLoading(true);
+      setGoogleLoading(true);
       setErrorMessage("");
       await signIn("google");
     } catch (err) {
-      setLoading(false);
+      setGoogleLoading(false);
       setErrorMessage("Une erreur est survenue lors de l'initialisation de la connexion.");
     }
   };
 
-  if (status === "loading" || (status === "authenticated" && !loading)) {
+  if (status === "loading" || (status === "authenticated" && !loading && !googleLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-on-surface">
         <div className="flex flex-col items-center gap-md">
@@ -95,14 +135,68 @@ function LoginContent() {
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="mt-lg flex flex-col gap-md">
+          {/* Credentials Form */}
+          <form onSubmit={handleCredentialsLogin} className="mt-lg flex flex-col gap-md">
+            <div className="flex flex-col gap-xs">
+              <label htmlFor="email" className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                Adresse E-mail
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                placeholder="jean.dupont@example.com"
+                className="rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-sm outline-none transition-all focus:border-primary focus:bg-surface-container-lowest"
+              />
+            </div>
+
+            <div className="flex flex-col gap-xs">
+              <label htmlFor="password" className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                Mot de Passe
+              </label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+                placeholder="••••••••"
+                className="rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-sm outline-none transition-all focus:border-primary focus:bg-surface-container-lowest"
+              />
+            </div>
+
             <button
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              className="relative inline-flex w-full items-center justify-center gap-sm rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-base font-semibold text-on-surface transition-all duration-200 hover:bg-surface-container hover:shadow-soft active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+              type="submit"
+              disabled={loading || googleLoading}
+              className="inline-flex w-full items-center justify-center gap-sm rounded-xl bg-primary px-md py-sm text-base font-semibold text-white shadow-soft transition-all hover:bg-surface-tint active:scale-[0.99] disabled:opacity-50"
             >
               {loading ? (
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              ) : null}
+              <span>{loading ? "Connexion..." : "Se connecter"}</span>
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-md flex items-center justify-center">
+            <div className="absolute w-full border-t border-outline-variant/30"></div>
+            <span className="relative bg-surface-container-lowest px-sm text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+              Ou continuer avec
+            </span>
+          </div>
+
+          {/* OAuth Buttons */}
+          <div className="flex flex-col gap-md">
+            <button
+              onClick={handleGoogleLogin}
+              disabled={loading || googleLoading}
+              className="relative inline-flex w-full items-center justify-center gap-sm rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-base font-semibold text-on-surface transition-all duration-200 hover:bg-surface-container hover:shadow-soft active:scale-[0.98] disabled:opacity-50"
+            >
+              {googleLoading ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
               ) : (
                 <svg className="h-5 w-5 select-none" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -124,8 +218,18 @@ function LoginContent() {
                   />
                 </svg>
               )}
-              <span>{loading ? "Connexion en cours..." : "Se connecter avec Google"}</span>
+              <span>{googleLoading ? "Connexion en cours..." : "Google"}</span>
             </button>
+
+            <div className="text-center text-sm text-on-surface-variant">
+              Nouveau membre ?{" "}
+              <button
+                onClick={() => router.push("/register")}
+                className="font-semibold text-primary hover:underline"
+              >
+                Créer un compte
+              </button>
+            </div>
 
             <button
               onClick={() => router.push("/home")}
