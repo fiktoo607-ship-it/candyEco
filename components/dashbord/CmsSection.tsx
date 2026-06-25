@@ -53,6 +53,8 @@ export default function CmsSection() {
 
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(9);
 
   // Carousel slide modal states
   const [slideModalOpen, setSlideModalOpen] = useState(false);
@@ -71,11 +73,32 @@ export default function CmsSection() {
 
   const isSubmitting = updateMutation.isPending;
 
-  const selectedSlugs = watch('carousel_products') || [];
+  const rawSelectedSlugs = watch('carousel_products') || [];
+  const validProductSlugs = products.map(p => p.slug);
+  const selectedSlugs = rawSelectedSlugs.filter(slug => validProductSlugs.includes(slug));
   const maxSlidesInput = Number(watch('carousel_max_slides')) || 5;
 
   const totalCurrentSlides = selectedSlugs.length + slides.length;
   const isLimitReached = totalCurrentSlides >= maxSlidesInput;
+
+  // Filter products by search query
+  const filteredChecklistProducts = products.filter(
+    (product) =>
+      product.title.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
+      product.category.toLowerCase().includes(productSearchQuery.toLowerCase())
+  );
+
+  // Progressive/Lazy loading scroll handler
+  const handleChecklistScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    if (target.scrollHeight - target.scrollTop - target.clientHeight < 20) {
+      if (visibleCount < filteredChecklistProducts.length) {
+        setVisibleCount((prev) => prev + 9);
+      }
+    }
+  };
+
+  const visibleProducts = filteredChecklistProducts.slice(0, visibleCount);
 
   const handleOpenSlideModal = (slide?: CarouselSlide) => {
     if (slide) {
@@ -209,7 +232,14 @@ export default function CmsSection() {
     setSaveSuccess(false);
     setSaveError(null);
     try {
-      await updateMutation.mutateAsync(data);
+      const validProductSlugs = products.map(p => p.slug);
+      const cleanedProducts = (data.carousel_products || []).filter((slug: string) => validProductSlugs.includes(slug));
+      const cleanedData = {
+        ...data,
+        carousel_products: cleanedProducts
+      };
+      await updateMutation.mutateAsync(cleanedData);
+      setValue('carousel_products', cleanedProducts);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err) {
@@ -311,45 +341,78 @@ export default function CmsSection() {
 
         {/* Subsection A: Product Selection Checklist */}
         <div className="space-y-sm">
-          <div>
-            <h3 className="font-semibold text-base text-on-surface">1. Sélectionner des produits</h3>
-            <p className="text-xs text-on-surface-variant mt-[2px]">
-              Cochez les produits que vous souhaitez mettre en avant dans les diapositives.
-              <span className="font-bold text-primary ml-xs">({selectedSlugs.length} sélectionné(s))</span>
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm">
+            <div>
+              <h3 className="font-semibold text-base text-on-surface">1. Sélectionner des produits</h3>
+              <p className="text-xs text-on-surface-variant mt-[2px]">
+                Cochez les produits que vous souhaitez mettre en avant dans les diapositives.
+                <span className="font-bold text-primary ml-xs">({selectedSlugs.length} sélectionné(s))</span>
+              </p>
+            </div>
+            {/* Search Bar */}
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
+                search
+              </span>
+              <input
+                type="text"
+                placeholder="Rechercher un produit..."
+                value={productSearchQuery}
+                onChange={(e) => {
+                  setProductSearchQuery(e.target.value);
+                  setVisibleCount(9); // Reset lazy loading count
+                }}
+                className="rounded-lg border border-outline-variant bg-surface-container-low py-1 pl-7 pr-3 text-sm text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 w-full sm:w-60"
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-sm max-h-[220px] overflow-y-auto border border-outline-variant/20 rounded-xl p-sm bg-surface-container-low/30">
-            {products.map((product) => {
-              const isChecked = selectedSlugs.includes(product.slug);
-              // Disable checking if unchecked and limit reached
-              const disabled = !isChecked && isLimitReached;
-              
-              return (
-                <label 
-                  key={product.id} 
-                  className={`flex items-center gap-sm border rounded-xl p-sm cursor-pointer transition-all ${isChecked ? 'border-primary bg-primary-container/5' : 'border-outline-variant/30 hover:bg-surface-container-low'} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    disabled={disabled}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setValue('carousel_products', [...selectedSlugs, product.slug], { shouldDirty: true });
-                      } else {
-                        setValue('carousel_products', selectedSlugs.filter((s) => s !== product.slug), { shouldDirty: true });
-                      }
-                    }}
-                    className="h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary cursor-pointer disabled:cursor-not-allowed"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-on-surface truncate text-sm">{product.title}</p>
-                    <p className="text-xs text-on-surface-variant capitalize">{product.category}</p>
-                  </div>
-                </label>
-              );
-            })}
+          <div 
+            onScroll={handleChecklistScroll}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-sm max-h-[220px] overflow-y-auto border border-outline-variant/20 rounded-xl p-sm bg-surface-container-low/30"
+          >
+            {visibleProducts.length === 0 ? (
+              <div className="col-span-full py-md text-center text-xs text-on-surface-variant italic">
+                Aucun produit ne correspond à votre recherche.
+              </div>
+            ) : (
+              visibleProducts.map((product) => {
+                const isChecked = selectedSlugs.includes(product.slug);
+                // Disable checking if unchecked and limit reached
+                const disabled = !isChecked && isLimitReached;
+                
+                return (
+                  <label 
+                    key={product.id} 
+                    className={`flex items-center gap-sm border rounded-xl p-sm cursor-pointer transition-all ${isChecked ? 'border-primary bg-primary-container/5' : 'border-outline-variant/30 hover:bg-surface-container-low'} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      disabled={disabled}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setValue('carousel_products', [...selectedSlugs, product.slug], { shouldDirty: true });
+                        } else {
+                          setValue('carousel_products', selectedSlugs.filter((s) => s !== product.slug), { shouldDirty: true });
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary cursor-pointer disabled:cursor-not-allowed"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-on-surface truncate text-sm">{product.title}</p>
+                      <p className="text-xs text-on-surface-variant capitalize">{product.category}</p>
+                    </div>
+                  </label>
+                );
+              })
+            )}
+
+            {visibleCount < filteredChecklistProducts.length && (
+              <div className="col-span-full py-xs text-center text-[10px] text-on-surface-variant/80 animate-pulse font-medium">
+                Défilez vers le bas pour charger plus de produits...
+              </div>
+            )}
           </div>
         </div>
 
