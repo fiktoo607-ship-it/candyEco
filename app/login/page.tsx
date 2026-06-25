@@ -38,6 +38,8 @@ function LoginContent() {
         setErrorMessage("La connexion a été refusée. Assurez-vous d'utiliser un compte autorisé.");
       } else if (errorType === "EmailNotVerified") {
         setErrorMessage("Votre adresse e-mail n'a pas encore été vérifiée. Veuillez vérifier votre boîte de réception.");
+      } else if (errorType === "OAuthAccountNotLinked") {
+        setErrorMessage("Cette adresse e-mail est déjà associée à un compte existant. Veuillez vous connecter avec votre mot de passe.");
       } else if (errorType === "CredentialsSignin") {
         setErrorMessage("Adresse e-mail ou mot de passe incorrect.");
       } else {
