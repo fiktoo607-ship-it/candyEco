@@ -71,6 +71,7 @@ model Order {
 
   userId             String?
   user               User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  deliveryMethod     String?
 }
 
 model OrderItem {
@@ -175,6 +176,16 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model DeliveryMethod {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  price       Float    @default(0.0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 

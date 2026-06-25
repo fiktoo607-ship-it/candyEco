@@ -32,6 +32,7 @@ export default function OrdersSection() {
 
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const ordersPerPage = 5;
 
@@ -148,7 +149,6 @@ export default function OrdersSection() {
                 <th className="p-md">Détails Client</th>
                 <th className="p-md">Articles Commandés</th>
                 <th className="p-md">Prix Total</th>
-                <th className="p-md">Points Gagnés</th>
                 <th className="p-md">Date</th>
                 <th className="p-md text-right">Statut / Action</th>
               </tr>
@@ -161,18 +161,6 @@ export default function OrdersSection() {
                   </td>
                   <td className="p-md">
                     <div className="font-semibold text-on-surface">{order.customerName}</div>
-                    {(order as any).customerTrustScore !== undefined && (
-                      <div className="mt-xs">
-                        <span className="inline-flex items-center gap-xs rounded-full bg-emerald-500/10 px-xs py-[2px] text-[10px] font-bold text-emerald-600">
-                          <span className="material-symbols-outlined text-[10px] select-none">verified_user</span>
-                          Trust: {(order as any).customerTrustScore}
-                        </span>
-                      </div>
-                    )}
-                    <div className="text-xs text-on-surface-variant mt-[2px]">{order.customerPhone}</div>
-                    <div className="text-xs text-on-surface-variant mt-[2px] line-clamp-1 max-w-[200px]" title={order.shippingAddress || undefined}>
-                      {order.shippingAddress}
-                    </div>
                   </td>
                   <td className="p-md">
                     <div className="flex flex-col gap-xs text-xs text-on-surface max-w-[250px]">
@@ -185,11 +173,6 @@ export default function OrdersSection() {
                     </div>
                   </td>
                   <td className="p-md font-bold text-primary">{order.totalPrice}</td>
-                  <td className="p-md">
-                    <span className="rounded-full bg-primary/10 px-sm py-xs text-xs font-semibold text-primary">
-                      +{order.pointsEarned} pts
-                    </span>
-                  </td>
                   <td className="p-md text-xs text-on-surface-variant">
                     {formatFrenchDate(order.createdAt)}
                   </td>
@@ -224,6 +207,12 @@ export default function OrdersSection() {
                         <option value="DELIVERED">Livré</option>
                         <option value="CANCELLED">Annulé</option>
                       </select>
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors"
+                      >
+                        Détails
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -268,6 +257,140 @@ export default function OrdersSection() {
             >
               ›
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Order Details Modal */}
+      {selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-md">
+          <div className="w-full max-w-2xl bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-soft overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-outline-variant/30 p-md bg-surface-container-low">
+              <div>
+                <h3 className="text-lg font-bold text-on-surface">Détails de la Commande</h3>
+                <p className="text-xs font-mono text-on-surface-variant mt-[2px]">
+                  ID: #{selectedOrder.id.toUpperCase()}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="rounded-full p-xs text-on-surface-variant hover:bg-surface-container-high transition-colors"
+                aria-label="Fermer"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-md space-y-md max-h-[70vh] overflow-y-auto">
+              {/* Customer Details Section */}
+              <div>
+                <h4 className="text-sm font-semibold uppercase tracking-wider text-primary mb-sm">Informations Client</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-sm bg-surface-container-low p-sm rounded-xl border border-outline-variant/10">
+                  <div>
+                    <span className="text-xs text-on-surface-variant block">Nom</span>
+                    <span className="text-sm font-semibold text-on-surface">{selectedOrder.customerName}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-on-surface-variant block">Téléphone</span>
+                    <span className="text-sm font-semibold text-on-surface">{selectedOrder.customerPhone}</span>
+                  </div>
+                  {selectedOrder.shippingAddress && (
+                    <div className="md:col-span-2">
+                      <span className="text-xs text-on-surface-variant block">Adresse de livraison</span>
+                      <span className="text-sm font-medium text-on-surface">{selectedOrder.shippingAddress}</span>
+                    </div>
+                  )}
+                  {(selectedOrder as any).deliveryMethod && (
+                    <div>
+                      <span className="text-xs text-on-surface-variant block">Mode de livraison</span>
+                      <span className="text-sm font-semibold text-primary">{(selectedOrder as any).deliveryMethod}</span>
+                    </div>
+                  )}
+                  {(selectedOrder as any).customerTrustScore !== undefined && (
+                    <div>
+                      <span className="text-xs text-on-surface-variant block">Score Trust</span>
+                      <span className="inline-flex items-center gap-xs rounded-full bg-emerald-500/10 px-sm py-[2px] text-xs font-bold text-emerald-600 mt-[2px]">
+                        <span className="material-symbols-outlined text-[12px] select-none">verified_user</span>
+                        {(selectedOrder as any).customerTrustScore}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Order Info & Items Section */}
+              <div>
+                <h4 className="text-sm font-semibold uppercase tracking-wider text-primary mb-sm">Articles Commandés</h4>
+                <div className="border border-outline-variant/30 rounded-xl overflow-hidden">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="bg-surface-container-low border-b border-outline-variant/30 text-xs font-semibold text-on-surface-variant">
+                        <th className="p-sm">Produit</th>
+                        <th className="p-sm text-center">Quantité</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant/10">
+                      {selectedOrder.items.map((item) => (
+                        <tr key={item.id}>
+                          <td className="p-sm font-medium text-on-surface">
+                            {item.product?.title || 'Produit Inconnu'}
+                          </td>
+                          <td className="p-sm text-center font-bold text-primary">
+                            x{item.quantity}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Order Metadata */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-sm pt-sm border-t border-outline-variant/20">
+                <div>
+                  <span className="text-xs text-on-surface-variant block">Prix Total</span>
+                  <span className="text-base font-bold text-primary">{selectedOrder.totalPrice}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-on-surface-variant block">Points Gagnés</span>
+                  <span className="inline-block mt-xs rounded-full bg-primary/10 px-sm py-[2px] text-xs font-bold text-primary">
+                    +{selectedOrder.pointsEarned} pts
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xs text-on-surface-variant block">Date</span>
+                  <span className="text-xs font-medium text-on-surface block mt-xs">{formatFrenchDate(selectedOrder.createdAt)}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-on-surface-variant block">Statut</span>
+                  <span className={`inline-block mt-xs rounded-full px-sm py-[2px] text-xs font-bold uppercase ${
+                    selectedOrder.status === 'PENDING'
+                      ? 'bg-amber-100 text-amber-800'
+                      : selectedOrder.status === 'SHIPPED'
+                      ? 'bg-blue-100 text-blue-800'
+                      : selectedOrder.status === 'DELIVERED'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-rose-100 text-rose-800'
+                  }`}>
+                    {selectedOrder.status === 'PENDING' ? 'En attente' : selectedOrder.status === 'SHIPPED' ? 'Expédié' : selectedOrder.status === 'DELIVERED' ? 'Livré' : 'Annulé'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end gap-sm border-t border-outline-variant/30 p-md bg-surface-container-low">
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="rounded-lg border border-outline-variant bg-surface-container-low px-md py-sm text-sm font-semibold text-on-surface hover:bg-surface-container-high transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
           </div>
         </div>
       )}

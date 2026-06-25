@@ -6,6 +6,7 @@ import OrdersSection from '@/components/dashbord/OrdersSection';
 import CmsSection from '@/components/dashbord/CmsSection';
 import QnaSection from '@/components/dashbord/QnaSection';
 import UsersSection from '@/components/dashbord/UsersSection';
+import DeliverySection from '@/components/dashbord/DeliverySection';
 import ProductModal from '@/components/dashbord/ProductModal';
 import DeleteModal from '@/components/dashbord/DeleteModal';
 import { useDashboardStore } from '@/lib/dashboard-store';
@@ -35,7 +36,9 @@ export default function DashboardPage() {
               ? 'Configuration du site (CMS)'
               : activeTab === 'qna'
               ? 'Questions & Réponses'
-              : 'Gestion des utilisateurs'}
+              : activeTab === 'users'
+              ? 'Gestion des utilisateurs'
+              : 'Méthodes de livraison'}
           </h1>
           {activeTab === 'products' && (
             <button
@@ -59,8 +62,10 @@ export default function DashboardPage() {
             <CmsSection />
           ) : activeTab === 'qna' ? (
             <QnaSection />
-          ) : (
+          ) : activeTab === 'users' ? (
             <UsersSection />
+          ) : (
+            <DeliverySection />
           )}
         </div>
       </section>

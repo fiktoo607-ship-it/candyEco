@@ -11,7 +11,7 @@ interface RequestItem {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { customerName, customerPhone, shippingAddress, items, sessionId } = body;
+    const { customerName, customerPhone, shippingAddress, items, sessionId, deliveryMethod } = body;
 
     if (!customerName || !customerPhone || !shippingAddress || !items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Missing required guest customer or cart information' }, { status: 400 });
@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
           shippingAddress,
           pointsEarned,
           userId,
+          deliveryMethod,
           items: {
             create: orderItemsData,
           },

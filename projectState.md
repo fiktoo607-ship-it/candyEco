@@ -120,6 +120,18 @@
   - `app/api/orders/route.ts`: Injected `getServerSession` lookup in POST request processing to associate placed orders with the authenticated user ID if a session is present.
   - `app/api/users/route.ts`: Refactored user listing handler to load users with associated orders, compute completed order counts and latest activity metrics dynamically, and sort in-memory based on requested query parameters.
 
+### 12. Delivery Method Selection
+- **Description**: Customers can choose between delivery options (e.g. Home Delivery, Office Pickup, Store Pickup) at checkout. Admins can create, edit, enable/disable methods in the dashboard.
+- **Components**:
+  - `components/cart/CheckoutForm.tsx`: Fetches active delivery methods and renders selection radio buttons during checkout, falling back to a default set if none are configured in database.
+  - `components/dashbord/DeliverySection.tsx`: Admin panel for CRUD operations and active status toggling of delivery methods.
+  - `components/dashbord/OrdersSection.tsx`: Displays the selected delivery method inside the customer details card for each order.
+  - `components/dashbord/Sidebar.tsx` & `app/dashboard/page.tsx` & `lib/dashboard-store.ts`: Added routing and navigation for the "Méthodes de livraison" dashboard tab.
+- **APIs & Database**:
+  - `prisma/schema.prisma`: Added `DeliveryMethod` model and `deliveryMethod` field to `Order`.
+  - `app/api/delivery-methods/route.ts` & `app/api/delivery-methods/[id]/route.ts`: Built endpoints for delivery methods.
+  - `app/api/orders/route.ts`: Refactored to accept `deliveryMethod` and save it to database orders.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
@@ -127,5 +139,6 @@
   - Created `tests/api/auth.test.ts` to test signIn, jwt, and session callbacks.
   - Created `tests/api/verification.test.ts` to test local sign-up input validation, token generation, SMTP email dispatching, expiration, and database cleaning (including user deletion actions).
   - Created `tests/api/trust.test.ts` to verify session linkage during order creation, trust score calculations, and users list sorting.
+  - Created `tests/api/delivery.test.ts` to verify delivery methods CRUD API endpoints and order integration.
   - Mocked `getServerSession` across all other API test modules to isolate authentication during endpoint operations.
-  - All 98 tests pass successfully under `vitest`.
+  - All 105 tests pass successfully under `vitest`.

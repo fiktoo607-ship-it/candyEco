@@ -1,10 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCartStore } from '@/lib/cart-store';
 import { useSubmitOrder } from '@/lib/hooks/use-orders';
 import dictionary from '@/lib/copy-dictionary.json';
 
 interface CheckoutFormProps {
   onSuccess: () => void;
+}
+
+interface DeliveryMethod {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  active: boolean;
 }
 
 export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
@@ -14,12 +22,43 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
+  const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>([]);
+  const [selectedMethod, setSelectedMethod] = useState('');
+
+  useEffect(() => {
+    const fetchMethods = async () => {
+      try {
+        const res = await fetch('/api/delivery-methods');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) {
+            setDeliveryMethods(data);
+            setSelectedMethod(data[0].name);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching delivery methods:', err);
+      }
+
+      // Local fallback
+      const fallbacks: DeliveryMethod[] = [
+        { id: 'fd-1', name: 'Home Delivery', description: 'Livraison à domicile', price: 0, active: true },
+        { id: 'fd-2', name: 'Office Pickup', description: 'Retrait au bureau', price: 0, active: true },
+        { id: 'fd-3', name: 'Store Pickup', description: 'Retrait en magasin', price: 0, active: true },
+      ];
+      setDeliveryMethods(fallbacks);
+      setSelectedMethod(fallbacks[0].name);
+    };
+
+    fetchMethods();
+  }, []);
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) return;
 
-    if (!customerName || !customerPhone || !shippingAddress) {
+    if (!customerName || !customerPhone || !shippingAddress || !selectedMethod) {
       alert(dictionary.cart.form.validationError);
       return;
     }
@@ -28,6 +67,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
       customerName,
       customerPhone,
       shippingAddress,
+      deliveryMethod: selectedMethod,
       items: items.map((item) => ({
         productId: item.product.id,
         quantity: item.quantity,
@@ -97,6 +137,51 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
             onChange={(e) => setShippingAddress(e.target.value)}
             className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary"
           />
+        </div>
+
+        {/* Delivery Method Selection */}
+        <div className="pt-xs">
+          <label className="block text-sm font-bold text-on-surface-variant mb-sm">
+            Mode de livraison
+          </label>
+          <div className="space-y-xs">
+            {deliveryMethods.map((method) => (
+              <label
+                key={method.id}
+                className={`flex items-start gap-sm rounded-xl border p-sm cursor-pointer transition-all ${
+                  selectedMethod === method.name
+                    ? 'border-primary bg-primary/5'
+                    : 'border-outline-variant bg-surface-container-low hover:bg-surface-container-high'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="deliveryMethod"
+                  value={method.name}
+                  checked={selectedMethod === method.name}
+                  onChange={() => setSelectedMethod(method.name)}
+                  className="mt-[3px] accent-primary"
+                />
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-on-surface">
+                    {method.name === 'Home Delivery'
+                      ? 'Home Delivery (Livraison à domicile)'
+                      : method.name === 'Office Pickup'
+                      ? 'Office Pickup (Retrait au bureau)'
+                      : method.name === 'Store Pickup'
+                      ? 'Store Pickup (Retrait en magasin)'
+                      : method.name}
+                  </span>
+                  {method.description && (
+                    <span className="text-xs text-on-surface-variant mt-[2px]">{method.description}</span>
+                  )}
+                  {method.price > 0 && (
+                    <span className="text-xs font-semibold text-primary mt-[2px]">+${method.price.toFixed(2)}</span>
+                  )}
+                </div>
+              </label>
+            ))}
+          </div>
         </div>
 
         <button

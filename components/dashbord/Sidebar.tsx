@@ -62,6 +62,16 @@ export default function Sidebar() {
         >
           Utilisateurs
         </button>
+        <button
+          onClick={() => setActiveTab("delivery-methods")}
+          className={`rounded-lg px-md py-sm text-left transition-colors font-semibold ${
+            activeTab === "delivery-methods"
+              ? "bg-primary-container/10 text-primary"
+              : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+          }`}
+        >
+          Méthodes de livraison
+        </button>
       </nav>
       <div className="mt-auto border-t border-outline-variant/30 p-md flex flex-col">
         <button
