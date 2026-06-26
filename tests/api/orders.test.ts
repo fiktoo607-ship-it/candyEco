@@ -3,6 +3,7 @@ import { POST as createOrder, GET as getOrders } from '@/app/api/orders/route';
 import { PUT as updateOrder, GET as getOrderDetail } from '@/app/api/orders/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth';
 
 // Mock next-auth session
 vi.mock('next-auth', () => ({
@@ -375,7 +376,7 @@ describe('Orders API', () => {
         customerName: 'Bob',
         customerPhone: '333444',
         shippingAddress: 'Address 2',
-        status: 'SHIPPED',
+        status: 'ACCEPTED',
         totalPrice: '$25.00',
         totalAmount: 25.0,
         createdAt: new Date('2026-06-04T13:00:00Z'),
@@ -422,14 +423,14 @@ describe('Orders API', () => {
       vi.mocked(prisma.order.count).mockResolvedValueOnce(1);
       vi.mocked(prisma.order.findMany).mockResolvedValueOnce([mockOrders[1]] as any);
 
-      // Filter by status=SHIPPED and query=Bob
-      const req = new NextRequest('http://localhost/api/orders?status=SHIPPED&query=Bob');
+      // Filter by status=ACCEPTED and query=Bob
+      const req = new NextRequest('http://localhost/api/orders?status=ACCEPTED&query=Bob');
       const response = await getOrders(req);
 
       expect(response.status).toBe(200);
 
       const expectedWhere = {
-        status: 'SHIPPED',
+        status: 'ACCEPTED',
         OR: [
           { customerName: { contains: 'Bob', mode: 'insensitive' } },
           { customerPhone: { contains: 'Bob', mode: 'insensitive' } },
@@ -463,29 +464,29 @@ describe('Orders API', () => {
       customerName: 'John',
       status: 'PENDING',
     };
-
     it('should update the order status and convert status parameter to uppercase', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { role: 'admin' } } as any);
       vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockOrder as any);
       vi.mocked(prisma.order.update).mockResolvedValueOnce({
         ...mockOrder,
-        status: 'SHIPPED',
+        status: 'ACCEPTED',
       } as any);
 
       const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'shipped' }), // Lowercase status passed
+        body: JSON.stringify({ status: 'accepted' }), // Lowercase status passed
       });
 
       const response = await updateOrder(req, { params: Promise.resolve({ id: mockOrder.id }) });
       expect(response.status).toBe(200);
 
       const data = await response.json();
-      expect(data.status).toBe('SHIPPED');
+      expect(data.status).toBe('ACCEPTED');
 
       expect(prisma.order.update).toHaveBeenCalledWith({
         where: { id: mockOrder.id },
-        data: { status: 'SHIPPED' }, // Converted to uppercase
+        data: { status: 'ACCEPTED' }, // Converted to uppercase
         include: { items: { include: { product: true } } },
       });
     });
@@ -523,13 +524,14 @@ describe('Orders API', () => {
     });
 
     it('should return 500 when order update fails in database', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { role: 'admin' } } as any);
       vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockOrder as any);
       vi.mocked(prisma.order.update).mockRejectedValueOnce(new Error('Update failed'));
 
       const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'DELIVERED' }),
+        body: JSON.stringify({ status: 'ACCEPTED' }),
       });
 
       const response = await updateOrder(req, { params: Promise.resolve({ id: mockOrder.id }) });
@@ -537,6 +539,109 @@ describe('Orders API', () => {
 
       const data = await response.json();
       expect(data).toEqual({ error: 'Update failed' });
+    });
+
+    it('should allow customer to cancel order while status is PENDING', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(null); // Guest/Customer
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
+        id: 'order-1',
+        status: 'PENDING',
+      } as any);
+      vi.mocked(prisma.order.update).mockResolvedValueOnce({
+        id: 'order-1',
+        status: 'CANCELLED',
+      } as any);
+
+      const req = new NextRequest('http://localhost/api/orders/order-1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+
+      const response = await updateOrder(req, { params: Promise.resolve({ id: 'order-1' }) });
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.status).toBe('CANCELLED');
+    });
+
+    it('should NOT allow customer to update status to anything other than CANCELLED', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(null); // Guest/Customer
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
+        id: 'order-1',
+        status: 'PENDING',
+      } as any);
+
+      const req = new NextRequest('http://localhost/api/orders/order-1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ACCEPTED' }),
+      });
+
+      const response = await updateOrder(req, { params: Promise.resolve({ id: 'order-1' }) });
+      expect(response.status).toBe(403);
+      const data = await response.json();
+      expect(data.error).toBe('Unauthorized to update order status');
+    });
+
+    it('should NOT allow customer to cancel order if current status is not PENDING', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(null); // Guest/Customer
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
+        id: 'order-1',
+        status: 'ACCEPTED',
+      } as any);
+
+      const req = new NextRequest('http://localhost/api/orders/order-1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+
+      const response = await updateOrder(req, { params: Promise.resolve({ id: 'order-1' }) });
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('Only pending orders can be cancelled');
+    });
+
+    it('should NOT allow admin to cancel order if current status is ACCEPTED', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { role: 'admin' } } as any);
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
+        id: 'order-1',
+        status: 'ACCEPTED',
+      } as any);
+
+      const req = new NextRequest('http://localhost/api/orders/order-1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+
+      const response = await updateOrder(req, { params: Promise.resolve({ id: 'order-1' }) });
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('Cannot cancel an accepted order');
+    });
+
+    it('should allow admin to update order status to ACCEPTED from PENDING', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { role: 'admin' } } as any);
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
+        id: 'order-1',
+        status: 'PENDING',
+      } as any);
+      vi.mocked(prisma.order.update).mockResolvedValueOnce({
+        id: 'order-1',
+        status: 'ACCEPTED',
+      } as any);
+
+      const req = new NextRequest('http://localhost/api/orders/order-1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ACCEPTED' }),
+      });
+
+      const response = await updateOrder(req, { params: Promise.resolve({ id: 'order-1' }) });
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.status).toBe('ACCEPTED');
     });
   });
 

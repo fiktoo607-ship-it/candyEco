@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 export async function PUT(
   request: NextRequest,
@@ -22,9 +24,30 @@ export async function PUT(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
+    const session = await getServerSession(authOptions);
+    const isAdmin = session?.user?.role === 'admin';
+
+    const targetStatus = status.toUpperCase();
+    const currentStatus = existingOrder.status.toUpperCase();
+
+    // Customer rules: Can cancel order while status is Pending.
+    if (!isAdmin) {
+      if (targetStatus !== 'CANCELLED') {
+        return NextResponse.json({ error: 'Unauthorized to update order status' }, { status: 403 });
+      }
+      if (currentStatus !== 'PENDING') {
+        return NextResponse.json({ error: 'Only pending orders can be cancelled' }, { status: 400 });
+      }
+    }
+
+    // Restrictions: Cannot cancel Accepted orders
+    if (targetStatus === 'CANCELLED' && currentStatus === 'ACCEPTED') {
+      return NextResponse.json({ error: 'Cannot cancel an accepted order' }, { status: 400 });
+    }
+
     const updatedOrder = await prisma.order.update({
       where: { id },
-      data: { status: status.toUpperCase() },
+      data: { status: targetStatus },
       include: {
         items: {
           include: {

@@ -165,6 +165,13 @@
   - `app/api/notifications/sse/route.ts`: Server-Sent Events endpoint streaming real-time notification events.
   - `lib/hooks/use-notifications.ts`: Added React Query custom hooks `useNotifications` and `useMarkNotifications`.
 
+### 16. Order Cancellation Rules
+- **Description**: Enabled customers to cancel their pending orders directly from the tracking page, while restricting cancellation of accepted/shipped/delivered orders. Admins retain full status update rights and can always view the cancellation history.
+- **Components**:
+  - `app/orders/[id]/page.tsx`: Added an "Annuler la commande" button (active only when status is PENDING) with a confirmation dialog, and a periodic status poll.
+- **APIs & Database**:
+  - `app/api/orders/[id]/route.ts`: Enforces backend validation checks restricting customers to only cancel pending orders and forbidding anyone from cancelling accepted/shipped/delivered orders.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
@@ -173,7 +180,7 @@
   - Created `tests/api/verification.test.ts` to test local sign-up input validation, token generation, SMTP email dispatching, expiration, and database cleaning.
   - Created `tests/api/trust.test.ts` to verify session linkage during order creation, trust score calculations, and users list sorting.
   - Created `tests/api/delivery.test.ts` to verify delivery methods CRUD API endpoints and order integration.
-  - Updated `tests/api/orders.test.ts` to verify email optionality, phone layout requirements, validation rules, order details query handler, and ACCEPTED transitions.
+  - Updated `tests/api/orders.test.ts` to verify email optionality, phone layout requirements, validation rules, order details query handler, ACCEPTED transitions, and cancellation validation checks.
   - Created `tests/api/notifications.test.ts` to cover fetch, mark as read, mark all as read, and role authorization validation.
   - Mocked `orderNotification` in `tests/api/orders.test.ts`, `tests/api/trust.test.ts`, and `tests/api/delivery.test.ts` to maintain compatibility with order creation test paths.
-  - All 118 tests pass successfully under `vitest`.
+  - All 123 tests pass successfully under `vitest`.

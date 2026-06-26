@@ -14,6 +14,7 @@ export default function OrderTrackingPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -36,14 +37,42 @@ export default function OrderTrackingPage() {
       }
     };
 
+    const interval = setInterval(fetchOrder, 15000); // Poll status periodically
+
     fetchOrder();
+
+    return () => clearInterval(interval);
   }, [id]);
+
+  const handleCancelOrder = async () => {
+    if (!window.confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
+      return;
+    }
+    setCancelling(true);
+    try {
+      const res = await fetch(`/api/orders/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Erreur lors de l’annulation');
+      }
+      const updatedOrder = await res.json();
+      setOrder(updatedOrder);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   const steps = [
     { key: 'PENDING', label: 'En attente', icon: 'hourglass_empty', desc: 'Votre commande est en cours de validation par nos équipes.' },
-    { key: 'ACCEPTED', label: 'Acceptée', icon: 'check_circle', desc: 'Votre commande a été acceptée et est en cours de préparation.' },
-    { key: 'SHIPPED', label: 'Expédiée', icon: 'local_shipping', desc: 'Votre colis a été remis au transporteur.' },
-    { key: 'DELIVERED', label: 'Livrée', icon: 'done_all', desc: 'La commande a été livrée avec succès.' }
+    { key: 'ACCEPTED', label: 'Acceptée', icon: 'check_circle', desc: 'Votre commande a été acceptée et est en cours de préparation.' }
   ];
 
   // Helper to determine active step index
@@ -226,13 +255,23 @@ export default function OrderTrackingPage() {
                     </div>
                   </div>
 
-                  <div className="pt-xs">
+                  <div className="pt-xs flex flex-col gap-sm">
                     <Link
                       href="/our-product"
-                      className="w-full inline-flex justify-center items-center rounded-xl bg-primary py-sm font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint text-sm"
+                      className="w-full inline-flex justify-center items-center rounded-xl bg-primary py-sm font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint text-sm text-center"
                     >
                       Continuer les achats
                     </Link>
+
+                    {order.status === 'PENDING' && (
+                      <button
+                        onClick={handleCancelOrder}
+                        disabled={cancelling}
+                        className="w-full inline-flex justify-center items-center rounded-xl border border-rose-300 bg-rose-50/50 py-sm font-bold text-rose-700 shadow-soft transition-transform active:scale-95 hover:bg-rose-100/50 text-sm disabled:opacity-50"
+                      >
+                        {cancelling ? 'Annulation...' : 'Annuler la commande'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
