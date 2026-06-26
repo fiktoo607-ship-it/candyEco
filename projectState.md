@@ -181,6 +181,11 @@
   - `prisma/schema.prisma`: Added `reference String? @unique` to `Order` model.
   - `app/api/orders/route.ts`: Automatically computes sequence increment numbers based on existing orders for the current UTC day. Implemented a transaction retry loop to guarantee unique constraint safety under concurrent orders. Extended GET handler search query filters to match on the reference code.
 
+### 18. Address Linked To Order
+- **Description**: Confirmed and tested the requirement that delivery addresses are entered during checkout, stored per-order on the order record, and not persisted to the user profile, allowing future address changes without affecting past orders.
+- **APIs & Database**:
+  - `tests/api/orders.test.ts`: Added automated integration tests to explicitly verify these per-order address storage and snapshotting rules.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
@@ -189,7 +194,7 @@
   - Created `tests/api/verification.test.ts` to test local sign-up input validation, token generation, SMTP email dispatching, expiration, and database cleaning.
   - Created `tests/api/trust.test.ts` to verify session linkage during order creation, trust score calculations, and users list sorting.
   - Created `tests/api/delivery.test.ts` to verify delivery methods CRUD API endpoints and order integration.
-  - Updated `tests/api/orders.test.ts` to verify email optionality, phone layout requirements, validation rules, order details query handler, ACCEPTED transitions, cancellation validation checks, reference code sequence generation, and filters.
+  - Updated `tests/api/orders.test.ts` to verify email optionality, phone layout requirements, validation rules, order details query handler, ACCEPTED transitions, cancellation validation checks, reference code sequence generation, filters, and per-order address snapshotting.
   - Created `tests/api/notifications.test.ts` to cover fetch, mark as read, mark all as read, and role authorization validation.
   - Mocked `orderNotification` in `tests/api/orders.test.ts`, `tests/api/trust.test.ts`, and `tests/api/delivery.test.ts` to maintain compatibility with order creation test paths.
-  - All 124 tests pass successfully under `vitest`.
+  - All 125 tests pass successfully under `vitest`.

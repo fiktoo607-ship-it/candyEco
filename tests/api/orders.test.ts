@@ -769,4 +769,69 @@ describe('Orders API', () => {
       expect(data).toEqual({ error: 'Fetch failed' });
     });
   });
+
+  describe('Address Linked To Order Requirements', () => {
+    const mockDbProducts = [
+      {
+        id: 'prod-1',
+        title: 'Delicious Cookie',
+        price: '$2.50',
+        state: 'exist',
+      },
+    ];
+
+    it('should save shipping address on the order itself and not alter user profile', async () => {
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
+      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(null);
+
+      const payload = {
+        customerName: 'Alice Address',
+        customerPhone: '1234567890',
+        shippingAddress: '456 Order Street',
+        items: [{ productId: 'prod-1', quantity: 1 }],
+      };
+
+      const now = new Date();
+      const yyyy = now.getUTCFullYear();
+      const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(now.getUTCDate()).padStart(2, '0');
+      const expectedRef = `ORD-${yyyy}${mm}${dd}-001`;
+
+      const expectedOrder = {
+        id: 'order-12345',
+        reference: expectedRef,
+        status: 'PENDING',
+        totalPrice: '$2.50',
+        totalAmount: 2.50,
+        customerName: payload.customerName,
+        customerPhone: payload.customerPhone,
+        shippingAddress: payload.shippingAddress,
+        pointsEarned: 2,
+      };
+
+      vi.mocked(prisma.order.create).mockResolvedValueOnce(expectedOrder as any);
+      vi.mocked(prisma.pointsTransaction.create).mockResolvedValueOnce({} as any);
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(201);
+
+      const data = await response.json();
+      expect(data.shippingAddress).toBe('456 Order Street');
+      
+      // Verify that prisma.order.create was called with the shippingAddress directly
+      expect(prisma.order.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            shippingAddress: '456 Order Street',
+          }),
+        })
+      );
+    });
+  });
 });
