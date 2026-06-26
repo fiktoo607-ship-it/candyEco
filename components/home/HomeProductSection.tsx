@@ -44,13 +44,13 @@ export default function HomeProductSection({
       {!isSearchActive ? (
         <>
           <HeroCarousel slides={carouselSlides} />
-          <NewProductsSection products={initialNewProducts} />
-          <PopularProductsSection products={initialPopularProducts} />
           <div className="mx-auto max-w-container-max px-gutter py-sm">
             <div className="mx-auto max-w-xl">
               <SearchBar value={searchQuery} onChange={setSearchQuery} />
             </div>
           </div>
+          <NewProductsSection products={initialNewProducts} />
+          <PopularProductsSection products={initialPopularProducts} />
           <FeaturedProducts products={initialFeaturedProducts} />
           <StorySection title={storyTitle} description={storyDescription} />
           <FaqSection faqs={initialFaqs} />
