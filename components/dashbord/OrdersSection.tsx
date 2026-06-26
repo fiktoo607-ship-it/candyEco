@@ -156,7 +156,7 @@ export default function OrdersSection() {
               {ordersData.data.map((order: Order) => (
                 <tr key={order.id} className="group transition-colors hover:bg-surface/50">
                   <td className="p-md font-mono text-xs text-on-surface-variant">
-                    #{order.id.substring(0, 8).toUpperCase()}
+                    {order.reference || `#${order.id.substring(0, 8).toUpperCase()}`}
                   </td>
                   <td className="p-md">
                     <div className="font-semibold text-on-surface">{order.customerName}</div>
@@ -283,7 +283,7 @@ export default function OrdersSection() {
               <div>
                 <h3 className="text-lg font-bold text-on-surface">Détails de la Commande</h3>
                 <p className="text-xs font-mono text-on-surface-variant mt-[2px]">
-                  ID: #{selectedOrder.id.toUpperCase()}
+                  Réf: {selectedOrder.reference || `#${selectedOrder.id.toUpperCase()}`}
                 </p>
               </div>
               <button

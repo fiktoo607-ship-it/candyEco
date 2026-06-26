@@ -44,6 +44,7 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
+  reference: string | null;
   sessionId: string | null;
   status: string;
   totalPrice: string;

@@ -21,6 +21,7 @@ vi.mock('@/lib/prisma', () => {
     },
     order: {
       create: vi.fn(),
+      findFirst: vi.fn().mockResolvedValue(null),
       groupBy: vi.fn().mockResolvedValue([]),
     },
     product: {

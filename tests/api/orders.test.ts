@@ -27,6 +27,7 @@ vi.mock('@/lib/prisma', () => {
       create: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+      findFirst: vi.fn(),
       groupBy: vi.fn().mockResolvedValue([]),
     },
     pointsTransaction: {
@@ -90,6 +91,7 @@ describe('Orders API', () => {
 
     it('should place an order successfully, calculate correct price/points, and create PointsTransaction', async () => {
       vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
+      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(null);
 
       // We expect:
       // prod-1: $2.50 * 2 = $5.00
@@ -98,8 +100,15 @@ describe('Orders API', () => {
       // Total price = '$20.00'
       // Points earned = 20
 
+      const now = new Date();
+      const yyyy = now.getUTCFullYear();
+      const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(now.getUTCDate()).padStart(2, '0');
+      const expectedRef = `ORD-${yyyy}${mm}${dd}-001`;
+
       const expectedOrder = {
         id: 'order-uuid-123',
+        reference: expectedRef,
         sessionId: validPayload.sessionId,
         status: 'PENDING',
         totalPrice: '$20.00',
@@ -151,6 +160,7 @@ describe('Orders API', () => {
 
       expect(prisma.order.create).toHaveBeenCalledWith({
         data: {
+          reference: expectedRef,
           sessionId: validPayload.sessionId,
           status: 'PENDING',
           totalPrice: '$20.00',
@@ -193,21 +203,29 @@ describe('Orders API', () => {
           orderId: 'order-uuid-123',
           type: 'earn',
           points: 20,
-          description: 'Earned 20 loyalty points from order #ORDER-UU',
+          description: `Earned 20 loyalty points from order #${expectedRef}`,
         },
       });
     });
 
     it('should place an order successfully with NO email (optional)', async () => {
       vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
+      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(null);
 
       const payloadWithoutEmail = {
         ...validPayload,
         customerEmail: undefined,
       };
 
+      const now = new Date();
+      const yyyy = now.getUTCFullYear();
+      const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(now.getUTCDate()).padStart(2, '0');
+      const expectedRef = `ORD-${yyyy}${mm}${dd}-001`;
+
       const expectedOrder = {
         id: 'order-uuid-123',
+        reference: expectedRef,
         sessionId: payloadWithoutEmail.sessionId,
         status: 'PENDING',
         totalPrice: '$20.00',
@@ -230,6 +248,50 @@ describe('Orders API', () => {
 
       const response = await createOrder(req);
       expect(response.status).toBe(201);
+    });
+
+    it('should automatically increment sequence number for reference code on the same day', async () => {
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
+      
+      const now = new Date();
+      const yyyy = now.getUTCFullYear();
+      const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(now.getUTCDate()).padStart(2, '0');
+      const todayStr = `${yyyy}${mm}${dd}`;
+
+      // Mock that there's already an order with sequence 002
+      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce({
+        reference: `ORD-${todayStr}-002`,
+      } as any);
+
+      const expectedOrder = {
+        id: 'order-uuid-123',
+        reference: `ORD-${todayStr}-003`,
+        sessionId: validPayload.sessionId,
+        status: 'PENDING',
+        totalPrice: '$20.00',
+        totalAmount: 20.00,
+        customerName: validPayload.customerName,
+        customerPhone: validPayload.customerPhone,
+        customerEmail: validPayload.customerEmail,
+        shippingAddress: validPayload.shippingAddress,
+        pointsEarned: 20,
+        items: [],
+      };
+
+      vi.mocked(prisma.order.create).mockResolvedValueOnce(expectedOrder as any);
+      vi.mocked(prisma.pointsTransaction.create).mockResolvedValueOnce({} as any);
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validPayload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(201);
+      const data = await response.json();
+      expect(data.reference).toBe(`ORD-${todayStr}-003`);
     });
 
     it('should return 400 when phone number format is invalid', async () => {
@@ -437,6 +499,7 @@ describe('Orders API', () => {
           { customerEmail: { contains: 'Bob', mode: 'insensitive' } },
           { shippingAddress: { contains: 'Bob', mode: 'insensitive' } },
           { id: { contains: 'Bob', mode: 'insensitive' } },
+          { reference: { contains: 'Bob', mode: 'insensitive' } },
         ],
       };
 

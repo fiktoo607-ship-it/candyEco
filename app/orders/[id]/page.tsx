@@ -113,7 +113,7 @@ export default function OrderTrackingPage() {
               <div>
                 <h1 className="font-display text-4xl font-bold text-on-surface">Suivi de Commande</h1>
                 <p className="text-sm font-mono text-on-surface-variant mt-[4px]">
-                  Réf: #{order.id.toUpperCase()}
+                  Réf: {order.reference || `#${order.id.toUpperCase()}`}
                 </p>
               </div>
               <div className="flex items-center gap-sm">

@@ -172,6 +172,15 @@
 - **APIs & Database**:
   - `app/api/orders/[id]/route.ts`: Enforces backend validation checks restricting customers to only cancel pending orders and forbidding anyone from cancelling accepted/shipped/delivered orders.
 
+### 17. Order Reference Code
+- **Description**: Implemented unique, automatically generated order reference codes in the format `ORD-YYYYMMDD-001`. Searchable from the admin dashboard and visible to customers.
+- **Components**:
+  - `app/orders/[id]/page.tsx`: Displays reference code at the top of the customer order tracking page.
+  - `components/dashbord/OrdersSection.tsx`: Replaced the UUID display in the main dashboard orders list table and details modal header with the human-readable reference code.
+- **APIs & Database**:
+  - `prisma/schema.prisma`: Added `reference String? @unique` to `Order` model.
+  - `app/api/orders/route.ts`: Automatically computes sequence increment numbers based on existing orders for the current UTC day. Implemented a transaction retry loop to guarantee unique constraint safety under concurrent orders. Extended GET handler search query filters to match on the reference code.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
@@ -180,7 +189,7 @@
   - Created `tests/api/verification.test.ts` to test local sign-up input validation, token generation, SMTP email dispatching, expiration, and database cleaning.
   - Created `tests/api/trust.test.ts` to verify session linkage during order creation, trust score calculations, and users list sorting.
   - Created `tests/api/delivery.test.ts` to verify delivery methods CRUD API endpoints and order integration.
-  - Updated `tests/api/orders.test.ts` to verify email optionality, phone layout requirements, validation rules, order details query handler, ACCEPTED transitions, and cancellation validation checks.
+  - Updated `tests/api/orders.test.ts` to verify email optionality, phone layout requirements, validation rules, order details query handler, ACCEPTED transitions, cancellation validation checks, reference code sequence generation, and filters.
   - Created `tests/api/notifications.test.ts` to cover fetch, mark as read, mark all as read, and role authorization validation.
   - Mocked `orderNotification` in `tests/api/orders.test.ts`, `tests/api/trust.test.ts`, and `tests/api/delivery.test.ts` to maintain compatibility with order creation test paths.
-  - All 123 tests pass successfully under `vitest`.
+  - All 124 tests pass successfully under `vitest`.

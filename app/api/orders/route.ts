@@ -84,56 +84,106 @@ export async function POST(request: NextRequest) {
     const userId = session?.user?.id || null;
 
     // 3. Atomically write Order, OrderItems, and PointsTransaction
-    const { newOrder, notification } = await prisma.$transaction(async (tx) => {
-      const order = await tx.order.create({
-        data: {
-          sessionId,
-          status: 'PENDING',
-          totalPrice,
-          totalAmount,
-          customerName,
-          customerPhone,
-          customerEmail: customerEmail || null,
-          shippingAddress,
-          pointsEarned,
-          userId,
-          deliveryMethod,
-          items: {
-            create: orderItemsData,
-          },
-        },
-        include: {
-          items: {
-            include: {
-              product: true,
+    let attempts = 0;
+    const maxAttempts = 3;
+    let transactionResult;
+
+    while (attempts < maxAttempts) {
+      try {
+        transactionResult = await prisma.$transaction(async (tx) => {
+          // Generate reference code ORD-YYYYMMDD-XXX
+          const now = new Date();
+          const yyyy = now.getUTCFullYear();
+          const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+          const dd = String(now.getUTCDate()).padStart(2, '0');
+          const todayStr = `${yyyy}${mm}${dd}`;
+          const prefix = `ORD-${todayStr}-`;
+
+          const lastOrderForToday = await tx.order.findFirst({
+            where: {
+              reference: {
+                startsWith: prefix
+              }
             },
-          },
-        },
-      });
+            orderBy: {
+              reference: 'desc'
+            },
+            select: {
+              reference: true
+            }
+          });
 
-      if (pointsEarned > 0) {
-        await tx.pointsTransaction.create({
-          data: {
-            customerId: customerPhone,
-            orderId: order.id,
-            type: 'earn',
-            points: pointsEarned,
-            description: `Earned ${pointsEarned} loyalty points from order #${order.id.substring(0, 8).toUpperCase()}`,
-          },
+          let nextSeq = 1;
+          if (lastOrderForToday?.reference) {
+            const parts = lastOrderForToday.reference.split('-');
+            const lastSeq = parseInt(parts[2] || '0', 10);
+            nextSeq = lastSeq + 1;
+          }
+          const seqStr = String(nextSeq).padStart(3, '0');
+          const reference = `${prefix}${seqStr}`;
+
+          const order = await tx.order.create({
+            data: {
+              reference,
+              sessionId,
+              status: 'PENDING',
+              totalPrice,
+              totalAmount,
+              customerName,
+              customerPhone,
+              customerEmail: customerEmail || null,
+              shippingAddress,
+              pointsEarned,
+              userId,
+              deliveryMethod,
+              items: {
+                create: orderItemsData,
+              },
+            },
+            include: {
+              items: {
+                include: {
+                  product: true,
+                },
+              },
+            },
+          });
+
+          if (pointsEarned > 0) {
+            await tx.pointsTransaction.create({
+              data: {
+                customerId: customerPhone,
+                orderId: order.id,
+                type: 'earn',
+                points: pointsEarned,
+                description: `Earned ${pointsEarned} loyalty points from order #${reference}`,
+              },
+            });
+          }
+
+          const notif = await tx.orderNotification.create({
+            data: {
+              orderId: order.id,
+            },
+            include: {
+              order: true,
+            },
+          });
+
+          return { newOrder: order, notification: notif };
         });
+        break; // Success!
+      } catch (err: any) {
+        attempts++;
+        if (err.code === 'P2002' && attempts < maxAttempts) {
+          console.warn(`Unique constraint violation on order reference. Retrying attempt ${attempts}...`);
+          continue;
+        }
+        throw err;
       }
+    }
 
-      const notif = await tx.orderNotification.create({
-        data: {
-          orderId: order.id,
-        },
-        include: {
-          order: true,
-        },
-      });
-
-      return { newOrder: order, notification: notif };
-    });
+    const { newOrder, notification } = transactionResult!;
 
     try {
       const { notificationEmitter } = await import('@/lib/notification-emitter');
@@ -171,6 +221,7 @@ export async function GET(request: NextRequest) {
         customerEmail?: { contains: string; mode: 'insensitive' };
         shippingAddress?: { contains: string; mode: 'insensitive' };
         id?: { contains: string; mode: 'insensitive' };
+        reference?: { contains: string; mode: 'insensitive' };
       }>;
     }
 
@@ -187,6 +238,7 @@ export async function GET(request: NextRequest) {
         { customerEmail: { contains: query, mode: 'insensitive' } },
         { shippingAddress: { contains: query, mode: 'insensitive' } },
         { id: { contains: query, mode: 'insensitive' } },
+        { reference: { contains: query, mode: 'insensitive' } },
       ];
     }
 
