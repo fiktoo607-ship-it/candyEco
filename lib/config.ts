@@ -41,7 +41,9 @@ export const DEFAULT_CONFIGS: Record<string, any> = {
   contact_social_instagram: THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'Instagram')?.href || 'https://www.instagram.com/lesdelices.d.eva?igsh=aDQwZGYyMXNpeG5n',
   contact_social_instagram_user: THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'Instagram')?.username || 'lesdelices.d.eva',
   contact_social_tiktok: THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'TikTok')?.href || 'https://www.tiktok.com/@les.delices.d.eva?_r=1&_t=ZS-96y0UWvpi3o',
-  contact_social_tiktok_user: THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'TikTok')?.username || 'les.delices.d.eva'
+  contact_social_tiktok_user: THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'TikTok')?.username || 'les.delices.d.eva',
+  store_enabled: true,
+  store_message: "Le magasin est temporairement fermé."
 };
 
 export const CMS_MAP: Record<string, string> = {
@@ -63,6 +65,8 @@ export const CMS_MAP: Record<string, string> = {
   contact_social_instagram_user: 'contact.social.instagram_user',
   contact_social_tiktok: 'contact.social.tiktok',
   contact_social_tiktok_user: 'contact.social.tiktok_user',
+  store_enabled: 'cms.store_enabled',
+  store_message: 'cms.store_message',
 };
 
 function getNestedValue(obj: any, path: string): any {

@@ -10,6 +10,7 @@ import { useCartStore } from '@/lib/cart-store';
 import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
 import { useSession, signOut } from 'next-auth/react';
+import { useConfig } from '@/lib/hooks/use-config';
 
 const navigationLinks = [
   { href: '/home', label: dictionary.navigation.home },
@@ -50,6 +51,10 @@ export default function SiteHeader() {
 
   const totalItemsCount = useCartStore((state) => state.getTotalItemsCount());
   const { data: session, status } = useSession();
+  const { data: config } = useConfig();
+
+  const storeEnabled = config?.store_enabled !== false;
+  const storeMessage = config?.store_message;
 
   // Prevent SSR hydration mismatch on cart count
   const [mounted, setMounted] = useState(false);
@@ -62,7 +67,14 @@ export default function SiteHeader() {
   }, [pathname, closeMobileMenu]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-outline-variant/30 bg-surface/95 backdrop-blur">
+    <>
+      {mounted && !storeEnabled && storeMessage && (
+        <div className="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white px-gutter py-2 text-center font-semibold text-sm shadow-md flex items-center justify-center gap-xs relative z-50 animate-fade-in select-none">
+          <span className="material-symbols-outlined text-base animate-pulse">error</span>
+          <span>{storeMessage}</span>
+        </div>
+      )}
+      <header className="sticky top-0 z-50 border-b border-outline-variant/30 bg-surface/95 backdrop-blur">
       <div className="mx-auto flex h-20 max-w-container-max items-center justify-between px-gutter">
         <Link href="/home" className="flex items-center">
           <Image
@@ -234,5 +246,6 @@ export default function SiteHeader() {
         </div>
       ) : null}
     </header>
+    </>
   );
 }

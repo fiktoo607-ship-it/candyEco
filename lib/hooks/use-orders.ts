@@ -58,6 +58,8 @@ export interface Order {
   updatedAt: string;
   items: OrderItem[];
   deliveryMethod: string | null;
+  customerTrustScore?: number;
+  customerOrderCount?: number;
 }
 
 export interface OrdersResponse {

@@ -4,10 +4,20 @@ import { PUT as updateOrder, GET as getOrderDetail } from '@/app/api/orders/[id]
 import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { getSiteConfig } from '@/lib/config';
 
 // Mock next-auth session
 vi.mock('next-auth', () => ({
   getServerSession: vi.fn().mockResolvedValue(null),
+}));
+
+// Mock config
+vi.mock('@/lib/config', () => ({
+  getSiteConfig: vi.fn().mockImplementation((key) => {
+    if (key === 'store_enabled') return Promise.resolve(true);
+    if (key === 'store_message') return Promise.resolve('Le magasin est temporairement fermé.');
+    return Promise.resolve(null);
+  }),
 }));
 
 
@@ -88,6 +98,32 @@ describe('Orders API', () => {
         { productId: 'prod-2', quantity: 1 },
       ],
     };
+
+    it('should return 400 when store is closed', async () => {
+      vi.mocked(getSiteConfig).mockImplementation((key) => {
+        if (key === 'store_enabled') return Promise.resolve(false);
+        if (key === 'store_message') return Promise.resolve('Boutique fermée pour maintenance.');
+        return Promise.resolve(null);
+      });
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        body: JSON.stringify(validPayload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(400);
+
+      const data = await response.json();
+      expect(data.error).toBe('Boutique fermée pour maintenance.');
+
+      // Restore default mock
+      vi.mocked(getSiteConfig).mockImplementation((key) => {
+        if (key === 'store_enabled') return Promise.resolve(true);
+        if (key === 'store_message') return Promise.resolve('Le magasin est temporairement fermé.');
+        return Promise.resolve(null);
+      });
+    });
 
     it('should place an order successfully, calculate correct price/points, and create PointsTransaction', async () => {
       vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
@@ -448,6 +484,7 @@ describe('Orders API', () => {
     const mockOrdersJson = JSON.parse(JSON.stringify(mockOrders)).map((o: any) => ({
       ...o,
       customerTrustScore: 0,
+      customerOrderCount: 0,
     }));
 
     it('should support pagination metadata and return paginated orders list', async () => {
@@ -507,6 +544,32 @@ describe('Orders API', () => {
       expect(prisma.order.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: expectedWhere })
       );
+    });
+
+    it('should support sorting by status, customer trust score, and order count', async () => {
+      // 1. Test sorting by status (database-native sort path)
+      vi.mocked(prisma.order.count).mockResolvedValueOnce(12);
+      vi.mocked(prisma.order.findMany).mockResolvedValueOnce(mockOrders as any);
+
+      const reqStatus = new NextRequest('http://localhost/api/orders?sortBy=status&sortOrder=asc');
+      const resStatus = await getOrders(reqStatus);
+      expect(resStatus.status).toBe(200);
+      expect(prisma.order.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        orderBy: { status: 'asc' }
+      }));
+
+      // 2. Test sorting by orderCount (computed sorting path)
+      vi.mocked(prisma.order.count).mockResolvedValueOnce(2);
+      // First findMany call in the two-step logic retrieves metadata
+      vi.mocked(prisma.order.findMany).mockResolvedValueOnce(mockOrders as any);
+      // Second findMany call retrieves full objects
+      vi.mocked(prisma.order.findMany).mockResolvedValueOnce(mockOrders as any);
+
+      const reqOrderCount = new NextRequest('http://localhost/api/orders?sortBy=orderCount&sortOrder=desc');
+      const resOrderCount = await getOrders(reqOrderCount);
+      expect(resOrderCount.status).toBe(200);
+      const dataOrderCount = await resOrderCount.json();
+      expect(dataOrderCount.data[0].customerOrderCount).toBeDefined();
     });
 
     it('should return 500 when database count or query fails', async () => {

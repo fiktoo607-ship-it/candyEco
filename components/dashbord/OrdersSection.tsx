@@ -91,7 +91,9 @@ export default function OrdersSection() {
               }}
               className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary h-[46px]"
             >
-              <option value="createdAt">Trier par Date</option>
+              <option value="createdAt">Trier par Date (Récentes)</option>
+              <option value="status">Trier par Statut</option>
+              <option value="orderCount">Trier par Volume Commandes</option>
               <option value="trustScore">Trier par Score Trust</option>
             </select>
 
@@ -163,6 +165,20 @@ export default function OrdersSection() {
                     {order.customerEmail && (
                       <div className="text-xs text-on-surface-variant break-all">{order.customerEmail}</div>
                     )}
+                    <div className="flex flex-wrap items-center gap-xs mt-xs">
+                      {order.customerTrustScore !== undefined && (
+                        <span className="inline-flex items-center gap-xs rounded-full bg-emerald-500/10 px-2 py-[2px] text-[10px] font-bold text-emerald-600" title="Score de confiance (Commandes livrées)">
+                          <span className="material-symbols-outlined text-[10px] select-none">verified_user</span>
+                          Confiance: {order.customerTrustScore}
+                        </span>
+                      )}
+                      {order.customerOrderCount !== undefined && (
+                        <span className="inline-flex items-center gap-xs rounded-full bg-primary/10 px-2 py-[2px] text-[10px] font-bold text-primary" title="Volume total de commandes">
+                          <span className="material-symbols-outlined text-[10px] select-none">shopping_bag</span>
+                          Commandes: {order.customerOrderCount}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="p-md">
                     <div className="flex flex-col gap-xs text-xs text-on-surface max-w-[250px]">

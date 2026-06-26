@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useCartStore } from '@/lib/cart-store';
 import { useSubmitOrder } from '@/lib/hooks/use-orders';
 import dictionary from '@/lib/copy-dictionary.json';
+import { useConfig } from '@/lib/hooks/use-config';
 
 interface CheckoutFormProps {
   onSuccess: (orderId: string) => void;
@@ -18,6 +19,10 @@ interface DeliveryMethod {
 export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
   const { items, clearCart, getTotalPrice } = useCartStore();
   const submitOrderMutation = useSubmitOrder();
+
+  const { data: config } = useConfig();
+  const storeEnabled = config?.store_enabled !== false;
+  const storeMessage = config?.store_message || "Le magasin est temporairement fermé.";
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -60,6 +65,10 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!storeEnabled) {
+      alert("La boutique est fermée pour le moment. Prise de commande impossible.");
+      return;
+    }
     if (items.length === 0) return;
 
     if (!customerName || !customerPhone || !shippingAddress || !selectedMethod) {
@@ -231,15 +240,25 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
           </div>
         </div>
 
+        {!storeEnabled && (
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-sm text-amber-800 text-sm flex items-start gap-xs mt-md">
+            <span className="material-symbols-outlined text-base flex-shrink-0 mt-[2px]">warning</span>
+            <div>
+              <p className="font-bold">Boutique temporairement fermée</p>
+              <p className="text-xs mt-[2px]">{storeMessage}</p>
+            </div>
+          </div>
+        )}
+
         <button
           type="submit"
-          disabled={submitOrderMutation.isPending}
+          disabled={!storeEnabled || submitOrderMutation.isPending}
           className="w-full rounded-xl bg-primary py-md mt-md text-base font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-xs"
         >
           {submitOrderMutation.isPending && (
             <span className="material-symbols-outlined text-base animate-spin">sync</span>
           )}
-          {dictionary.cart.form.submitButton}
+          {!storeEnabled ? "Commandes désactivées" : dictionary.cart.form.submitButton}
         </button>
       </form>
     </div>

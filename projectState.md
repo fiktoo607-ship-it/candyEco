@@ -186,6 +186,22 @@
 - **APIs & Database**:
   - `tests/api/orders.test.ts`: Added automated integration tests to explicitly verify these per-order address storage and snapshotting rules.
 
+### 19. Store Availability Mode
+- **Description**: Enabled administrators to toggle store operations ON/OFF (e.g. Holiday, Maintenance, Temporary Closure) with a custom notification message. Displays the closure banner globally across client-facing pages, disables checkout inputs/submission on the frontend, and rejects order creation requests on the backend API with a 400 Bad Request.
+- **Components**:
+  - `components/dashbord/CmsSection.tsx`: Form toggle switches (Ouvert/Fermé) and text area for message configuration.
+  - `components/site-header.tsx`: Renders global closure warning banner with the custom notification message.
+  - `components/cart/CheckoutForm.tsx`: Warns checkout users and disables order placement when store is closed.
+- **APIs**:
+  - `app/api/orders/route.ts`: Blocks order placement on POST if the store is closed, returning the closure reason.
+
+### 20. Advanced Order Management
+- **Description**: Improved order management with sorting, filtering, searching, and pagination performance optimizations. Admins can filter by PENDING, ACCEPTED, CANCELLED statuses, search orders by ID/reference, customer name, or phone number, and sort by date, status, customer trust score, and order count. The backend utilizes native database queries for date/status sort paths and a lightweight two-step paginated fetch for computed fields.
+- **Components**:
+  - `components/dashbord/OrdersSection.tsx`: Integrated sorting controls and filters, and added trust score and volume of orders badges next to customer details in the orders list.
+- **APIs**:
+  - `app/api/orders/route.ts`: Extended GET handler to process advanced sorting pathways with optimal paginated queries, and attached customer metrics.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
@@ -194,7 +210,7 @@
   - Created `tests/api/verification.test.ts` to test local sign-up input validation, token generation, SMTP email dispatching, expiration, and database cleaning.
   - Created `tests/api/trust.test.ts` to verify session linkage during order creation, trust score calculations, and users list sorting.
   - Created `tests/api/delivery.test.ts` to verify delivery methods CRUD API endpoints and order integration.
-  - Updated `tests/api/orders.test.ts` to verify email optionality, phone layout requirements, validation rules, order details query handler, ACCEPTED transitions, cancellation validation checks, reference code sequence generation, filters, and per-order address snapshotting.
+  - Updated `tests/api/orders.test.ts` to verify email optionality, phone layout requirements, validation rules, order details query handler, ACCEPTED transitions, cancellation validation checks, reference code sequence generation, filters, per-order address snapshotting, store availability order rejection rules, status filtering, and sorting pathways (status, trust, volume).
   - Created `tests/api/notifications.test.ts` to cover fetch, mark as read, mark all as read, and role authorization validation.
   - Mocked `orderNotification` in `tests/api/orders.test.ts`, `tests/api/trust.test.ts`, and `tests/api/delivery.test.ts` to maintain compatibility with order creation test paths.
-  - All 125 tests pass successfully under `vitest`.
+  - All 127 tests pass successfully under `vitest`.

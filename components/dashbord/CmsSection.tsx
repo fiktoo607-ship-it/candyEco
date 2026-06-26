@@ -35,6 +35,8 @@ interface FormValues {
   contact_social_instagram_user: string;
   contact_social_tiktok: string;
   contact_social_tiktok_user: string;
+  store_enabled?: boolean;
+  store_message?: string;
 }
 
 export default function CmsSection() {
@@ -510,6 +512,56 @@ export default function CmsSection() {
             )}
             Enregistrer les modifications
           </button>
+        </div>
+
+        {/* SECTION: Statut de la Boutique */}
+        <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md md:p-lg shadow-soft space-y-md">
+          <div>
+            <h2 className="font-display text-2xl font-bold text-on-surface">Statut de la Boutique</h2>
+            <p className="text-sm text-on-surface-variant mt-[2px]">Activer ou désactiver temporairement les commandes des clients.</p>
+          </div>
+
+          <div className="space-y-sm">
+            <div className="flex items-center gap-md">
+              <label className="text-sm font-bold text-on-surface-variant flex-shrink-0">Prise de commande :</label>
+              <div className="flex items-center gap-xs">
+                <button
+                  type="button"
+                  onClick={() => setValue('store_enabled', true, { shouldDirty: true })}
+                  className={`rounded-full px-md py-xs text-sm font-semibold transition-all ${
+                    watch('store_enabled') === true
+                      ? 'bg-emerald-500 text-white shadow-soft'
+                      : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                  }`}
+                >
+                  Ouvert (ON)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setValue('store_enabled', false, { shouldDirty: true })}
+                  className={`rounded-full px-md py-xs text-sm font-semibold transition-all ${
+                    watch('store_enabled') === false
+                      ? 'bg-rose-500 text-white shadow-soft'
+                      : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                  }`}
+                >
+                  Fermé (OFF)
+                </button>
+              </div>
+            </div>
+
+            {watch('store_enabled') === false && (
+              <div className="flex flex-col gap-xs animate-fade-in">
+                <label className="text-sm font-bold text-on-surface-variant">Message d'indisponibilité (ex: Vacances, Maintenance, Fermeture temporaire)</label>
+                <textarea
+                  rows={2}
+                  {...register('store_message', { required: watch('store_enabled') === false })}
+                  placeholder="Nous sommes fermés pour les vacances d'été. Réouverture le 10 Juillet !"
+                  className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary resize-none w-full"
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* SECTION 2: Slogan & Story de l'accueil */}

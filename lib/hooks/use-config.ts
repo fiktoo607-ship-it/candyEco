@@ -22,6 +22,8 @@ export interface SiteConfigs {
   contact_social_instagram_user: string;
   contact_social_tiktok: string;
   contact_social_tiktok_user: string;
+  store_enabled: boolean;
+  store_message: string;
 }
 
 export function useConfig() {
