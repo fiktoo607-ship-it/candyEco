@@ -73,6 +73,7 @@ model Order {
   userId             String?
   user               User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
   deliveryMethod     String?
+  notifications      OrderNotification[]
 }
 
 model OrderItem {
@@ -189,4 +190,10 @@ model DeliveryMethod {
   updatedAt   DateTime @updatedAt
 }
 
-
+model OrderNotification {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

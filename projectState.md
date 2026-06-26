@@ -152,6 +152,19 @@
   - `app/api/orders/[id]/route.ts`: Added GET endpoint to retrieve order tracking information by ID for customer access.
   - `lib/hooks/use-orders.ts`: Integrated `deliveryMethod` into `Order` type interfaces.
 
+### 15. Order Notifications
+- **Description**: Real-time order notifications for administrators in the dashboard.
+- **Components**:
+  - `components/dashbord/NotificationBell.tsx`: Premium glassmorphic notification bell displaying an unread counter badge. Features sliding toast alerts and standard double chime tone (Web Audio API) for new orders. Clicking a notification marks it read and redirects admin to the "Commandes" tab with filters set to inspect that specific order.
+  - `app/dashboard/page.tsx`: Embedded the notification bell in the dashboard page header.
+- **APIs & Database**:
+  - `prisma/schema.prisma`: Added `OrderNotification` model, linked to `Order` with cascade delete.
+  - `lib/notification-emitter.ts`: Multi-module EventEmitter attached to `globalThis` to broadcast events.
+  - `app/api/orders/route.ts`: Inside transaction, creates `OrderNotification` record and emits event outside transaction.
+  - `app/api/notifications/route.ts`: GET endpoint fetches notifications (up to 50, sorted desc). PATCH handler marks specific or all notifications as read.
+  - `app/api/notifications/sse/route.ts`: Server-Sent Events endpoint streaming real-time notification events.
+  - `lib/hooks/use-notifications.ts`: Added React Query custom hooks `useNotifications` and `useMarkNotifications`.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
@@ -161,4 +174,6 @@
   - Created `tests/api/trust.test.ts` to verify session linkage during order creation, trust score calculations, and users list sorting.
   - Created `tests/api/delivery.test.ts` to verify delivery methods CRUD API endpoints and order integration.
   - Updated `tests/api/orders.test.ts` to verify email optionality, phone layout requirements, validation rules, order details query handler, and ACCEPTED transitions.
-  - All 111 tests pass successfully under `vitest`.
+  - Created `tests/api/notifications.test.ts` to cover fetch, mark as read, mark all as read, and role authorization validation.
+  - Mocked `orderNotification` in `tests/api/orders.test.ts`, `tests/api/trust.test.ts`, and `tests/api/delivery.test.ts` to maintain compatibility with order creation test paths.
+  - All 118 tests pass successfully under `vitest`.

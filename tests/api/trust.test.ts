@@ -24,6 +24,14 @@ vi.mock('@/lib/prisma', () => {
     pointsTransaction: {
       create: vi.fn(),
     },
+    orderNotification: {
+      create: vi.fn().mockImplementation((args) => Promise.resolve({
+        id: 'notif-uuid-123',
+        orderId: args.data.orderId,
+        read: false,
+        createdAt: new Date(),
+      })),
+    },
     $transaction: vi.fn((arg) => {
       if (typeof arg === 'function') {
         return arg(mockPrisma);

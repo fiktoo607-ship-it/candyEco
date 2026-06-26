@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     const userId = session?.user?.id || null;
 
     // 3. Atomically write Order, OrderItems, and PointsTransaction
-    const newOrder = await prisma.$transaction(async (tx) => {
+    const { newOrder, notification } = await prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
           sessionId,
@@ -123,8 +123,24 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      return order;
+      const notif = await tx.orderNotification.create({
+        data: {
+          orderId: order.id,
+        },
+        include: {
+          order: true,
+        },
+      });
+
+      return { newOrder: order, notification: notif };
     });
+
+    try {
+      const { notificationEmitter } = await import('@/lib/notification-emitter');
+      notificationEmitter.emit('new-order', notification);
+    } catch (e) {
+      console.error('[Orders API] Failed to emit new-order notification:', e);
+    }
 
     return NextResponse.json(newOrder, { status: 201 });
   } catch (error) {

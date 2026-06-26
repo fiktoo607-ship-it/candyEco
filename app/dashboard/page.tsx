@@ -9,6 +9,7 @@ import UsersSection from '@/components/dashbord/UsersSection';
 import DeliverySection from '@/components/dashbord/DeliverySection';
 import ProductModal from '@/components/dashbord/ProductModal';
 import DeleteModal from '@/components/dashbord/DeleteModal';
+import NotificationBell from '@/components/dashbord/NotificationBell';
 import { useDashboardStore } from '@/lib/dashboard-store';
 
 const CATEGORIES = ['gâteau', 'aliments traditionnel'];
@@ -40,17 +41,21 @@ export default function DashboardPage() {
               ? 'Gestion des utilisateurs'
               : 'Méthodes de livraison'}
           </h1>
-          {activeTab === 'products' && (
-            <button
-              onClick={() => openCreate(CATEGORIES[0])}
-              className="inline-flex items-center gap-xs rounded-full bg-primary px-md py-sm text-sm font-semibold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint hover:scale-[1.02]"
-            >
-              <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              Ajouter un nouveau produit
-            </button>
-          )}
+          <div className="flex items-center gap-md">
+            <NotificationBell />
+            
+            {activeTab === 'products' && (
+              <button
+                onClick={() => openCreate(CATEGORIES[0])}
+                className="inline-flex items-center gap-xs rounded-full bg-primary px-md py-sm text-sm font-semibold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint hover:scale-[1.02]"
+              >
+                <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Ajouter un nouveau produit
+              </button>
+            )}
+          </div>
         </header>
 
         <div className="mx-auto w-full max-w-container-max flex-1 p-gutter">
