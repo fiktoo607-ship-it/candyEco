@@ -78,7 +78,7 @@ export default function ProductsSection() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer md:w-56"
+              className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer h-[46px] md:w-56"
             >
               <option value="default">Tri par défaut</option>
               <option value="rating-desc">Note : Élevée à Faible</option>
@@ -128,8 +128,8 @@ export default function ProductsSection() {
               <tbody className="divide-y divide-outline-variant/20">
                 {currentItems.map((product) => (
                   <tr
-                     key={product.id}
-                     className="group transition-colors hover:bg-surface/50"
+                    key={product.id}
+                    className="group transition-colors hover:bg-surface/50"
                   >
                     <td className="p-md">
                       <div className="relative h-16 w-16 overflow-hidden rounded-lg bg-surface-container-high border border-outline-variant/20 shadow-sm">
@@ -151,7 +151,7 @@ export default function ProductsSection() {
                       </div>
                     </td>
                     <td className="p-md">
-                      <span className="inline-block rounded-full bg-secondary-container/20 px-sm py-xs text-sm text-on-surface font-medium border border-outline-variant/30 leading-tight">
+                      <span className="inline-block rounded-xl bg-secondary-container/20 px-sm py-xs text-sm text-on-surface font-medium border border-outline-variant/30 leading-normal max-w-[150px] text-center">
                         {product.category}
                       </span>
                     </td>
