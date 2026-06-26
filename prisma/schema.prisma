@@ -63,13 +63,10 @@ model Order {
   customerPhone      String?
   customerEmail      String?
   shippingAddress    String?             // Customer's location
-  pointsEarned       Int                 @default(0)
-  
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
   items              OrderItem[]
-  pointsTransactions PointsTransaction[]
 
   userId             String?
   user               User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -89,17 +86,6 @@ model OrderItem {
 
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
-}
-
-model PointsTransaction {
-  id          String    @id @default(uuid())
-  customerId  String?   // Links to session ID or customer email/phone
-  orderId     String?
-  order       Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  type        String    // e.g. "earn", "redeem"
-  points      Int       // Positive (earn) or negative (redeem) points
-  description String?
-  createdAt   DateTime  @default(now())
 }
 
 model SiteConfig {

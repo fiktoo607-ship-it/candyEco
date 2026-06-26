@@ -22,9 +22,6 @@ vi.mock('@/lib/prisma', () => {
     product: {
       findMany: vi.fn(),
     },
-    pointsTransaction: {
-      create: vi.fn(),
-    },
     orderNotification: {
       create: vi.fn().mockImplementation((args) => Promise.resolve({
         id: 'notif-uuid-123',

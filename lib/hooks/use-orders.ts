@@ -53,7 +53,6 @@ export interface Order {
   customerPhone: string | null;
   customerEmail: string | null;
   shippingAddress: string | null;
-  pointsEarned: number;
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];

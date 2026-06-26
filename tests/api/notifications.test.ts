@@ -23,9 +23,6 @@ vi.mock('@/lib/prisma', () => {
     product: {
       findMany: vi.fn(),
     },
-    pointsTransaction: {
-      create: vi.fn(),
-    },
     $transaction: vi.fn((arg) => {
       if (typeof arg === 'function') {
         return arg(mockPrisma);

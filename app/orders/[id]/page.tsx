@@ -245,10 +245,6 @@ export default function OrderTrackingPage() {
                       <span className="text-on-surface-variant">Sous-total</span>
                       <span className="font-medium text-on-surface">{order.totalPrice}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-on-surface-variant">Points gagnés</span>
-                      <span className="font-semibold text-emerald-600">+{order.pointsEarned} pts</span>
-                    </div>
                     <div className="border-t border-outline-variant/10 pt-sm flex justify-between items-center">
                       <span className="font-bold text-on-surface">Total payé</span>
                       <span className="text-xl font-bold text-primary">{order.totalPrice}</span>

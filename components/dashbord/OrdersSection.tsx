@@ -162,23 +162,6 @@ export default function OrdersSection() {
                   </td>
                   <td className="p-md">
                     <div className="font-semibold text-on-surface">{order.customerName}</div>
-                    {order.customerEmail && (
-                      <div className="text-xs text-on-surface-variant break-all">{order.customerEmail}</div>
-                    )}
-                    <div className="flex flex-wrap items-center gap-xs mt-xs">
-                      {order.customerTrustScore !== undefined && (
-                        <span className="inline-flex items-center gap-xs rounded-full bg-emerald-500/10 px-2 py-[2px] text-[10px] font-bold text-emerald-600" title="Score de confiance (Commandes livrées)">
-                          <span className="material-symbols-outlined text-[10px] select-none">verified_user</span>
-                          Confiance: {order.customerTrustScore}
-                        </span>
-                      )}
-                      {order.customerOrderCount !== undefined && (
-                        <span className="inline-flex items-center gap-xs rounded-full bg-primary/10 px-2 py-[2px] text-[10px] font-bold text-primary" title="Volume total de commandes">
-                          <span className="material-symbols-outlined text-[10px] select-none">shopping_bag</span>
-                          Commandes: {order.customerOrderCount}
-                        </span>
-                      )}
-                    </div>
                   </td>
                   <td className="p-md">
                     <div className="flex flex-col gap-xs text-xs text-on-surface max-w-[250px]">
@@ -383,33 +366,27 @@ export default function OrdersSection() {
               </div>
 
               {/* Order Metadata */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-sm pt-sm border-t border-outline-variant/20">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-sm pt-sm border-t border-outline-variant/20">
                 <div>
                   <span className="text-xs text-on-surface-variant block">Prix Total</span>
                   <span className="text-base font-bold text-primary">{selectedOrder.totalPrice}</span>
                 </div>
                 <div>
-                  <span className="text-xs text-on-surface-variant block">Points Gagnés</span>
-                  <span className="inline-block mt-xs rounded-full bg-primary/10 px-sm py-[2px] text-xs font-bold text-primary">
-                    +{selectedOrder.pointsEarned} pts
-                  </span>
-                </div>
-                <div>
                   <span className="text-xs text-on-surface-variant block">Date</span>
                   <span className="text-xs font-medium text-on-surface block mt-xs">{formatFrenchDate(selectedOrder.createdAt)}</span>
                 </div>
-                  <div>
-                    <span className="text-xs text-on-surface-variant block">Statut</span>
-                    <span className={`inline-block mt-xs rounded-full px-sm py-[2px] text-xs font-bold uppercase ${
-                      selectedOrder.status === 'PENDING'
-                        ? 'bg-amber-100 text-amber-800'
-                        : selectedOrder.status === 'ACCEPTED'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-rose-100 text-rose-800'
-                    }`}>
-                      {selectedOrder.status === 'PENDING' ? 'En attente' : selectedOrder.status === 'ACCEPTED' ? 'Acceptée' : 'Annulé'}
-                    </span>
-                  </div>
+                <div>
+                  <span className="text-xs text-on-surface-variant block">Statut</span>
+                  <span className={`inline-block mt-xs rounded-full px-sm py-[2px] text-xs font-bold uppercase ${
+                    selectedOrder.status === 'PENDING'
+                      ? 'bg-amber-100 text-amber-800'
+                      : selectedOrder.status === 'ACCEPTED'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-rose-100 text-rose-800'
+                  }`}>
+                    {selectedOrder.status === 'PENDING' ? 'En attente' : selectedOrder.status === 'ACCEPTED' ? 'Acceptée' : 'Annulé'}
+                  </span>
+                </div>
               </div>
             </div>
 

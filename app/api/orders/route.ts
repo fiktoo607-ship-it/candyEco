@@ -84,8 +84,6 @@ export async function POST(request: NextRequest) {
     }
 
     const totalPrice = `$${totalAmount.toFixed(2)}`;
-    // 1 point per $1 spent
-    const pointsEarned = Math.floor(totalAmount);
 
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id || null;
@@ -140,7 +138,6 @@ export async function POST(request: NextRequest) {
               customerPhone,
               customerEmail: customerEmail || null,
               shippingAddress,
-              pointsEarned,
               userId,
               deliveryMethod,
               items: {
@@ -155,18 +152,6 @@ export async function POST(request: NextRequest) {
               },
             },
           });
-
-          if (pointsEarned > 0) {
-            await tx.pointsTransaction.create({
-              data: {
-                customerId: customerPhone,
-                orderId: order.id,
-                type: 'earn',
-                points: pointsEarned,
-                description: `Earned ${pointsEarned} loyalty points from order #${reference}`,
-              },
-            });
-          }
 
           const notif = await tx.orderNotification.create({
             data: {

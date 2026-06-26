@@ -40,9 +40,6 @@ vi.mock('@/lib/prisma', () => {
       findFirst: vi.fn(),
       groupBy: vi.fn().mockResolvedValue([]),
     },
-    pointsTransaction: {
-      create: vi.fn(),
-    },
     orderNotification: {
       create: vi.fn().mockImplementation((args) => Promise.resolve({
         id: 'notif-uuid-123',
@@ -125,7 +122,7 @@ describe('Orders API', () => {
       });
     });
 
-    it('should place an order successfully, calculate correct price/points, and create PointsTransaction', async () => {
+    it('should place an order successfully, calculate correct price', async () => {
       vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
       vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(null);
 
@@ -134,7 +131,6 @@ describe('Orders API', () => {
       // prod-2: $15.00 * 1 = $15.00
       // Total amount = $20.00
       // Total price = '$20.00'
-      // Points earned = 20
 
       const now = new Date();
       const yyyy = now.getUTCFullYear();
@@ -153,7 +149,6 @@ describe('Orders API', () => {
         customerPhone: validPayload.customerPhone,
         customerEmail: validPayload.customerEmail,
         shippingAddress: validPayload.shippingAddress,
-        pointsEarned: 20,
         items: [
           {
             id: 'item-1',
@@ -175,7 +170,6 @@ describe('Orders API', () => {
       };
 
       vi.mocked(prisma.order.create).mockResolvedValueOnce(expectedOrder as any);
-      vi.mocked(prisma.pointsTransaction.create).mockResolvedValueOnce({} as any);
 
       const req = new NextRequest('http://localhost/api/orders', {
         method: 'POST',
@@ -205,7 +199,6 @@ describe('Orders API', () => {
           customerPhone: validPayload.customerPhone,
           customerEmail: validPayload.customerEmail,
           shippingAddress: validPayload.shippingAddress,
-          pointsEarned: 20,
           userId: null,
           items: {
             create: [
@@ -230,16 +223,6 @@ describe('Orders API', () => {
               product: true,
             },
           },
-        },
-      });
-
-      expect(prisma.pointsTransaction.create).toHaveBeenCalledWith({
-        data: {
-          customerId: validPayload.customerPhone,
-          orderId: 'order-uuid-123',
-          type: 'earn',
-          points: 20,
-          description: `Earned 20 loyalty points from order #${expectedRef}`,
         },
       });
     });
@@ -270,11 +253,9 @@ describe('Orders API', () => {
         customerPhone: payloadWithoutEmail.customerPhone,
         customerEmail: null,
         shippingAddress: payloadWithoutEmail.shippingAddress,
-        pointsEarned: 20,
       };
 
       vi.mocked(prisma.order.create).mockResolvedValueOnce(expectedOrder as any);
-      vi.mocked(prisma.pointsTransaction.create).mockResolvedValueOnce({} as any);
 
       const req = new NextRequest('http://localhost/api/orders', {
         method: 'POST',
@@ -311,12 +292,10 @@ describe('Orders API', () => {
         customerPhone: validPayload.customerPhone,
         customerEmail: validPayload.customerEmail,
         shippingAddress: validPayload.shippingAddress,
-        pointsEarned: 20,
         items: [],
       };
 
       vi.mocked(prisma.order.create).mockResolvedValueOnce(expectedOrder as any);
-      vi.mocked(prisma.pointsTransaction.create).mockResolvedValueOnce({} as any);
 
       const req = new NextRequest('http://localhost/api/orders', {
         method: 'POST',
@@ -869,11 +848,9 @@ describe('Orders API', () => {
         customerName: payload.customerName,
         customerPhone: payload.customerPhone,
         shippingAddress: payload.shippingAddress,
-        pointsEarned: 2,
       };
 
       vi.mocked(prisma.order.create).mockResolvedValueOnce(expectedOrder as any);
-      vi.mocked(prisma.pointsTransaction.create).mockResolvedValueOnce({} as any);
 
       const req = new NextRequest('http://localhost/api/orders', {
         method: 'POST',

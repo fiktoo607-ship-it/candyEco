@@ -92,7 +92,7 @@ export default function RegisterPage() {
               Créer un Compte
             </h2>
             <p className="mt-xs text-sm text-on-surface-variant">
-              Inscrivez-vous pour commander et profiter de vos points fidélité
+              Inscrivez-vous pour commander et suivre vos achats
             </p>
           </div>
 
