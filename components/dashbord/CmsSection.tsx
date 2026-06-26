@@ -78,7 +78,7 @@ export default function CmsSection() {
   const rawSelectedSlugs = watch('carousel_products') || [];
   const validProductSlugs = products.map(p => p.slug);
   const selectedSlugs = rawSelectedSlugs.filter(slug => validProductSlugs.includes(slug));
-  const maxSlidesInput = Number(watch('carousel_max_slides')) || 5;
+  const maxSlidesInput = Number(watch("carousel_max_slides")) + 1 || 5;
 
   const totalCurrentSlides = selectedSlugs.length + slides.length;
   const isLimitReached = totalCurrentSlides >= maxSlidesInput;
