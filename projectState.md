@@ -202,15 +202,23 @@
 - **APIs**:
   - `app/api/orders/route.ts`: Extended GET handler to process advanced sorting pathways with optimal paginated queries, and attached customer metrics.
 
+### 21. Pure Database Data Source & Cleanup
+- **Description**: Cleaned up the codebase to ensure the database acts as the single source of truth for the application's data. All mock data seeding and importing scripts were deleted. Client-side fallback mock datasets for carousel slides and delivery methods were removed.
+- **Removed Scripts**:
+  - `scripts/import-candies.ts`
+  - `scripts/migrate-tags.ts`
+  - `scripts/seed-carousel-products.ts`
+  - `scripts/seed-faqs.ts`
+  - `scripts/update-categories.ts`
+  - `scripts/upload-carousel.ts`
+- **Components**:
+  - `components/cart/CheckoutForm.tsx`: Removed the local fallback array for `DeliveryMethod`.
+  - `components/home/HeroCarousel.tsx`: Removed the static fallback slides array, rendering nothing (`null`) if no slides are returned from the database.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - Created `tests/api/auth.test.ts` to test signIn, jwt, and session callbacks.
-  - Created `tests/api/verification.test.ts` to test local sign-up input validation, token generation, SMTP email dispatching, expiration, and database cleaning.
-  - Created `tests/api/trust.test.ts` to verify session linkage during order creation, trust score calculations, and users list sorting.
-  - Created `tests/api/delivery.test.ts` to verify delivery methods CRUD API endpoints and order integration.
-  - Updated `tests/api/orders.test.ts` to verify email optionality, phone layout requirements, validation rules, order details query handler, ACCEPTED transitions, cancellation validation checks, reference code sequence generation, filters, per-order address snapshotting, store availability order rejection rules, status filtering, and sorting pathways (status, trust, volume).
-  - Created `tests/api/notifications.test.ts` to cover fetch, mark as read, mark all as read, and role authorization validation.
-  - Mocked `orderNotification` in `tests/api/orders.test.ts`, `tests/api/trust.test.ts`, and `tests/api/delivery.test.ts` to maintain compatibility with order creation test paths.
-  - All 127 tests pass successfully under `vitest`.
+  - All 127 tests pass successfully under `vitest` (`npx vitest run`).
+  - No existing tests were impacted by the removal of mock/seeding scripts or local fallbacks.
+

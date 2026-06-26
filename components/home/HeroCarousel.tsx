@@ -31,68 +31,21 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
 
-  const displaySlides: Slide[] =
-    slides.length > 0
-      ? slides.map((slide) => ({
-          imageUrl: slide.imageUrl,
-          title: slide.title,
-          description: slide.description,
-          primaryLink: slide.linkUrl
-            ? {
-                href: slide.linkUrl,
-                label: "Savoir plus",
-              }
-            : undefined,
-        }))
-      : [
-          {
-            imageUrl:
-              "https://res.cloudinary.com/dr8buntcb/image/upload/v1780692653/carousel/hyss2jjjyh6ichchm3c8.jpg",
-            title: "Chakhchoukhat Dfer",
-            description:
-              "Un plat traditionnel de l'Est algérien à base de petites pâtes coupées à la main, arrosées d'une sauce rouge piquante et garnies de viande et de pois chiches.",
-            primaryLink: {
-              href: "/our-product/chakhchoukhat-dfer",
-              label: "Savoir plus",
-            },
-          },
-          {
-            imageUrl:
-              "https://res.cloudinary.com/dr8buntcb/image/upload/v1780692654/carousel/tkafu2szdsqqjxrgzrin.jpg",
-            title: "Tajine Zitoun avec Khobz El Dar",
-            description:
-              "Un ragoût algérien classique aux olives vertes et poulet mijotés dans une sauce au citron, accompagné d'un pain maison moelleux.",
-            primaryLink: {
-              href: "/our-product/tajine-zitoun-avec-khobz-el-dar",
-              label: "Savoir plus",
-            },
-          },
-          {
-            imageUrl:
-              "https://res.cloudinary.com/dr8buntcb/image/upload/v1780692654/carousel/wqw7mqlukeroz9e87fbx.jpg",
-            title: "Sablés à la confiture",
-            description:
-              "Biscuits secs algériens incontourbables, très fondants, saupoudrés de sucre glace et assemblés avec de la confiture au centre.",
-            primaryLink: {
-              href: "/our-product/sables-a-la-confiture",
-              label: "Savoir plus",
-            },
-          },
-          {
-            imageUrl:
-              "https://res.cloudinary.com/dr8buntcb/image/upload/v1780692655/carousel/trjzocbatbpsbuu794ng.jpg",
-            title: "Dziriettes",
-            description:
-              "Une pâtisserie algéroise raffinée, composée d'une fine pâte croustillante farcie d'amandes parfumées au citron, puis généreusement trempée dans le miel.",
-            primaryLink: {
-              href: "/our-product/dziriettes",
-              label: "Savoir plus",
-            },
-          },
-        ];
+  const displaySlides: Slide[] = slides.map((slide) => ({
+    imageUrl: slide.imageUrl,
+    title: slide.title,
+    description: slide.description,
+    primaryLink: slide.linkUrl
+      ? {
+          href: slide.linkUrl,
+          label: "Savoir plus",
+        }
+      : undefined,
+  }));
 
   const startTimer = () => {
     stopTimer();
+    if (displaySlides.length === 0) return;
     timerRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
     }, 6000); // cycles slides every 6 seconds
@@ -111,12 +64,14 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
   }, [displaySlides.length]);
 
   const handleNext = () => {
+    if (displaySlides.length === 0) return;
     stopTimer();
     setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
     startTimer();
   };
 
   const handlePrev = () => {
+    if (displaySlides.length === 0) return;
     stopTimer();
     setCurrentSlide((prev) => (prev - 1 + displaySlides.length) % displaySlides.length);
     startTimer();
@@ -149,6 +104,10 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
     setTouchStartX(null);
     setTouchEndX(null);
   };
+
+  if (displaySlides.length === 0) {
+    return null;
+  }
 
   return (
     <section 

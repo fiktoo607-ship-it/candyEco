@@ -49,15 +49,6 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
       } catch (err) {
         console.error('Error fetching delivery methods:', err);
       }
-
-      // Local fallback
-      const fallbacks: DeliveryMethod[] = [
-        { id: 'fd-1', name: 'Home Delivery', description: 'Livraison à domicile', price: 0, active: true },
-        { id: 'fd-2', name: 'Office Pickup', description: 'Retrait au bureau', price: 0, active: true },
-        { id: 'fd-3', name: 'Store Pickup', description: 'Retrait en magasin', price: 0, active: true },
-      ];
-      setDeliveryMethods(fallbacks);
-      setSelectedMethod(fallbacks[0].name);
     };
 
     fetchMethods();
