@@ -187,7 +187,7 @@ export default function ProductDetails({ product }: { product: ProductData }) {
             onClick={() => addItem(product)}
             disabled={!isActionable}
             style={isActionable ? { backgroundColor: THEME_CONFIG.colorRoles.accent10.yellowPrimary, color: THEME_CONFIG.colorRoles.accent10.textOnYellow } : undefined}
-            className="w-full rounded-xl py-md text-base font-bold shadow-soft transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"
+            className="w-full rounded-xl px-md py-md text-base font-bold shadow-soft transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"
           >
             {buttonText}
           </button>

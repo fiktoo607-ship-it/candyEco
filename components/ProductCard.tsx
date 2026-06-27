@@ -118,9 +118,9 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
 
           {/* Quantity Controls & Add to Cart */}
-          <div className="flex items-center gap-xs">
+          <div className="flex flex-col gap-xs w-full mt-xs">
             {isActionable && (
-              <div className="flex items-center border border-outline-variant/60 rounded-full bg-surface-container-low p-0.5">
+              <div className="flex items-center justify-between border border-outline-variant/60 rounded-full bg-surface-container-low p-0.5 w-full">
                 <button
                   type="button"
                   onClick={handleDecrease}
@@ -132,7 +132,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
                   </svg>
                 </button>
-                <span className="w-10 text-center text-sm font-bold text-on-surface">
+                <span className="flex-1 text-center text-sm font-bold text-on-surface">
                   {quantity}
                 </span>
                 <button
@@ -150,7 +150,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               onClick={handleAddToCart}
               disabled={!isActionable}
               style={isActionable ? { backgroundColor: THEME_CONFIG.colorRoles.accent10.yellowPrimary, color: THEME_CONFIG.colorRoles.accent10.textOnYellow } : undefined}
-              className="flex-grow rounded-full py-sm text-sm font-bold shadow-soft transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed h-11 flex items-center justify-center disabled:bg-neutral-200 disabled:text-neutral-500"
+              className="w-full rounded-full py-sm text-sm font-bold shadow-soft transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed h-11 flex items-center justify-center disabled:bg-neutral-200 disabled:text-neutral-500 whitespace-nowrap"
             >
               {buttonText}
             </button>
