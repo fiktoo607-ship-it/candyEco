@@ -59,7 +59,7 @@
       "title": "Produits Populaires"
     },
     "story": {
-      "title": "Fait Main, sans Raccourci",
+      "title": "Fait Main, sans Raccourci zon8",
       "description": "Nous cuisons avec la rigueur de l'artisanat : fermentation lente, ingrédients d'exception et cuisson précise. Le résultat ? Des créations authentiques au goût incomparable.",
       "imageAlt": "Pain Artisanal"
     }
@@ -176,8 +176,7 @@
   "cms": {
     "carousel_products": [
       "artisanal-sourdough-loaf",
-      "chakhchoukha-traditionnelle",
-      "seasonal-berry-tart"
+      "chakhchoukha-traditionnelle"
     ],
     "homepage_story_title": "Fait Main, sans Raccourci",
     "homepage_story_description": "Nous cuisons avec la rigueur de l'artisanat : fermentation lente, ingrédients d'exception et cuisson précise. Le résultat ? Des créations authentiques au goût incomparable.",
