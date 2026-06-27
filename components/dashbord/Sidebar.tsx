@@ -1,6 +1,7 @@
 import { useDashboardStore } from '@/lib/dashboard-store';
 import { signOut } from 'next-auth/react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function Sidebar() {
   const { activeTab, setActiveTab } = useDashboardStore();
@@ -8,14 +9,16 @@ export default function Sidebar() {
   return (
     <aside className="sticky top-0 z-20 flex w-full flex-col border-r border-outline-variant/30 bg-surface-container-lowest shadow-soft md:min-h-screen md:w-64">
       <div className="flex items-center gap-sm p-lg">
-        <Image
-          src="/logo-title.png"
-          alt="Délices d'Eva Logo"
-          width={198}
-          height={40}
-          className="h-10 w-auto object-contain"
-          priority
-        />
+        <Link href="/home" className="hover:opacity-85 transition-opacity">
+          <Image
+            src="/logo-title.png"
+            alt="Délices d'Eva Logo"
+            width={198}
+            height={40}
+            className="h-10 w-auto object-contain"
+            priority
+          />
+        </Link>
       </div>
       <nav className="flex flex-1 flex-col gap-sm px-md">
         <button
