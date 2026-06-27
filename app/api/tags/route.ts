@@ -1,10 +1,14 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { ensureProductTags } from '@/lib/tags';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
+    // Ensure all products in the database have their tags assigned first
+    await ensureProductTags();
+
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q');
 
@@ -16,6 +20,9 @@ export async function GET(request: NextRequest) {
             contains: query,
             mode: 'insensitive',
           },
+          products: {
+            some: {}, // Only return tags associated with at least one product
+          },
         },
         select: { name: true },
         orderBy: { name: 'asc' },
@@ -24,6 +31,11 @@ export async function GET(request: NextRequest) {
     }
 
     const dbTags = await prisma.tag.findMany({
+      where: {
+        products: {
+          some: {}, // Only return tags associated with at least one product
+        },
+      },
       select: { name: true },
       orderBy: { name: 'asc' },
     });

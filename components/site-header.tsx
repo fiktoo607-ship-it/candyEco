@@ -107,7 +107,10 @@ export default function SiteHeader() {
           <Link href="/cart" className="relative flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-3 text-primary hover:bg-surface-container-low transition-colors ml-sm">
             <ShoppingCartIcon className="h-6 w-6" />
             {mounted && totalItemsCount > 0 && (
-              <span className="absolute -top-xs -right-xs flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white shadow-soft">
+              <span
+                style={{ backgroundColor: THEME_CONFIG.colorRoles.accent10.yellowPrimary, color: THEME_CONFIG.colorRoles.accent10.textOnYellow }}
+                className="absolute -top-xs -right-xs flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold shadow-soft"
+              >
                 {totalItemsCount}
               </span>
             )}
@@ -162,7 +165,10 @@ export default function SiteHeader() {
           <Link href="/cart" className="relative flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-3 text-primary">
             <ShoppingCartIcon className="h-6 w-6" />
             {mounted && totalItemsCount > 0 && (
-              <span className="absolute -top-xs -right-xs flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white shadow-soft">
+              <span
+                style={{ backgroundColor: THEME_CONFIG.colorRoles.accent10.yellowPrimary, color: THEME_CONFIG.colorRoles.accent10.textOnYellow }}
+                className="absolute -top-xs -right-xs flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold shadow-soft"
+              >
                 {totalItemsCount}
               </span>
             )}

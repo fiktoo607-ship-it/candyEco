@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useCartStore } from '@/lib/cart-store';
+import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
 
 interface ProductData {
@@ -24,6 +25,8 @@ export default function ProductDetails({ product }: { product: ProductData }) {
   const [hoverRating, setHoverRating] = useState(0);
   const [hasRated, setHasRated] = useState(false);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [canRate, setCanRate] = useState(false);
+  const [loadingCanRate, setLoadingCanRate] = useState(true);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -32,6 +35,23 @@ export default function ProductDetails({ product }: { product: ProductData }) {
         setHasRated(true);
       }
     }
+  }, [product.id]);
+
+  useEffect(() => {
+    async function checkCanRate() {
+      try {
+        const res = await fetch(`/api/products/${product.id}/can-rate`);
+        if (res.ok) {
+          const data = await res.json();
+          setCanRate(data.canRate);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingCanRate(false);
+      }
+    }
+    checkCanRate();
   }, [product.id]);
 
   const handleRate = async (value: number) => {
@@ -127,7 +147,13 @@ export default function ProductDetails({ product }: { product: ProductData }) {
 
         <div className="border-t border-outline-variant/20 pt-md">
           <h2 className="text-lg font-bold text-on-surface-variant">Évaluer ce produit</h2>
-          {hasRated ? (
+          {loadingCanRate ? (
+            <span className="text-xs text-on-surface-variant animate-pulse">Vérification de l'éligibilité...</span>
+          ) : !canRate ? (
+            <p className="mt-xs text-xs text-on-surface-variant/70 italic">
+              Vous pouvez évaluer ce produit uniquement après qu'une commande le contenant a été livrée.
+            </p>
+          ) : hasRated ? (
             <p className="mt-xs text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-xs">
               <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400">check_circle</span>
               Merci pour votre évaluation !
@@ -160,7 +186,8 @@ export default function ProductDetails({ product }: { product: ProductData }) {
           <button
             onClick={() => addItem(product)}
             disabled={!isActionable}
-            className="w-full rounded-xl bg-primary py-md text-base font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint disabled:opacity-60 disabled:cursor-not-allowed"
+            style={isActionable ? { backgroundColor: THEME_CONFIG.colorRoles.accent10.yellowPrimary, color: THEME_CONFIG.colorRoles.accent10.textOnYellow } : undefined}
+            className="w-full rounded-xl py-md text-base font-bold shadow-soft transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"
           >
             {buttonText}
           </button>

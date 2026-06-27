@@ -10,13 +10,14 @@ export interface CarouselSlide {
   imageUrl: string;
   linkUrl?: string | null;
   order?: number;
+  isProduct?: boolean;
 }
 
 interface Slide {
   imageUrl: string;
   title: string;
   description: string;
-  primaryLink?: { href: string; label: string };
+  primaryLink?: { href: string; label: string; isComingSoon: boolean };
 }
 
 interface HeroCarouselProps {
@@ -31,17 +32,27 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
 
-  const displaySlides: Slide[] = slides.map((slide) => ({
-    imageUrl: slide.imageUrl,
-    title: slide.title,
-    description: slide.description,
-    primaryLink: slide.linkUrl
-      ? {
-          href: slide.linkUrl,
-          label: "Savoir plus",
-        }
-      : undefined,
-  }));
+  const displaySlides: Slide[] = slides.map((slide) => {
+    const isProduct = slide.isProduct ?? slide.linkUrl?.startsWith('/our-product/');
+    return {
+      imageUrl: slide.imageUrl,
+      title: slide.title,
+      description: slide.description,
+      primaryLink: isProduct
+        ? (slide.linkUrl
+            ? {
+                href: slide.linkUrl,
+                label: "Savoir plus",
+                isComingSoon: false,
+              }
+            : undefined)
+        : {
+            href: slide.linkUrl || "#",
+            label: "Coming Soon",
+            isComingSoon: true,
+          },
+    };
+  });
 
   const startTimer = () => {
     stopTimer();
@@ -148,23 +159,29 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
                   dir="ltr"
                 >
                   {/* Elegant Typography */}
-                  <h1 className="mt-md font-display text-4xl font-black leading-tight md:text-5xl lg:text-6xl tracking-tight text-white drop-shadow-sm">
+                  <h1 className="mt-md font-display text-4xl font-black leading-tight md:text-5xl lg:text-6xl tracking-tight text-white drop-shadow-md max-w-[15ch] md:max-w-[18ch]">
                     {slide.title}
                   </h1>
 
-                  <p className="mt-md max-w-xl text-base md:text-lg leading-relaxed text-white/80 font-medium line-clamp-4 lg:line-clamp-none">
+                  <p className="mt-md max-w-xl text-lg md:text-2xl leading-relaxed text-neutral-300 font-medium line-clamp-4 lg:line-clamp-none">
                     {slide.description}
                   </p>
 
-                  {/* Action Buttons */}
+                   {/* Action Buttons */}
                   {slide.primaryLink && (
                     <div className="mt-lg flex flex-wrap gap-sm">
-                      <Link
-                        href={slide.primaryLink.href}
-                        className="rounded-xl bg-primary px-xl py-md text-base font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] hover:bg-surface-tint active:scale-[0.98]"
-                      >
-                        {slide.primaryLink.label}
-                      </Link>
+                      {slide.primaryLink.isComingSoon ? (
+                        <div className="rounded-xl bg-[#EAB308] px-[50px] py-[16px] text-base font-extrabold text-neutral-950 shadow-lg shadow-yellow-500/10 cursor-default select-none">
+                          {slide.primaryLink.label}
+                        </div>
+                      ) : (
+                        <Link
+                          href={slide.primaryLink.href}
+                          className="rounded-xl bg-[#EAB308] px-[50px] py-[16px] text-base font-extrabold text-neutral-950 shadow-lg shadow-yellow-500/20 transition-all hover:scale-[1.02] hover:bg-[#CA8A04] active:scale-[0.98]"
+                        >
+                          {slide.primaryLink.label}
+                        </Link>
+                      )}
                     </div>
                   )}
                 </div>
@@ -222,19 +239,19 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
         </button>
       )}
 
-      {/* Slide Indicator Pills centered at the bottom */}
+      {/* Slide Indicator Diamonds centered at the bottom */}
       {displaySlides.length > 1 && (
-        <div className="absolute bottom-md left-1/2 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-white/10 bg-neutral-900/65 px-md py-2 backdrop-blur-md shadow-lg">
+        <div className="absolute bottom-md left-1/2 z-30 flex -translate-x-1/2 items-center gap-4">
           {displaySlides.map((_, index) => {
             const isActive = index === currentSlide;
             return (
               <button
                 key={index}
                 onClick={() => handleDotClick(index)}
-                className={`h-1.5 rounded-full transition-all duration-500 ease-out ${
+                className={`w-2.5 h-2.5 rotate-45 transition-all duration-300 ease-out ${
                   isActive
-                    ? "w-6 bg-primary shadow-sm shadow-primary/30"
-                    : "w-1.5 bg-white/20 hover:bg-white/50"
+                    ? "bg-primary shadow-md shadow-primary/50 scale-125"
+                    : "bg-white/40 hover:bg-white/70 hover:scale-110"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />

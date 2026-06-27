@@ -79,6 +79,7 @@ export default function OrdersSection() {
             <option value="">Tous les statuts</option>
             <option value="PENDING">En attente</option>
             <option value="ACCEPTED">Acceptée</option>
+            <option value="DELIVERED">Livrée</option>
             <option value="CANCELLED">Annulé</option>
           </select>
 
@@ -198,11 +199,14 @@ export default function OrdersSection() {
                             ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900'
                             : order.status === 'ACCEPTED'
                             ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
+                            : order.status === 'DELIVERED'
+                            ? 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900'
                             : 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900'
                         }`}
                       >
                         <option value="PENDING">En attente</option>
                         <option value="ACCEPTED">Acceptée</option>
+                        <option value="DELIVERED">Livrée</option>
                         <option value="CANCELLED">Annulé</option>
                       </select>
                       {order.status === 'PENDING' && (
@@ -217,6 +221,20 @@ export default function OrdersSection() {
                           className="rounded-lg bg-emerald-600 px-sm py-xs text-xs font-bold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
                         >
                           Accepter
+                        </button>
+                      )}
+                      {order.status === 'ACCEPTED' && (
+                        <button
+                          onClick={() => {
+                            updateStatusMutation.mutate({
+                              id: order.id,
+                              status: 'DELIVERED',
+                            });
+                          }}
+                          disabled={updateStatusMutation.isPending}
+                          className="rounded-lg bg-blue-600 px-sm py-xs text-xs font-bold text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        >
+                          Livrer
                         </button>
                       )}
                       <button
@@ -382,9 +400,11 @@ export default function OrdersSection() {
                       ? 'bg-amber-100 text-amber-800'
                       : selectedOrder.status === 'ACCEPTED'
                       ? 'bg-emerald-100 text-emerald-800'
+                      : selectedOrder.status === 'DELIVERED'
+                      ? 'bg-blue-100 text-blue-800'
                       : 'bg-rose-100 text-rose-800'
                   }`}>
-                    {selectedOrder.status === 'PENDING' ? 'En attente' : selectedOrder.status === 'ACCEPTED' ? 'Acceptée' : 'Annulé'}
+                    {selectedOrder.status === 'PENDING' ? 'En attente' : selectedOrder.status === 'ACCEPTED' ? 'Acceptée' : selectedOrder.status === 'DELIVERED' ? 'Livrée' : 'Annulé'}
                   </span>
                 </div>
               </div>
@@ -408,6 +428,24 @@ export default function OrdersSection() {
                   className="rounded-lg bg-emerald-600 px-md py-sm text-sm font-semibold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
                 >
                   Accepter la commande
+                </button>
+              )}
+              {selectedOrder.status === 'ACCEPTED' && (
+                <button
+                  onClick={() => {
+                    updateStatusMutation.mutate({
+                      id: selectedOrder.id,
+                      status: 'DELIVERED',
+                    });
+                    setSelectedOrder({
+                      ...selectedOrder,
+                      status: 'DELIVERED',
+                    });
+                  }}
+                  disabled={updateStatusMutation.isPending}
+                  className="rounded-lg bg-blue-600 px-md py-sm text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  Marquer comme livrée
                 </button>
               )}
               <button

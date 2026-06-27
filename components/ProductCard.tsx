@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCartStore } from '@/lib/cart-store';
+import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
 
 export interface ProductCardProps {
@@ -148,7 +149,8 @@ export default function ProductCard({ product }: ProductCardProps) {
             <button
               onClick={handleAddToCart}
               disabled={!isActionable}
-              className="flex-grow rounded-full bg-primary py-sm text-sm font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint disabled:opacity-60 disabled:cursor-not-allowed h-11 flex items-center justify-center"
+              style={isActionable ? { backgroundColor: THEME_CONFIG.colorRoles.accent10.yellowPrimary, color: THEME_CONFIG.colorRoles.accent10.textOnYellow } : undefined}
+              className="flex-grow rounded-full py-sm text-sm font-bold shadow-soft transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed h-11 flex items-center justify-center disabled:bg-neutral-200 disabled:text-neutral-500"
             >
               {buttonText}
             </button>

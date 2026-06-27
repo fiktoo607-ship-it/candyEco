@@ -22,15 +22,15 @@
 - **Description**: Re-engineered the homepage carousel and admin dashboard to merge product selection checklist items and custom uploaded database slides, up to a user-defined max slides limit. Repositioned and redesigned the Next/Prev navigation buttons.
 - **Components**:
   - `components/dashbord/CmsSection.tsx`: Configures slide limit (`carousel_max_slides`), product selection checklist, and custom image uploads, dynamically enforcing the limit constraints.
-  - `components/home/HeroCarousel.tsx`: Made `order` type field optional. Moved the Prev/Next navigation buttons from the bottom indicators bar to the left and right edges of the slide, styled with a premium glassmorphic circle design. Keep dots/pills indicators centered at the bottom.
+  - `components/home/HeroCarousel.tsx`: Made `order` type field optional. Moved the Prev/Next navigation buttons from the bottom indicators bar to the left and right edges of the slide, styled with a premium glassmorphic circle design. Converted the bottom indicators to clean, borderless, larger diamond shapes (`rotate-45`) with expanded spacing and scale animations.
   - `app/home/page.tsx`: Merges checklist products (first) and custom uploaded slides (second) from database, capped by `carousel_max_slides`.
 - **APIs & Database**:
   - `prisma/schema.prisma`: Added `CarouselSlide` model.
   - `app/api/carousel-slides/route.ts` & `app/api/carousel-slides/[id]/route.ts`: Built GET, POST, PUT, DELETE endpoints for slides management.
   - `app/api/config/route.ts`: Validates dynamic max slides limits.
 
-### 4. Product Tags & Filtering (Dedicated Tag Model)
-- **Description**: Migrated product tags to a dedicated database `Tag` model with a many-to-many relationship to `Product`. Seeding has been applied to assign 2 to 6 random tags for every existing product in the database. Built an autocomplete tag search widget at the top of the product browser to allow filtering products by multiple tags dynamically.
+### 4. Product Tags & Filtering (Dedicated Tag Model & Automatic Validation)
+- **Description**: Migrated product tags to a dedicated database `Tag` model with a many-to-many relationship to `Product`. Built an autocomplete tag search widget at the top of the product browser to allow filtering products by multiple tags dynamically. Implemented automatic product tag verification ensuring that every product has tags assigned, and updated the tags filter suggestions to only show tags associated with at least one product.
 - **Components**:
   - `components/our-product/ProductBrowser.tsx`: Repositioned the main search bar to the top. Added a search input for tags next to it, complete with a dropdown displaying matching suggestions matching the user's typing (fetched from `/api/tags?q=...`). Supports multi-select, displaying selected tags as premium, deletable pills.
   - `components/dashbord/ProductModal.tsx`: Maintained compatibility with a chip-based tags editor, mapping `tags: string[]` in POST/PUT API request/response payloads to/from the database relation.
@@ -38,9 +38,11 @@
   - `components/ProductCard.tsx`: Displays up to 3 tags as styled badges below the product title.
 - **APIs & Database**:
   - `prisma/schema.prisma`: Replaced the string array with a many-to-many relationship using a dedicated `Tag` model (`tags Tag[]` on Product, `products Product[]` on Tag).
-  - `scripts/migrate-tags.ts`: A one-off script that populated `Tag` tables and associated 2 to 6 random tags with all products.
-  - `app/api/tags/route.ts`: Rewritten to query the `Tag` table and support case-insensitive prefix search (`?q=ل` returns matching tags like `لوز`, `حليب`, `لحم`).
-  - `app/api/products/route.ts` & `app/api/products/[id]/route.ts`: Updated GET, POST, and PUT handlers to link tags relation and map returned tags to `string[]` for frontend compatibility. GET queries support intersection filter via multiple nested `AND` conditions.
+  - `prisma/seed.ts`: Updated database seed script to explicitly connect initial products with tags upon creation.
+  - `lib/tags.ts`: Built a server-side helper `ensureProductTags` that scans the database for products lacking tags and maps appropriate tags based on Arabic/French keyword matching (e.g. chocolate, butter, lemon, olive oil, etc.).
+  - `app/api/tags/route.ts`: Rewritten to call `ensureProductTags` and query the `Tag` table, applying the `products: { some: {} }` constraint to filter out any unused tags from being shown in the autocomplete filter search.
+  - `app/api/products/route.ts` & `app/api/products/[id]/route.ts`: Updated GET, POST, and PUT handlers to link tags relation and map returned tags to `string[]` for frontend compatibility. GET queries call `ensureProductTags` first.
+  - `tests/api/tags.test.ts`: Added automated unit/integration tests to verify tag endpoints and product association rules.
 
 ### 5. Product Rating System
 - **Description**: Storing, editing and sorting products by ratings inside the admin dashboard while hiding ratings from customer views, plus allowing customers to rate products from the details page.
@@ -219,6 +221,7 @@
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 127 tests pass successfully under `vitest` (`npx vitest run`).
-  - No existing tests were impacted by the removal of mock/seeding scripts or local fallbacks.
+  - All 129 tests pass successfully under `vitest` (`npx vitest run`).
+  - Added new integration tests under `tests/api/tags.test.ts` to verify filtering and tag validation constraints.
+
 

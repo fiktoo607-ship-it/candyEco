@@ -40,9 +40,9 @@ export async function PUT(
       }
     }
 
-    // Restrictions: Cannot cancel Accepted orders
-    if (targetStatus === 'CANCELLED' && currentStatus === 'ACCEPTED') {
-      return NextResponse.json({ error: 'Cannot cancel an accepted order' }, { status: 400 });
+    // Restrictions: Cannot cancel Accepted or Delivered orders
+    if (targetStatus === 'CANCELLED' && (currentStatus === 'ACCEPTED' || currentStatus === 'DELIVERED')) {
+      return NextResponse.json({ error: 'Cannot cancel an accepted or delivered order' }, { status: 400 });
     }
 
     const updatedOrder = await prisma.order.update({

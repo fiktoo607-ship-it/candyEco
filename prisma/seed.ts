@@ -18,7 +18,8 @@ const initialProducts = [
     story: 'نبدأ بتحضير عجينة الكرواسون الكلاسيكية على مدار 3 أيام، حيث نستخدم زبدة فرنسية فاخرة للحصول على طبقات هشة ومقرمشة تذوب في الفم.',
     limitBay: 10,
     state: 'exist',
-    publishedAt: new Date()
+    publishedAt: new Date(),
+    tags: ['حليب', 'سكر']
   },
   {
     title: 'تارت التوت الموسمي',
@@ -30,7 +31,8 @@ const initialProducts = [
     story: 'يجمع هذا التارت بين كريمة الكاسترد المخملية بنكهة فانيليا مدغشقر، وتشكيلة من التوت البري الطازج المنتقى بعناية فائقة.',
     limitBay: 5,
     state: 'exist',
-    publishedAt: new Date()
+    publishedAt: new Date(),
+    tags: ['حليب', 'سكر']
   },
   {
     title: 'رغيف العجين المخمر الحرفي',
@@ -42,7 +44,8 @@ const initialProducts = [
     story: 'رغيف يخبز بالخميرة الطبيعية التي نغذيها يومياً منذ سنوات. مخمر ببطء لمدة 24 ساعة ليعطي القشرة المقرمشة واللب الطري ذو الطعم الحامض المميز.',
     limitBay: null,
     state: 'exist',
-    publishedAt: new Date()
+    publishedAt: new Date(),
+    tags: ['زيت', 'سمسم']
   },
   {
     title: 'كعكة الكاكاو منتصف الليل',
@@ -54,7 +57,8 @@ const initialProducts = [
     story: 'كعكة الكاكاو الفاخرة التي تلبي شغف عشاق الشوكولاتة الداكنة، مغطاة بطبقات سميكة من الغاناش الغني والناعم.',
     limitBay: 3,
     state: 'exist',
-    publishedAt: new Date()
+    publishedAt: new Date(),
+    tags: ['شوكولا', 'سكر', 'حليب']
   },
   {
     title: 'رقائق الشوكولاتة بملح البحر',
@@ -66,7 +70,8 @@ const initialProducts = [
     story: 'بسكويت كلاسيكي محضر بقطع الشوكولاتة الداكنة الفاخرة، رشينا عليها ملح البحر الخشن لموازنة الحلاوة وإبراز النكهة الحقيقية.',
     limitBay: 12,
     state: 'exist',
-    publishedAt: new Date()
+    publishedAt: new Date(),
+    tags: ['شوكولا', 'سكر', 'بندق']
   },
   {
     title: 'تارت الحمضيات والتوت',
@@ -78,7 +83,8 @@ const initialProducts = [
     story: 'مزيج رائع من خثارة الليمون الحامض والمنعش والتوت البري الأحمر على قاعدة تارت مقرمشة ومغذية.',
     limitBay: 4,
     state: 'outofStock',
-    publishedAt: new Date()
+    publishedAt: new Date(),
+    tags: ['ليمون', 'سكر']
   },
   {
     title: 'مجموعة الماكرون الحرفية',
@@ -90,7 +96,8 @@ const initialProducts = [
     story: 'علبة ماكرون فرنسي مخبوز بدقة متناهية بقشرة خارجية هشة وقلب طري غني بالنكهات الحرفية المتنوعة.',
     limitBay: 2,
     state: 'commingSoun',
-    publishedAt: null
+    publishedAt: null,
+    tags: ['لوز', 'سكر']
   },
   {
     title: "Huile d'olive Traditionnelle",
@@ -102,7 +109,8 @@ const initialProducts = [
     story: "Cette huile d'olive est produite selon des méthodes traditionnelles transmises de génération en génération, offrant un goût riche et authentique.",
     limitBay: 5,
     state: "exist",
-    publishedAt: new Date()
+    publishedAt: new Date(),
+    tags: ['زيت']
   },
   {
     title: "Chakhchoukha Traditionnelle",
@@ -114,7 +122,8 @@ const initialProducts = [
     story: "Un plat traditionnel emblématique et convivial, préparé à la main pour faire revivre les saveurs d'antan.",
     limitBay: 5,
     state: "exist",
-    publishedAt: new Date()
+    publishedAt: new Date(),
+    tags: ['لحم']
   }
 ];
 
@@ -124,8 +133,17 @@ async function main() {
   await prisma.product.deleteMany({});
   
   for (const p of initialProducts) {
+    const { tags, ...productData } = p;
     const product = await prisma.product.create({
-      data: p
+      data: {
+        ...productData,
+        tags: tags ? {
+          connectOrCreate: tags.map((name: string) => ({
+            where: { name },
+            create: { name }
+          }))
+        } : undefined
+      }
     });
     console.log(`Created product with id: ${product.id}`);
   }

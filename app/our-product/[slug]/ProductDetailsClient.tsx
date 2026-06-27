@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useCartStore } from '@/lib/cart-store';
+import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
 
 interface ProductData {
@@ -85,7 +86,8 @@ export default function ProductDetailsClient({ product }: { product: ProductData
           <button
             onClick={() => addItem(product)}
             disabled={!isActionable}
-            className="w-full rounded-xl bg-primary py-md text-base font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint disabled:opacity-60 disabled:cursor-not-allowed"
+            style={isActionable ? { backgroundColor: THEME_CONFIG.colorRoles.accent10.yellowPrimary, color: THEME_CONFIG.colorRoles.accent10.textOnYellow } : undefined}
+            className="w-full rounded-xl py-md text-base font-bold shadow-soft transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"
           >
             {buttonText}
           </button>

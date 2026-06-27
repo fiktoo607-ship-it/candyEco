@@ -168,6 +168,7 @@ export default async function HomePage() {
           description: p.description,
           imageUrl: p.imageUrl,
           linkUrl: `/our-product/${p.slug}`,
+          isProduct: true,
         }));
     }
 
@@ -180,6 +181,7 @@ export default async function HomePage() {
       description: slide.description,
       imageUrl: slide.imageUrl,
       linkUrl: slide.linkUrl,
+      isProduct: false,
     }));
 
     carouselSlides = [...productSlides, ...formattedCustomSlides].slice(0, maxSlides);

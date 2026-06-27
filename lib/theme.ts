@@ -16,6 +16,24 @@ export interface BrandConfig {
 export interface ThemeConfig {
   brand: BrandConfig;
   colors: Record<string, string>;
+  // تحديد أدوار الألوان بناءً على قاعدة 60-30-10 لتسهيل التطبيق في الـ UI
+  colorRoles: {
+    dominant60: {
+      background: string;
+      surface: string;
+      surfaceCard: string;
+    };
+    secondary30: {
+      textMain: string;
+      brandIdentity: string;
+      textMuted: string;
+    };
+    accent10: {
+      yellowPrimary: string;
+      yellowLight: string;
+      textOnYellow: string;
+    };
+  };
   borderRadius: Record<string, string>;
   spacing: Record<string, string>;
   boxShadow: Record<string, string>;
@@ -33,8 +51,16 @@ export const THEME_CONFIG: ThemeConfig = {
       email: "contact@boulangerie-artisanale.fr",
       hours: "Lundi - Samedi : 7h00 - 18h00 | Dimanche : Fermé",
       socialLinks: [
-        { label: "Instagram", href: "https://www.instagram.com/lesdelices.d.eva?igsh=aDQwZGYyMXNpeG5n", username: "lesdelices.d.eva" },
-        { label: "TikTok", href: "https://www.tiktok.com/@les.delices.d.eva?_r=1&_t=ZS-96y0UWvpi3o", username: "les.delices.d.eva" }
+        {
+          label: "Instagram",
+          href: "https://www.instagram.com/lesdelices.d.eva?igsh=aDQwZGYyMXNpeG5n",
+          username: "lesdelices.d.eva",
+        },
+        {
+          label: "TikTok",
+          href: "https://www.tiktok.com/@les.delices.d.eva?_r=1&_t=ZS-96y0UWvpi3o",
+          username: "les.delices.d.eva",
+        },
       ],
     },
   },
@@ -84,9 +110,29 @@ export const THEME_CONFIG: ThemeConfig = {
     "surface-container": "#e8ebf3",
     "surface-container-high": "#dee0e8",
     "on-secondary-container": "#302800",
-    "secondary-fixed": "#fff38d",
+    "secondary-fixed": "#EAB308",
     "on-secondary-fixed-variant": "#4f4000",
   },
+
+  // تطبيق توزيع قاعدة 60 - 30 - 10 بشكل صريح ومباشر
+  colorRoles: {
+    dominant60: {
+      background: "#f8f9ff", // مساحة الخلفية الأساسية (Light Surface)
+      surface: "#ffffff",    // الأقسام الكبيرة (Light Surface)
+      surfaceCard: "#ffffff", // بطاقات المنتجات والقوائم (Light Surface)
+    },
+    secondary30: {
+      textMain: "#1a1b23", // النصوص الأساسية والعناوين (Deep Text)
+      brandIdentity: "#30048d", // لون الهوية الأساسي (Deep Brand Color)
+      textMuted: "#30048d", // النصوص الفرعية والوصف (Deep Brand Color)
+    },
+    accent10: {
+      yellowPrimary: "#EAB308", // الأصفر الذهبي المميز للأزرار والهايلايت
+      yellowLight: "#EAB308",   // نفس درجة الأصفر للأزرار الفورية
+      textOnYellow: "#0a0a0a",  // لون النص داكن جداً (neutral-950) لتباين مثالي وسهل القراءة
+    },
+  },
+
   borderRadius: {
     DEFAULT: "0.25rem",
     lg: "0.5rem",

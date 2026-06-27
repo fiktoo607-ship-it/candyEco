@@ -169,6 +169,28 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid rating value. Must be a number between 1 and 5.' }, { status: 400 });
     }
 
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Vous devez vous connecter pour évaluer un produit.' }, { status: 401 });
+    }
+
+    // Verification: Order containing the product must be DELIVERED
+    const deliveredOrder = await prisma.order.findFirst({
+      where: {
+        userId: session.user.id,
+        status: 'DELIVERED',
+        items: {
+          some: {
+            productId: id
+          }
+        }
+      }
+    });
+
+    if (!deliveredOrder) {
+      return NextResponse.json({ error: 'Vous ne pouvez évaluer que les produits qui vous ont été livrés.' }, { status: 403 });
+    }
+
     const product = await prisma.product.findUnique({
       where: { id }
     });

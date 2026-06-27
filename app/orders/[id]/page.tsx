@@ -72,7 +72,8 @@ export default function OrderTrackingPage() {
 
   const steps = [
     { key: 'PENDING', label: 'En attente', icon: 'hourglass_empty', desc: 'Votre commande est en cours de validation par nos équipes.' },
-    { key: 'ACCEPTED', label: 'Acceptée', icon: 'check_circle', desc: 'Votre commande a été acceptée et est en cours de préparation.' }
+    { key: 'ACCEPTED', label: 'Acceptée', icon: 'check_circle', desc: 'Votre commande a été acceptée et est en cours de préparation.' },
+    { key: 'DELIVERED', label: 'Livrée', icon: 'local_shipping', desc: 'Votre commande a été livrée avec succès !' }
   ];
 
   // Helper to determine active step index
@@ -227,8 +228,17 @@ export default function OrderTrackingPage() {
                         <div className="flex flex-col">
                           <span className="font-bold text-on-surface text-sm">{item.product?.title || 'Produit'}</span>
                           <span className="text-xs text-on-surface-variant">Prix unitaire: {item.priceAtPurchase}</span>
+                          {order.status === 'DELIVERED' && item.product?.slug && (
+                            <Link
+                              href={`/our-product/${item.product.slug}`}
+                              className="text-xs font-semibold text-primary hover:underline mt-xs flex items-center gap-xs"
+                            >
+                              <span className="material-symbols-outlined text-sm">star</span>
+                              Évaluer ce produit
+                            </Link>
+                          )}
                         </div>
-                        <span className="text-sm font-bold text-primary">x{item.quantity}</span>
+                        <span className="text-sm font-bold text-primary flex items-center">x{item.quantity}</span>
                       </div>
                     ))}
                   </div>
