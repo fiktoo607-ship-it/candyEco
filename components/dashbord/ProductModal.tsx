@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from 'react';
-import { convertToWebP } from '@/lib/image-utils';
-import { useDashboardStore } from '@/lib/dashboard-store';
-import { useCreateProduct, useUpdateProduct, useUploadImage } from '@/lib/hooks/use-products';
+import React from 'react';
+import { useProductModal } from './hooks/useProductModal';
 import {
   ProductBasicInfo,
   ProductImageUpload,
@@ -18,7 +16,6 @@ export default function ProductModal() {
     isModalOpen,
     setIsModalOpen,
     modalMode,
-    editingId,
     title,
     setTitle,
     slug,
@@ -28,7 +25,6 @@ export default function ProductModal() {
     imageUrl,
     setImageUrl,
     uploadError,
-    setUploadError,
     description,
     setDescription,
     story,
@@ -46,115 +42,18 @@ export default function ProductModal() {
     rating,
     setRating,
     tags,
-    setTags,
-  } = useDashboardStore();
-
-  const [newTagInput, setNewTagInput] = useState("");
-
-  const handleAddTag = () => {
-    const trimmed = newTagInput.trim();
-    if (trimmed && !tags.includes(trimmed)) {
-      setTags([...tags, trimmed]);
-      setNewTagInput("");
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((t) => t !== tagToRemove));
-  };
-
-  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag();
-    }
-  };
-
-  const createMutation = useCreateProduct();
-  const updateMutation = useUpdateProduct();
-  const uploadMutation = useUploadImage();
-
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
-  const isUploading = uploadMutation.isPending;
+    newTagInput,
+    setNewTagInput,
+    isSubmitting,
+    isUploading,
+    handleAddTag,
+    handleRemoveTag,
+    handleTagKeyDown,
+    handleFileUpload,
+    handleSubmit,
+  } = useProductModal();
 
   if (!isModalOpen) return null;
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadError(null);
-
-    try {
-      // Convert image to WebP format before uploading
-      const webpBlob = await convertToWebP(file);
-      
-      const originalName = file.name;
-      const dotIndex = originalName.lastIndexOf(".");
-      const baseName = dotIndex !== -1 ? originalName.substring(0, dotIndex) : originalName;
-      const webpFileName = `${baseName}.webp`;
-
-      const webpFile = new File([webpBlob], webpFileName, { type: "image/webp" });
-
-      if (webpFile.size > 10 * 1024 * 1024) {
-        setUploadError("La taille de l'image doit être inférieure à 10 Mo");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("file", webpFile);
-
-      const data = await uploadMutation.mutateAsync(formData);
-      setImageUrl(data.url);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Échec du chargement de l'image";
-      console.error(msg);
-      setUploadError(msg);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isUploading) {
-      alert("Veuillez attendre la fin du chargement de l'image.");
-      return;
-    }
-    if (!title || !slug || !price || !imageUrl || !description || !story) {
-      alert('Veuillez remplir tous les champs obligatoires.');
-      return;
-    }
-
-    const payload = {
-      title,
-      slug,
-      price,
-      imageUrl,
-      description,
-      story,
-      category,
-      limitBay: limitBay.trim() === '' ? null : Number(limitBay),
-      state,
-      visibility: visibility.trim() === '' ? 0 : Number(visibility),
-      rating: rating.trim() === '' ? 0.0 : Number(rating),
-      tags,
-      publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
-    };
-
-    try {
-      if (modalMode === 'create') {
-        await createMutation.mutateAsync(payload);
-      } else {
-        if (!editingId) return;
-        await updateMutation.mutateAsync({ id: editingId, payload });
-      }
-      setIsModalOpen(false);
-    } catch (err) {
-      console.error(err);
-      const errMsg =
-        err instanceof Error ? err.message : "Une erreur est survenue lors de l'enregistrement.";
-      alert(errMsg);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-md bg-black/40 backdrop-blur-sm animate-fade-in">

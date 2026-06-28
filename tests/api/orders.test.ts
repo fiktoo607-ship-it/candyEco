@@ -723,7 +723,7 @@ describe('Orders API', () => {
       const response = await updateOrder(req, { params: Promise.resolve({ id: 'order-1' }) });
       expect(response.status).toBe(400);
       const data = await response.json();
-      expect(data.error).toBe('Cannot cancel an accepted order');
+      expect(data.error).toBe('Cannot cancel an accepted or delivered order');
     });
 
     it('should allow admin to update order status to ACCEPTED from PENDING', async () => {

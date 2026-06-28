@@ -40,6 +40,7 @@ vi.mock('@/lib/prisma', () => {
       create: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+      findFirst: vi.fn(),
     },
     $transaction: vi.fn((arg) => {
       if (typeof arg === 'function') {
@@ -538,6 +539,7 @@ describe('Products API', () => {
 
   describe('POST /api/products/[id] (User Rating Submission)', () => {
     it('should successfully submit a rating and calculate running average', async () => {
+      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce({ id: 'order-1' } as any);
       vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(mockProduct);
 
       const newRatingValue = 3.0; // ((4.5 * 2) + 3.0) / 3 = 12 / 3 = 4.0
@@ -590,6 +592,7 @@ describe('Products API', () => {
     });
 
     it('should return 404 if product is not found', async () => {
+      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce({ id: 'order-1' } as any);
       vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(null);
 
       const req = new NextRequest(`http://localhost/api/products/unknown-id`, {

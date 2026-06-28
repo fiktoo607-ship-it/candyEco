@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from 'react';
-import { useOrders, useUpdateOrderStatus, Order } from '@/lib/hooks/use-orders';
-import { useDashboardStore } from '@/lib/dashboard-store';
+import React from 'react';
+import { useOrdersSection } from './hooks/useOrdersSection';
 import {
   OrdersFilters,
   OrdersTable,
@@ -17,24 +16,20 @@ export default function OrdersSection() {
     setOrderStatusFilter,
     orderCurrentPage,
     setOrderCurrentPage,
-  } = useDashboardStore();
-
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState('desc');
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-
-  const ordersPerPage = 5;
-
-  const { data: ordersData, isLoading: isOrdersLoading, error: ordersError } = useOrders({
-    page: orderCurrentPage,
-    limit: ordersPerPage,
-    query: orderSearchQuery,
-    status: orderStatusFilter,
     sortBy,
+    setSortBy,
     sortOrder,
-  });
-
-  const updateStatusMutation = useUpdateOrderStatus();
+    setSortOrder,
+    selectedOrder,
+    setSelectedOrder,
+    ordersPerPage,
+    orders,
+    isLoading,
+    error,
+    totalPages,
+    totalOrders,
+    updateStatusMutation,
+  } = useOrdersSection();
 
   return (
     <div className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-soft border border-outline-variant/10">
@@ -50,19 +45,19 @@ export default function OrdersSection() {
         setSortBy={setSortBy}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
-        totalOrders={ordersData?.meta?.total || 0}
+        totalOrders={totalOrders}
       />
 
       {/* Orders Table & Pagination */}
       <OrdersTable
-        orders={ordersData?.data || []}
-        isLoading={isOrdersLoading}
-        error={ordersError}
+        orders={orders}
+        isLoading={isLoading}
+        error={error as Error | null}
         ordersPerPage={ordersPerPage}
         orderCurrentPage={orderCurrentPage}
         setOrderCurrentPage={setOrderCurrentPage}
-        totalPages={ordersData?.meta?.totalPages || 0}
-        totalOrders={ordersData?.meta?.total || 0}
+        totalPages={totalPages}
+        totalOrders={totalOrders}
         updateStatusMutation={updateStatusMutation}
         onViewDetails={setSelectedOrder}
       />

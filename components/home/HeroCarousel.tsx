@@ -195,7 +195,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
       {displaySlides.length > 1 && (
         <button
           onClick={handlePrev}
-          className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-30 flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border border-white/10 bg-neutral-900/40 text-white/70 backdrop-blur-md transition-all duration-300 hover:bg-primary hover:border-primary hover:text-white hover:scale-110 active:scale-95 shadow-lg shadow-black/20"
+          className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-30 flex h-10 w-10 md:h-12 md:w-12 items-center justify-center text-white opacity-60 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300"
           aria-label="Previous Slide"
         >
           <svg
@@ -204,7 +204,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
             viewBox="0 0 24 24"
             strokeWidth={2.5}
             stroke="currentColor"
-            className="h-5 w-5 md:h-6 md:w-6"
+            className="h-6 w-6 md:h-8 md:w-8"
           >
             <path
               strokeLinecap="round"
@@ -219,7 +219,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
       {displaySlides.length > 1 && (
         <button
           onClick={handleNext}
-          className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-30 flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border border-white/10 bg-neutral-900/40 text-white/70 backdrop-blur-md transition-all duration-300 hover:bg-primary hover:border-primary hover:text-white hover:scale-110 active:scale-95 shadow-lg shadow-black/20"
+          className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-30 flex h-10 w-10 md:h-12 md:w-12 items-center justify-center text-white opacity-60 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300"
           aria-label="Next Slide"
         >
           <svg
@@ -228,7 +228,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
             viewBox="0 0 24 24"
             strokeWidth={2.5}
             stroke="currentColor"
-            className="h-5 w-5 md:h-6 md:w-6"
+            className="h-6 w-6 md:h-8 md:w-8"
           >
             <path
               strokeLinecap="round"
@@ -239,19 +239,19 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
         </button>
       )}
 
-      {/* Slide Indicator Diamonds centered at the bottom */}
+      {/* Slide Indicator Dots centered at the bottom */}
       {displaySlides.length > 1 && (
-        <div className="absolute bottom-md left-1/2 z-30 flex -translate-x-1/2 items-center gap-4">
+        <div className="absolute bottom-md left-1/2 z-30 flex -translate-x-1/2 items-center gap-3">
           {displaySlides.map((_, index) => {
             const isActive = index === currentSlide;
             return (
               <button
                 key={index}
                 onClick={() => handleDotClick(index)}
-                className={`w-2.5 h-2.5 rotate-45 transition-all duration-300 ease-out ${
+                className={`h-3 transition-all duration-300 ease-out rounded-full ${
                   isActive
-                    ? "bg-primary shadow-md shadow-primary/50 scale-125"
-                    : "bg-white/40 hover:bg-white/70 hover:scale-110"
+                    ? "w-8 bg-[#2563eb] shadow-md shadow-blue-500/50"
+                    : "w-3 bg-white/40 hover:bg-white/70 hover:scale-110"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />
