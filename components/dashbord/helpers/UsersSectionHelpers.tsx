@@ -4,6 +4,7 @@ export interface User {
   id: string;
   name: string | null;
   email: string | null;
+  phone: string | null;
   role: string;
   emailVerified: string | null;
   completedOrderCount: number;
@@ -123,8 +124,8 @@ export function UsersTable({
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-outline-variant/30 bg-surface-container-low text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-              <th className="px-lg py-md">Nom</th>
-              <th className="px-lg py-md">Adresse E-mail</th>
+               <th className="px-lg py-md">Nom</th>
+              <th className="px-lg py-md">E-mail / Téléphone</th>
               <th className="px-lg py-md">Rôle</th>
               <th className="px-lg py-md">Commandes</th>
               <th className="px-lg py-md">Score Trust</th>
@@ -146,7 +147,7 @@ export function UsersTable({
                     {user.name || 'Sans Nom'}
                   </td>
                   <td className="px-lg py-md text-on-surface-variant font-mono text-xs">
-                    {user.email || '—'}
+                    {user.email || user.phone || '—'}
                   </td>
                   <td className="px-lg py-md">
                     {user.role === 'admin' ? (

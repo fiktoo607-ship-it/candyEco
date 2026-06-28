@@ -23,6 +23,7 @@ vi.mock('@/lib/prisma', () => {
     prisma: {
       user: {
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
         count: vi.fn(),
@@ -46,7 +47,7 @@ describe('Authentication Registration & Verification API', () => {
     it('should return 400 if name is missing', async () => {
       const req = new NextRequest('http://localhost/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ email: 'test@example.com', password: 'password123' }),
+        body: JSON.stringify({ phone: '+1234567890', password: 'password123' }),
       });
 
       const response = await registerUser(req);
@@ -55,22 +56,22 @@ describe('Authentication Registration & Verification API', () => {
       expect(data.error).toBe('Le nom est obligatoire.');
     });
 
-    it('should return 400 if email is invalid', async () => {
+    it('should return 400 if phone is invalid', async () => {
       const req = new NextRequest('http://localhost/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ name: 'Test', email: 'invalid-email', password: 'password123' }),
+        body: JSON.stringify({ name: 'Test', phone: '123', password: 'password123' }),
       });
 
       const response = await registerUser(req);
       expect(response.status).toBe(400);
       const data = await response.json();
-      expect(data.error).toBe('Une adresse e-mail valide est obligatoire.');
+      expect(data.error).toBe('Un numéro de téléphone valide est obligatoire.');
     });
 
     it('should return 400 if password is too short', async () => {
       const req = new NextRequest('http://localhost/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ name: 'Test', email: 'test@example.com', password: 'short' }),
+        body: JSON.stringify({ name: 'Test', phone: '+1234567890', password: 'short' }),
       });
 
       const response = await registerUser(req);
@@ -79,29 +80,28 @@ describe('Authentication Registration & Verification API', () => {
       expect(data.error).toBe('Le mot de passe doit comporter au moins 8 caractères.');
     });
 
-    it('should return 400 if email is already taken', async () => {
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'u1', email: 'test@example.com' } as any);
+    it('should return 400 if phone is already taken', async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: 'u1', phone: '+1234567890' } as any);
 
       const req = new NextRequest('http://localhost/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ name: 'Test', email: 'test@example.com', password: 'password123' }),
+        body: JSON.stringify({ name: 'Test', phone: '+1234567890', password: 'password123' }),
       });
 
       const response = await registerUser(req);
       expect(response.status).toBe(400);
       const data = await response.json();
-      expect(data.error).toBe('Cette adresse e-mail est déjà utilisée.');
+      expect(data.error).toBe('Ce numéro de téléphone est déjà utilisé.');
     });
 
-    it('should create user, generate token, and send email successfully', async () => {
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    it('should create user successfully without sending verification email', async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.user.count).mockResolvedValue(1);
-      vi.mocked(prisma.user.create).mockResolvedValue({ id: 'new-user-id', email: 'test@example.com' } as any);
-      vi.mocked(prisma.verificationToken.create).mockResolvedValue({} as any);
+      vi.mocked(prisma.user.create).mockResolvedValue({ id: 'new-user-id', phone: '+1234567890' } as any);
 
       const req = new NextRequest('http://localhost/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ name: 'Test User', email: 'test@example.com', password: 'password123' }),
+        body: JSON.stringify({ name: 'Test User', phone: '+1234567890', password: 'password123' }),
       });
 
       const response = await registerUser(req);
@@ -109,8 +109,6 @@ describe('Authentication Registration & Verification API', () => {
       const data = await response.json();
       expect(data.success).toBe(true);
       expect(prisma.user.create).toHaveBeenCalled();
-      expect(prisma.verificationToken.create).toHaveBeenCalled();
-      expect(sendVerificationEmail).toHaveBeenCalledWith('test@example.com', expect.any(String));
     });
   });
 

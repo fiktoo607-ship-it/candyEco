@@ -23,7 +23,7 @@ describe('NextAuth Callbacks', () => {
 
   describe('signIn callback', () => {
     it('should assign role admin if user email is in ADMIN_EMAILS', async () => {
-      const user = { email: 'admin@example.com', name: 'Admin' };
+      const user = { id: 'u1', email: 'admin@example.com', name: 'Admin' };
       vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'u1', email: 'admin@example.com', role: 'user' } as any);
       vi.mocked(prisma.user.update).mockResolvedValue({} as any);
 
@@ -32,7 +32,7 @@ describe('NextAuth Callbacks', () => {
         const result = await signInCallback({ user: user as any, account: {} as any, profile: {} as any });
         expect(result).toBe(true);
         expect(prisma.user.update).toHaveBeenCalledWith({
-          where: { email: 'admin@example.com' },
+          where: { id: 'u1' },
           data: { role: 'admin' },
         });
         expect((user as any).role).toBe('admin');
@@ -40,7 +40,7 @@ describe('NextAuth Callbacks', () => {
     });
 
     it('should assign role admin if it is the first user in the database', async () => {
-      const user = { email: 'first@example.com', name: 'First' };
+      const user = { id: 'u1', email: 'first@example.com', name: 'First' };
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
       vi.mocked(prisma.user.count).mockResolvedValue(0);
 
@@ -53,7 +53,7 @@ describe('NextAuth Callbacks', () => {
     });
 
     it('should assign role user if not in ADMIN_EMAILS and not first user', async () => {
-      const user = { email: 'user@example.com', name: 'User' };
+      const user = { id: 'u2', email: 'user@example.com', name: 'User' };
       vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'u2', email: 'user@example.com', role: 'user' } as any);
       vi.mocked(prisma.user.count).mockResolvedValue(1);
 

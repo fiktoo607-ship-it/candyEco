@@ -40,7 +40,7 @@ export default function NotificationBell() {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-sm w-96 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft z-40 transition-all duration-200 origin-top-right">
+        <div className="absolute right-0 mt-sm w-[calc(100vw-2rem)] sm:w-96 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft z-40 transition-all duration-200 origin-top-right">
           <div className="flex items-center justify-between border-b border-outline-variant/30 pb-sm mb-sm">
             <h3 className="font-display text-lg font-bold text-on-surface">Notifications</h3>
             {unreadCount > 0 && (

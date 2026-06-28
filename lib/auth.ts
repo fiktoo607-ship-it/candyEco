@@ -4,8 +4,10 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { logAuthData } from "@/logs/featurs";
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
@@ -15,20 +17,58 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID || process.env.Client_ID || "dummy-client-id",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || "dummy-client-secret",
       allowDangerousEmailAccountLinking: true,
+      authorization: {
+        params: {
+          scope: "openid email profile https://www.googleapis.com/auth/user.phonenumbers.read https://www.googleapis.com/auth/user.addresses.read"
+        }
+      },
+      async profile(profile, tokens) {
+        let phone = null;
+        let address = null;
+
+        if (tokens.access_token) {
+          try {
+            const res = await fetch(
+              "https://people.googleapis.com/v1/people/me?personFields=phoneNumbers,addresses",
+              {
+                headers: {
+                  Authorization: `Bearer ${tokens.access_token}`,
+                },
+              }
+            );
+            if (res.ok) {
+              const peopleData = await res.json();
+              phone = peopleData.phoneNumbers?.[0]?.value || null;
+              address = peopleData.addresses?.[0]?.formatted || null;
+            }
+          } catch (err) {
+            console.error("Error fetching extra profile data from Google People API:", err);
+          }
+        }
+
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+          phone,
+          address,
+        };
+      }
     }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "text" },
+        phone: { label: "Phone Number", type: "text" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.phone || !credentials?.password) {
           throw new Error("MissingCredentials");
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email.toLowerCase() }
+        const user = await prisma.user.findFirst({
+          where: { phone: credentials.phone.trim() }
         });
 
         if (!user || !user.password) {
@@ -49,14 +89,16 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role || "user";
+        token.phone = (user as any).phone || null;
       } else if (token.id) {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.id },
-            select: { role: true },
+            select: { role: true, phone: true },
           });
           if (dbUser) {
             token.role = dbUser.role;
+            token.phone = dbUser.phone;
           }
         } catch (e) {
           // Ignore lookup failures in edge environments
@@ -68,28 +110,38 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = (token.role as string) || "user";
+        session.user.phone = (token.phone as string) || null;
       }
       return session;
     },
     async signIn({ user, account }) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.id }
+      });
+
       if (account?.provider === "credentials") {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email! }
-        });
         if (!dbUser?.emailVerified) {
           throw new Error("EmailNotVerified");
         }
       }
 
-      if (!user.email) return false;
+      if (account?.provider === "google" && user.email) {
+        if (!dbUser) {
+          logAuthData({ user, account });
+        }
+      }
 
+      const email = user.email || dbUser?.email;
       const adminEmailsEnv = process.env.ADMIN_EMAILS || "";
       const adminEmails = adminEmailsEnv
         .split(",")
         .map((e) => e.trim().toLowerCase())
         .filter(Boolean);
 
-      let shouldBeAdmin = adminEmails.includes(user.email.toLowerCase());
+      let shouldBeAdmin = false;
+      if (email) {
+        shouldBeAdmin = adminEmails.includes(email.toLowerCase());
+      }
 
       try {
         if (!shouldBeAdmin) {
@@ -100,15 +152,10 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // If the user already exists in the database, update their role if needed
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email },
-        });
-
         if (dbUser) {
           if (shouldBeAdmin && dbUser.role !== "admin") {
             await prisma.user.update({
-              where: { email: user.email },
+              where: { id: user.id },
               data: { role: "admin" },
             });
             (user as any).role = "admin";

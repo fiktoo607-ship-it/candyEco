@@ -13,8 +13,9 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    email: "",
+    phone: "",
     password: "",
   });
 
@@ -41,7 +42,7 @@ function LoginContent() {
       } else if (errorType === "OAuthAccountNotLinked") {
         setErrorMessage("Cette adresse e-mail est déjà associée à un compte existant. Veuillez vous connecter avec votre mot de passe.");
       } else if (errorType === "CredentialsSignin") {
-        setErrorMessage("Adresse e-mail ou mot de passe incorrect.");
+        setErrorMessage("Numéro de téléphone ou mot de passe incorrect.");
       } else {
         setErrorMessage("Une erreur inattendue s'est produite. Veuillez réessayer.");
       }
@@ -60,17 +61,13 @@ function LoginContent() {
 
     try {
       const result = await signIn("credentials", {
-        email: formData.email,
+        phone: formData.phone,
         password: formData.password,
         redirect: false,
       });
 
       if (result?.error) {
-        if (result.error === "EmailNotVerified" || result.error.includes("EmailNotVerified")) {
-          setErrorMessage("Votre adresse e-mail n'a pas encore été vérifiée. Veuillez vérifier votre boîte de réception.");
-        } else {
-          setErrorMessage("Adresse e-mail ou mot de passe incorrect.");
-        }
+        setErrorMessage("Numéro de téléphone ou mot de passe incorrect.");
         setLoading(false);
       }
     } catch (err) {
@@ -140,17 +137,17 @@ function LoginContent() {
           {/* Credentials Form */}
           <form onSubmit={handleCredentialsLogin} className="mt-lg flex flex-col gap-md">
             <div className="flex flex-col gap-xs">
-              <label htmlFor="email" className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-                Adresse E-mail
+              <label htmlFor="phone" className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                Numéro de Téléphone
               </label>
               <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
                 onChange={handleInputChange}
                 required
-                placeholder="jean.dupont@example.com"
+                placeholder="+33 6 12 34 56 78"
                 className="rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-sm outline-none transition-all focus:border-primary focus:bg-surface-container-lowest"
               />
             </div>
@@ -159,16 +156,27 @@ function LoginContent() {
               <label htmlFor="password" className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
                 Mot de Passe
               </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                required
-                placeholder="••••••••"
-                className="rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-sm outline-none transition-all focus:border-primary focus:bg-surface-container-lowest"
-              />
+              <div className="relative flex items-center">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="••••••••"
+                  className="w-full rounded-xl border border-outline-variant bg-surface-container-low pl-md pr-lg py-sm text-sm outline-none transition-all focus:border-primary focus:bg-surface-container-lowest"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-sm text-on-surface-variant hover:text-primary transition-colors focus:outline-none flex items-center justify-center p-xs"
+                >
+                  <span className="material-symbols-outlined text-lg select-none">
+                    {showPassword ? "visibility_off" : "visibility"}
+                  </span>
+                </button>
+              </div>
             </div>
 
             <button

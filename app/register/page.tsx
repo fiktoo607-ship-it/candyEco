@@ -8,11 +8,13 @@ export default function RegisterPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
+    phone: "",
     password: "",
     confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -26,14 +28,19 @@ export default function RegisterPage() {
     setErrorMessage("");
     setSuccessMessage("");
 
-    const { name, email, password, confirmPassword } = formData;
+    const { name, phone, password, confirmPassword } = formData;
 
     if (!name || name.trim() === "") {
       setErrorMessage("Veuillez saisir votre nom.");
       return;
     }
-    if (!email || !email.includes("@")) {
-      setErrorMessage("Veuillez saisir une adresse e-mail valide.");
+    if (!phone || phone.trim() === "") {
+      setErrorMessage("Veuillez saisir un numéro de téléphone valide.");
+      return;
+    }
+    const phoneRegex = /^[+0-9\s-]{8,20}$/;
+    if (!phoneRegex.test(phone.trim())) {
+      setErrorMessage("Veuillez saisir un numéro de téléphone valide.");
       return;
     }
     if (!password || password.length < 8) {
@@ -50,7 +57,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, phone, password }),
       });
 
       const data = await res.json();
@@ -59,7 +66,7 @@ export default function RegisterPage() {
         setErrorMessage(data.error || "Une erreur est survenue lors de l'inscription.");
         setLoading(false);
       } else {
-        setSuccessMessage(data.message || "Inscription réussie ! Veuillez vérifier vos e-mails.");
+        setSuccessMessage(data.message || "Inscription réussie ! Vous pouvez maintenant vous connecter.");
         setLoading(false);
       }
     } catch (err) {
@@ -100,13 +107,13 @@ export default function RegisterPage() {
             <div className="mt-lg text-center animate-fade-in">
               <div className="mb-md flex justify-center">
                 <span className="material-symbols-outlined text-5xl text-primary animate-bounce select-none">
-                  mark_email_read
+                  check_circle
                 </span>
               </div>
-              <h3 className="text-lg font-bold text-primary">Vérification Requise</h3>
+              <h3 className="text-lg font-bold text-primary">Inscription Réussie</h3>
               <p className="mt-sm text-sm text-on-surface-variant leading-relaxed">
-                Un e-mail de confirmation a été envoyé à <strong>{formData.email}</strong>.
-                Veuillez cliquer sur le lien dans l'e-mail pour activer votre compte.
+                Votre compte a été créé avec succès pour le numéro <strong>{formData.phone}</strong>.
+                Vous pouvez maintenant vous connecter.
               </p>
               <button
                 onClick={() => router.push("/login")}
@@ -141,19 +148,19 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* Email Field */}
+              {/* Phone Field */}
               <div className="flex flex-col gap-xs">
-                <label htmlFor="email" className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-                  Adresse E-mail
+                <label htmlFor="phone" className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                  Numéro de Téléphone
                 </label>
                 <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
                   onChange={handleInputChange}
                   required
-                  placeholder="jean.dupont@example.com"
+                  placeholder="+33 6 12 34 56 78"
                   className="rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-sm outline-none transition-all focus:border-primary focus:bg-surface-container-lowest"
                 />
               </div>
@@ -163,16 +170,27 @@ export default function RegisterPage() {
                 <label htmlFor="password" className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
                   Mot de Passe
                 </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="••••••••"
-                  className="rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-sm outline-none transition-all focus:border-primary focus:bg-surface-container-lowest"
-                />
+                <div className="relative flex items-center">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="••••••••"
+                    className="w-full rounded-xl border border-outline-variant bg-surface-container-low pl-md pr-lg py-sm text-sm outline-none transition-all focus:border-primary focus:bg-surface-container-lowest"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-sm text-on-surface-variant hover:text-primary transition-colors focus:outline-none flex items-center justify-center p-xs"
+                  >
+                    <span className="material-symbols-outlined text-lg select-none">
+                      {showPassword ? "visibility_off" : "visibility"}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               {/* Confirm Password Field */}
@@ -180,16 +198,27 @@ export default function RegisterPage() {
                 <label htmlFor="confirmPassword" className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
                   Confirmer le Mot de Passe
                 </label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="••••••••"
-                  className="rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-sm outline-none transition-all focus:border-primary focus:bg-surface-container-lowest"
-                />
+                <div className="relative flex items-center">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="••••••••"
+                    className="w-full rounded-xl border border-outline-variant bg-surface-container-low pl-md pr-lg py-sm text-sm outline-none transition-all focus:border-primary focus:bg-surface-container-lowest"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-sm text-on-surface-variant hover:text-primary transition-colors focus:outline-none flex items-center justify-center p-xs"
+                  >
+                    <span className="material-symbols-outlined text-lg select-none">
+                      {showConfirmPassword ? "visibility_off" : "visibility"}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               <button

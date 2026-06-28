@@ -1,96 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { sendVerificationEmail } from '@/lib/email';
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password } = body;
+    const { name, phone, password } = body;
 
     // Validate inputs
     if (!name || name.trim() === '') {
       return NextResponse.json({ error: 'Le nom est obligatoire.' }, { status: 400 });
     }
-    if (!email || !email.includes('@')) {
-      return NextResponse.json({ error: 'Une adresse e-mail valide est obligatoire.' }, { status: 400 });
+    if (!phone || phone.trim() === '') {
+      return NextResponse.json({ error: 'Le numéro de téléphone est obligatoire.' }, { status: 400 });
+    }
+    const phoneRegex = /^[+0-9\s-]{8,20}$/;
+    if (!phoneRegex.test(phone.trim())) {
+      return NextResponse.json({ error: 'Un numéro de téléphone valide est obligatoire.' }, { status: 400 });
     }
     if (!password || password.length < 8) {
       return NextResponse.json({ error: 'Le mot de passe doit comporter au moins 8 caractères.' }, { status: 400 });
     }
 
-    const emailNormalized = email.trim().toLowerCase();
+    const phoneNormalized = phone.trim();
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: emailNormalized },
+    const existingUser = await prisma.user.findFirst({
+      where: { phone: phoneNormalized },
     });
 
     if (existingUser) {
-      return NextResponse.json({ error: 'Cette adresse e-mail est déjà utilisée.' }, { status: 400 });
+      return NextResponse.json({ error: 'Ce numéro de téléphone est déjà utilisé.' }, { status: 400 });
     }
 
-    // Determine role (admin if in ADMIN_EMAILS or if first user)
-    const adminEmailsEnv = process.env.ADMIN_EMAILS || '';
-    const adminEmails = adminEmailsEnv
-      .split(',')
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean);
-
+    // Determine role (admin if first user)
     let role = 'user';
-    if (adminEmails.includes(emailNormalized)) {
+    const userCount = await prisma.user.count();
+    if (userCount === 0) {
       role = 'admin';
-    } else {
-      const userCount = await prisma.user.count();
-      if (userCount === 0) {
-        role = 'admin';
-      }
     }
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create the user (unverified by default)
+    // Create the user (pre-verified because no email is provided for email verification)
     const newUser = await prisma.user.create({
       data: {
         name: name.trim(),
-        email: emailNormalized,
+        phone: phoneNormalized,
         password: hashedPassword,
         role,
-        emailVerified: null,
+        emailVerified: new Date(),
       },
     });
-
-    // Generate a secure verification token
-    const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
-
-    // Save token to verification table
-    await prisma.verificationToken.create({
-      data: {
-        identifier: emailNormalized,
-        token,
-        expires,
-      },
-    });
-
-    // Dispatch verification email
-    try {
-      await sendVerificationEmail(emailNormalized, token);
-    } catch (emailErr) {
-      console.error('Failed to send verification email:', emailErr);
-      // We don't rollback user creation, but let them know there was an email dispatch issue
-      return NextResponse.json({
-        success: true,
-        warning: "Compte créé mais l'envoi de l'e-mail d'activation a échoué. Veuillez contacter l'administrateur.",
-        userId: newUser.id,
-      }, { status: 201 });
-    }
 
     return NextResponse.json({
       success: true,
-      message: 'Compte créé avec succès. Veuillez vérifier votre e-mail pour activer votre compte.',
+      message: 'Compte créé avec succès. Vous pouvez maintenant vous connecter.',
       userId: newUser.id,
     }, { status: 201 });
 

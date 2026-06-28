@@ -27,8 +27,8 @@ export default function DashboardPage() {
 
       {/* Main Content Area */}
       <section className="flex-1 flex flex-col">
-        <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-outline-variant/30 bg-surface/90 backdrop-blur-md px-gutter shadow-soft">
-          <h1 className="font-display text-3xl font-bold text-on-surface">
+        <header className="md:sticky md:top-0 z-10 flex h-auto min-h-[5rem] py-md md:py-0 md:h-20 items-center justify-between border-b border-outline-variant/30 bg-surface/90 backdrop-blur-md px-gutter shadow-soft flex-wrap gap-md">
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-on-surface">
             {activeTab === 'products'
               ? 'Gérer les produits'
               : activeTab === 'orders'
@@ -47,12 +47,13 @@ export default function DashboardPage() {
             {activeTab === 'products' && (
               <button
                 onClick={() => openCreate(CATEGORIES[0])}
-                className="inline-flex items-center gap-xs rounded-full bg-primary px-md py-sm text-sm font-semibold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint hover:scale-[1.02]"
+                className="inline-flex items-center gap-xs rounded-full bg-primary px-sm py-xs text-xs font-semibold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint hover:scale-[1.02] md:px-md md:py-sm md:text-sm md:font-semibold"
               >
                 <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                Ajouter un nouveau produit
+                <span className="hidden sm:inline">Ajouter un nouveau produit</span>
+                <span className="inline sm:hidden">Ajouter</span>
               </button>
             )}
           </div>

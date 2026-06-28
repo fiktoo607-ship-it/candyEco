@@ -63,7 +63,8 @@ export function useUsersSection() {
     if (!search) return true;
     return (
       (user.name && user.name.toLowerCase().includes(search)) ||
-      (user.email && user.email.toLowerCase().includes(search))
+      (user.email && user.email.toLowerCase().includes(search)) ||
+      (user.phone && user.phone.includes(search))
     );
   });
 
