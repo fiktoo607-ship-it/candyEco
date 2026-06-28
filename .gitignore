@@ -59,4 +59,5 @@ Thumbs.db
 
 
 /prompt
-/logs
+/logs/*
+!/logs/featurs/
