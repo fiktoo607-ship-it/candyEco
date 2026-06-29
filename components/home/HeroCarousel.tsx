@@ -196,7 +196,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
       {displaySlides.length > 1 && (
         <button
           onClick={handlePrev}
-          className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-30 flex h-10 w-10 md:h-12 md:w-12 items-center justify-center text-white opacity-60 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300"
+          className="absolute left-6 top-1/2 -translate-y-1/2 z-30 hidden md:flex h-12 w-12 items-center justify-center text-white opacity-60 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300"
           aria-label="Previous Slide"
         >
           <svg
@@ -205,7 +205,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
             viewBox="0 0 24 24"
             strokeWidth={2.5}
             stroke="currentColor"
-            className="h-6 w-6 md:h-8 md:w-8"
+            className="h-8 w-8"
           >
             <path
               strokeLinecap="round"
@@ -220,7 +220,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
       {displaySlides.length > 1 && (
         <button
           onClick={handleNext}
-          className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-30 flex h-10 w-10 md:h-12 md:w-12 items-center justify-center text-white opacity-60 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300"
+          className="absolute right-6 top-1/2 -translate-y-1/2 z-30 hidden md:flex h-12 w-12 items-center justify-center text-white opacity-60 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300"
           aria-label="Next Slide"
         >
           <svg
@@ -229,7 +229,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
             viewBox="0 0 24 24"
             strokeWidth={2.5}
             stroke="currentColor"
-            className="h-6 w-6 md:h-8 md:w-8"
+            className="h-8 w-8"
           >
             <path
               strokeLinecap="round"
