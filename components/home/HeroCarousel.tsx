@@ -125,7 +125,8 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="relative isolate h-[calc(100vh-80px)] lg:h-[680px] w-full overflow-hidden bg-neutral-950"
+      className="relative isolate w-full overflow-hidden bg-neutral-950"
+      style={{ height: '100vh' }}
     >
       {/* Slides Container */}
       <div className="absolute inset-0 h-full w-full">
@@ -250,7 +251,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
                 onClick={() => handleDotClick(index)}
                 className={`h-3 transition-all duration-300 ease-out rounded-full ${
                   isActive
-                    ? "w-8 bg-[#2563eb] shadow-md shadow-blue-500/50"
+                    ? "w-8 bg-secondary-fixed shadow-md shadow-secondary-fixed/50"
                     : "w-3 bg-white/40 hover:bg-white/70 hover:scale-110"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
