@@ -75,41 +75,44 @@ export default function CmsSection() {
   }
 
   return (
-    <div className="space-y-lg pb-xl relative font-sans">
+    <div className="space-y-md md:space-y-lg pb-xl relative font-sans">
       {/* Toast Notifications */}
       {saveSuccess && (
-        <div className="fixed top-24 right-8 z-50 rounded-xl bg-primary px-md py-sm text-white shadow-lg flex items-center gap-sm animate-fade-in-out">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span className="font-semibold">Configurations enregistrées avec succès !</span>
+        <div className="fixed bottom-6 right-6 md:top-24 md:bottom-auto z-50 rounded-xl bg-emerald-600 px-md py-sm text-white shadow-lg flex items-center gap-sm animate-fade-in border border-emerald-500/30">
+          <span className="material-symbols-outlined text-xl">check_circle</span>
+          <span className="font-semibold text-sm">Configurations enregistrées avec succès !</span>
         </div>
       )}
 
       {saveError && (
-        <div className="fixed top-24 right-8 z-50 rounded-xl bg-error px-md py-sm text-white shadow-lg flex items-center gap-sm animate-fade-in-out">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-          </svg>
-          <span className="font-semibold">{saveError}</span>
+        <div className="fixed bottom-6 right-6 md:top-24 md:bottom-auto z-50 rounded-xl bg-error px-md py-sm text-white shadow-lg flex items-center gap-sm animate-fade-in border border-error-container/20">
+          <span className="material-symbols-outlined text-xl">error</span>
+          <span className="font-semibold text-sm">{saveError}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-lg">
-        {/* Floating Save Actions */}
-        <div className="sticky top-20 z-20 flex items-center justify-between border-b border-outline-variant/20 bg-surface/90 backdrop-blur-md py-sm mb-md">
-          <p className="text-sm text-on-surface-variant">
-            {isDirty ? "⚠️ Modifications non enregistrées" : "✓ Tout est à jour"}
-          </p>
+      <form onSubmit={handleSubmit} className="space-y-md md:space-y-lg">
+        {/* Floating Save Actions (Glassmorphism design) */}
+        <div className="sticky top-[72px] md:top-[80px] z-20 flex flex-col sm:flex-row sm:items-center justify-between gap-sm border border-outline-variant/30 bg-surface/85 backdrop-blur-lg p-sm md:p-md rounded-2xl shadow-soft mb-md transition-all">
+          <div className="flex items-center gap-xs">
+            <span className={`material-symbols-outlined text-lg ${isDirty ? "text-amber-500 animate-pulse" : "text-emerald-500"}`}>
+              {isDirty ? "pending_actions" : "check_circle"}
+            </span>
+            <p className="text-xs md:text-sm font-semibold text-on-surface-variant">
+              {isDirty ? "Modifications non enregistrées" : "Tout est à jour"}
+            </p>
+          </div>
           <button
             type="submit"
             disabled={isSubmitting || !isDirty}
-            className="rounded-full bg-primary px-lg py-sm font-semibold text-white shadow-soft hover:bg-surface-tint disabled:opacity-50 transition-all flex items-center gap-xs"
+            className="w-full sm:w-auto justify-center rounded-full bg-primary px-lg py-sm font-semibold text-white shadow-soft hover:bg-surface-tint active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-xs text-sm"
           >
-            {isSubmitting && (
+            {isSubmitting ? (
               <svg className="w-4 h-4 text-white animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
               </svg>
+            ) : (
+              <span className="material-symbols-outlined text-lg">save</span>
             )}
             Enregistrer les modifications
           </button>

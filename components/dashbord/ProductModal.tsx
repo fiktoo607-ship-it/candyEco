@@ -56,26 +56,27 @@ export default function ProductModal() {
   if (!isModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-md bg-black/40 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up">
-        <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low">
-          <h2 className="font-display text-xl font-bold text-on-surface">
-            {modalMode === "create" ? "Ajouter un nouveau produit" : "Modifier le produit"}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-sm md:p-md bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up flex flex-col max-h-[90vh]">
+        <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low flex-shrink-0">
+          <h2 className="font-display text-xl font-bold text-on-surface flex items-center gap-xs">
+            <span className="material-symbols-outlined text-primary text-xl">
+              {modalMode === "create" ? "add_box" : "edit_square"}
+            </span>
+            {modalMode === "create" ? "Ajouter un produit" : "Modifier le produit"}
           </h2>
           <button
             type="button"
             onClick={() => setIsModalOpen(false)}
             className="rounded-full p-xs text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <span className="material-symbols-outlined">close</span>
           </button>
         </header>
 
         <form
           onSubmit={handleSubmit}
-          className="p-md flex flex-col gap-sm overflow-y-auto max-h-[75vh]"
+          className="p-md flex flex-col gap-sm overflow-y-auto flex-grow"
         >
           {/* Title, Slug, Price, Category */}
           <ProductBasicInfo
@@ -135,23 +136,23 @@ export default function ProductModal() {
             setStory={setStory}
           />
 
-          <footer className="mt-md flex justify-end gap-sm border-t border-outline-variant/20 pt-md">
+          <footer className="mt-md flex justify-end gap-sm border-t border-outline-variant/20 pt-md mt-auto">
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="rounded-lg border border-outline-variant px-md py-sm font-semibold hover:bg-surface-container-low"
+              className="rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-sm font-semibold text-on-surface hover:bg-surface-container-high transition-colors"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={isSubmitting || isUploading}
-              className="rounded-lg bg-primary px-md py-sm font-semibold text-white hover:bg-surface-tint disabled:opacity-60 flex items-center gap-xs"
+              className="rounded-xl bg-primary px-md py-sm text-sm font-bold text-white hover:bg-surface-tint transition-all disabled:opacity-60 flex items-center gap-xs shadow-soft"
             >
-              {(isSubmitting || isUploading) && (
-                <svg className="w-4 h-4 text-white animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                </svg>
+              {(isSubmitting || isUploading) ? (
+                <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+              ) : (
+                <span className="material-symbols-outlined text-sm">save</span>
               )}
               {modalMode === "create" ? "Créer" : "Enregistrer les modifications"}
             </button>

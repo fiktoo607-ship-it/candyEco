@@ -61,31 +61,42 @@ export default function ProductsSection() {
 
       <div className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-soft border border-outline-variant/10">
         {/* Search and Filters */}
-        <div className="flex flex-col gap-md border-b border-outline-variant/30 p-md lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col gap-sm sm:flex-row sm:items-center w-full lg:w-auto">
-            <label className="relative w-full lg:w-80">
-              <svg className="pointer-events-none absolute left-sm top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-              </svg>
+        <div className="flex flex-col gap-md border-b border-outline-variant/30 p-md lg:flex-row lg:items-center lg:justify-between bg-surface-container-lowest/50">
+          <div className="flex flex-col gap-sm sm:flex-row sm:items-center w-full lg:w-auto flex-1">
+            {/* Search Input */}
+            <label className="relative w-full lg:w-80 flex-shrink-0">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
+                search
+              </span>
               <input
                 type="text"
                 placeholder="Rechercher des produits..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-lg border border-outline-variant bg-surface-container-low py-sm pl-xl pr-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-xl border border-outline-variant bg-surface-container-low py-sm pl-10 pr-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer h-[46px] md:w-56"
-            >
-              <option value="default">Tri par défaut</option>
-              <option value="rating-desc">Note : Élevée à Faible</option>
-              <option value="rating-asc">Note : Faible à Élevée</option>
-            </select>
+
+            {/* Sort Select */}
+            <div className="relative w-full sm:w-64 flex-shrink-0">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
+                sort
+              </span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="w-full rounded-xl border border-outline-variant bg-surface-container-low pl-9 pr-8 py-sm text-base text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer h-[46px] appearance-none"
+              >
+                <option value="default">Tri par défaut</option>
+                <option value="rating-desc">Note : Élevée à Faible</option>
+                <option value="rating-asc">Note : Faible à Élevée</option>
+              </select>
+              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
+                arrow_drop_down
+              </span>
+            </div>
           </div>
-          <div className="text-sm text-on-surface-variant font-medium">
+          <div className="text-sm text-on-surface-variant font-medium flex-shrink-0 mt-sm lg:mt-0 lg:text-right border-t border-outline-variant/10 pt-sm lg:border-t-0 lg:pt-0">
             Total des produits :{" "}
             <span className="text-primary font-bold">{totalItems}</span>
           </div>
@@ -100,7 +111,7 @@ export default function ProductsSection() {
             <p className="text-on-surface-variant">Chargement des produits...</p>
           </div>
         ) : currentItems.length === 0 ? (
-          <div className="flex h-64 flex-col items-center justify-center gap-sm text-on-surface-variant">
+          <div className="flex h-64 flex-col items-center justify-center gap-sm text-on-surface-variant bg-surface/10">
             <svg className="w-12 h-12 text-on-surface-variant/60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.31c-.4 0-.785-.158-1.07-.44l-2.12-2.12z" />
             </svg>
@@ -110,145 +121,230 @@ export default function ProductsSection() {
             </p>
           </div>
         ) : (
-          /* Products Table */
-          <div className="overflow-x-auto">
-            <table className="min-w-[800px] w-full border-collapse text-left">
-              <thead>
-                <tr className="border-b border-outline-variant/30 bg-surface-container-low text-sm font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
-                  <th className="p-md">Image</th>
-                  <th className="p-md">Titre</th>
-                  <th className="p-md">Catégorie</th>
-                  <th className="p-md">Prix</th>
-                  <th className="p-md">État</th>
-                  <th className="p-md">Visibilité</th>
-                  <th className="p-md">Note</th>
-                  <th className="p-md text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant/20">
-                {currentItems.map((product) => (
-                  <tr
-                    key={product.id}
-                    className="group transition-colors hover:bg-surface/50"
-                  >
-                    <td className="p-md">
-                      <div className="relative h-16 w-16 overflow-hidden rounded-lg bg-surface-container-high border border-outline-variant/20 shadow-sm">
-                        <Image
-                          src={product.imageUrl}
-                          alt={product.title}
-                          fill
-                          className="object-cover"
-                          sizes="64px"
-                        />
-                      </div>
-                    </td>
-                    <td className="p-md">
-                      <div className="font-semibold text-on-surface group-hover:text-primary transition-colors flex items-center gap-sm">
-                        {product.title}
-                      </div>
-                      <div className="text-xs text-on-surface-variant/80 mt-[2px] line-clamp-1 max-w-md">
-                        {product.description}
-                      </div>
-                    </td>
-                    <td className="p-md">
-                      <span className="inline-block rounded-xl bg-secondary-container/20 px-sm py-xs text-sm text-on-surface font-medium border border-outline-variant/30 leading-normal max-w-[150px] text-center">
-                        {product.category}
-                      </span>
-                    </td>
-                    <td className="p-md font-bold text-primary">
-                      {product.price}
-                    </td>
-                    <td className="p-md">
-                      <span
-                        className={`rounded-full px-sm py-[2px] text-xs font-semibold ${
-                          product.state === "exist"
-                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400"
+          <>
+            {/* Mobile/Tablet Card Grid Layout (< 1024px) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-md p-md lg:hidden bg-surface/20">
+              {currentItems.map((product) => (
+                <div key={product.id} className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft space-y-md hover:border-primary/20 transition-all flex flex-col justify-between">
+                  <div className="space-y-sm">
+                    {/* Product Image & Badges */}
+                    <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-neutral-900 shadow-sm border border-outline-variant/10 group">
+                      <Image
+                        src={product.imageUrl}
+                        alt={product.title}
+                        fill
+                        className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                        sizes="(max-w-768px) 100vw, 50vw"
+                      />
+                      {/* State Badge */}
+                      <div className="absolute top-2 left-2">
+                        <span
+                          className={`rounded-full px-sm py-[2px] text-[10px] font-bold uppercase border ${
+                            product.state === "exist"
+                              ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                              : product.state === "outofStock"
+                                ? "bg-rose-500/15 border-rose-500/30 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400"
+                                : "bg-amber-500/15 border-amber-500/30 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
+                          }`}
+                        >
+                          {product.state === "exist"
+                            ? "Disponible"
                             : product.state === "outofStock"
-                              ? "bg-rose-100 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400"
-                              : "bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400"
-                        }`}
-                      >
-                        {product.state === "exist"
-                          ? "Disponible"
-                          : product.state === "outofStock"
-                            ? "Indisponible"
-                            : "Bientôt"}
+                              ? "Indisponible"
+                              : "Bientôt"}
+                        </span>
+                      </div>
+                      {/* Price Tag */}
+                      <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md px-sm py-[2px] rounded-lg">
+                        <span className="text-xs font-bold text-white">{product.price}</span>
+                      </div>
+                    </div>
+
+                    {/* Title & Category */}
+                    <div>
+                      <div className="flex items-center justify-between gap-sm">
+                        <span className="inline-block rounded-xl bg-secondary-container/20 px-sm py-xs text-[10px] text-on-surface font-semibold border border-outline-variant/30 leading-normal">
+                          {product.category}
+                        </span>
+                        {/* Rating */}
+                        <div className="flex items-center gap-[2px] font-semibold text-xs text-on-surface-variant">
+                          <span className="material-symbols-outlined text-amber-500 text-base select-none">star</span>
+                          <span>{product.rating !== undefined ? Number(product.rating).toFixed(1) : '0.0'}</span>
+                        </div>
+                      </div>
+                      <h3 className="font-semibold text-on-surface text-base mt-xs">{product.title}</h3>
+                      <p className="text-xs text-on-surface-variant line-clamp-2 mt-xs">{product.description}</p>
+                    </div>
+                  </div>
+
+                  {/* Footer details & actions */}
+                  <div className="space-y-sm pt-sm border-t border-outline-variant/10 mt-auto">
+                    <div className="flex justify-between items-center text-xs text-on-surface-variant">
+                      <span className="flex items-center gap-[2px]">
+                        <span className="material-symbols-outlined text-sm">visibility</span>
+                        Visibilité: <strong>{product.visibility ?? 0}</strong>
                       </span>
-                    </td>
-                    <td className="p-md font-semibold text-on-surface-variant">
-                      {product.visibility ?? 0}
-                    </td>
-                    <td className="p-md">
-                      <div className="flex items-center gap-xs font-semibold text-on-surface-variant">
-                        <span className="material-symbols-outlined text-amber-500 text-lg">star</span>
-                        <span>{product.rating !== undefined ? Number(product.rating).toFixed(1) : '0.0'}</span>
-                      </div>
-                    </td>
-                    <td className="p-md text-right">
-                      <div className="flex justify-end gap-xs">
-                        <button
-                          onClick={() => openEdit(product)}
-                          className="inline-flex items-center justify-center rounded-full p-2 text-primary transition-all hover:bg-primary-container/10 active:scale-95"
-                          title="Modifier"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => openDelete(product)}
-                          className="inline-flex items-center justify-center rounded-full p-2 text-error transition-all hover:bg-error-container/30 active:scale-95"
-                          title="Supprimer"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-1.8c0-.661-.493-1.19-1.15-1.19h-3.78c-.657 0-1.15.529-1.15 1.19v1.8m-5.8 0h12" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-xs">
+                      <button
+                        onClick={() => openEdit(product)}
+                        className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-bold text-primary hover:bg-surface-container-high transition-colors flex items-center gap-xs"
+                      >
+                        <span className="material-symbols-outlined text-sm">edit</span>
+                        Modifier
+                      </button>
+                      <button
+                        onClick={() => openDelete(product)}
+                        className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-sm py-xs text-xs font-bold text-error hover:bg-rose-500/10 transition-colors flex items-center gap-xs"
+                      >
+                        <span className="material-symbols-outlined text-sm">delete</span>
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Tabular Grid Layout (>= 1024px) */}
+            <div className="overflow-x-auto lg:block hidden">
+              <table className="min-w-[800px] w-full border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-outline-variant/30 bg-surface-container-low text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
+                    <th className="p-md">Image</th>
+                    <th className="p-md">Titre</th>
+                    <th className="p-md">Catégorie</th>
+                    <th className="p-md">Prix</th>
+                    <th className="p-md">État</th>
+                    <th className="p-md">Visibilité</th>
+                    <th className="p-md">Note</th>
+                    <th className="p-md text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/20">
+                  {currentItems.map((product) => (
+                    <tr
+                      key={product.id}
+                      className="group transition-colors hover:bg-surface/50"
+                    >
+                      <td className="p-md">
+                        <div className="relative h-16 w-16 overflow-hidden rounded-xl bg-surface-container-high border border-outline-variant/20 shadow-sm">
+                          <Image
+                            src={product.imageUrl}
+                            alt={product.title}
+                            fill
+                            className="object-cover"
+                            sizes="64px"
+                          />
+                        </div>
+                      </td>
+                      <td className="p-md">
+                        <div className="font-semibold text-on-surface group-hover:text-primary transition-colors flex items-center gap-sm">
+                          {product.title}
+                        </div>
+                        <div className="text-xs text-on-surface-variant/80 mt-[2px] line-clamp-1 max-w-md">
+                          {product.description}
+                        </div>
+                      </td>
+                      <td className="p-md">
+                        <span className="inline-block rounded-xl bg-secondary-container/20 px-sm py-xs text-sm text-on-surface font-medium border border-outline-variant/30 leading-normal max-w-[150px] text-center">
+                          {product.category}
+                        </span>
+                      </td>
+                      <td className="p-md font-bold text-primary">
+                        {product.price}
+                      </td>
+                      <td className="p-md">
+                        <span
+                          className={`rounded-full px-sm py-[2px] text-xs font-semibold ${
+                            product.state === "exist"
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400"
+                              : product.state === "outofStock"
+                                ? "bg-rose-100 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400"
+                                : "bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400"
+                          }`}
+                        >
+                          {product.state === "exist"
+                            ? "Disponible"
+                            : product.state === "outofStock"
+                              ? "Indisponible"
+                              : "Bientôt"}
+                        </span>
+                      </td>
+                      <td className="p-md font-semibold text-on-surface-variant">
+                        {product.visibility ?? 0}
+                      </td>
+                      <td className="p-md">
+                        <div className="flex items-center gap-xs font-semibold text-on-surface-variant">
+                          <span className="material-symbols-outlined text-amber-500 text-lg">star</span>
+                          <span>{product.rating !== undefined ? Number(product.rating).toFixed(1) : '0.0'}</span>
+                        </div>
+                      </td>
+                      <td className="p-md text-right">
+                        <div className="flex justify-end gap-xs">
+                          <button
+                            onClick={() => openEdit(product)}
+                            className="inline-flex items-center justify-center rounded-xl p-2 text-primary border border-outline-variant/20 hover:bg-surface-container-low active:scale-95 transition-all h-[34px] w-[34px]"
+                            title="Modifier"
+                          >
+                            <span className="material-symbols-outlined text-lg">edit</span>
+                          </button>
+                          <button
+                            onClick={() => openDelete(product)}
+                            className="inline-flex items-center justify-center rounded-xl p-2 text-error border border-rose-500/20 hover:bg-rose-500/5 active:scale-95 transition-all h-[34px] w-[34px]"
+                            title="Supprimer"
+                          >
+                            <span className="material-symbols-outlined text-lg">delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
-        {/* Pagination footer */}
+        {/* Pagination footer (Responsive design) */}
         {!isLoading && totalItems > 0 && (
-          <div className="flex items-center justify-between border-t border-outline-variant/30 p-md">
-            <span className="text-sm text-on-surface-variant font-medium">
+          <div className="flex flex-col sm:flex-row items-center justify-between border-t border-outline-variant/30 p-md gap-sm bg-surface-container-lowest/80 flex-wrap">
+            <span className="text-xs md:text-sm text-on-surface-variant font-medium text-center sm:text-left">
               Affichage de {indexOfFirstItem + 1} à{" "}
               {Math.min(indexOfLastItem, totalItems)} sur {totalItems} entrées
             </span>
-            <div className="flex gap-xs">
+            <div className="flex gap-xs items-center overflow-x-auto max-w-full py-1">
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
-                className="rounded-md border border-outline-variant px-sm py-xs text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed"
+                className="rounded-xl border border-outline-variant px-sm py-xs text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 flex items-center justify-center font-bold"
               >
                 ‹
               </button>
-              {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(
-                (page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`rounded-md px-sm py-xs text-sm font-semibold transition-all ${
-                      currentPage === page
-                        ? "bg-primary text-white shadow-soft"
-                        : "border border-outline-variant text-on-surface hover:bg-surface-container-low"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ),
-              )}
+              <div className="flex gap-xs items-center">
+                {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(
+                  (page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`rounded-xl px-sm py-xs text-xs md:text-sm font-semibold transition-all h-9 min-w-9 flex items-center justify-center ${
+                        currentPage === page
+                          ? "bg-primary text-white shadow-soft font-bold"
+                          : "border border-outline-variant text-on-surface hover:bg-surface-container-low"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ),
+                )}
+              </div>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() =>
                   setCurrentPage(Math.min(currentPage + 1, totalPages))
                 }
-                className="rounded-md border border-outline-variant px-sm py-xs text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed"
+                className="rounded-xl border border-outline-variant px-sm py-xs text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 flex items-center justify-center font-bold"
               >
                 ›
               </button>
