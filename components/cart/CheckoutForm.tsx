@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { useCartStore } from '@/lib/cart-store';
 import { useSubmitOrder } from '@/lib/hooks/use-orders';
 import dictionary from '@/lib/copy-dictionary.json';
@@ -17,6 +18,7 @@ interface DeliveryMethod {
 }
 
 export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
+  const { data: session } = useSession();
   const { items, clearCart, getTotalPrice } = useCartStore();
   const submitOrderMutation = useSubmitOrder();
 
@@ -33,6 +35,20 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
   
   const [phoneError, setPhoneError] = useState('');
   const [emailError, setEmailError] = useState('');
+
+  useEffect(() => {
+    if (session?.user) {
+      if (session.user.name && !customerName) {
+        setCustomerName(session.user.name);
+      }
+      if (session.user.phone && !customerPhone) {
+        setCustomerPhone(session.user.phone);
+      }
+      if (session.user.email && !customerEmail) {
+        setCustomerEmail(session.user.email);
+      }
+    }
+  }, [session]);
 
   useEffect(() => {
     const fetchMethods = async () => {

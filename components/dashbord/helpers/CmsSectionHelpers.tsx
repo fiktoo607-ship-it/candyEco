@@ -109,9 +109,12 @@ export function CarouselManagerSection({
     <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md md:p-lg shadow-soft space-y-md">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-sm border-b border-outline-variant/10 pb-sm">
         <div>
-          <h2 className="font-display text-2xl font-bold text-on-surface">Carousel de l'accueil</h2>
+          <h2 className="font-display text-2xl font-bold text-on-surface">
+            Carousel de l'accueil
+          </h2>
           <p className="text-sm text-on-surface-variant mt-[2px]">
-            Combinez la sélection de produits existants et des images personnalisées (limite totale globale).
+            Combinez la sélection de produits existants et des images
+            personnalisées (limite totale globale).
           </p>
         </div>
         <button
@@ -129,7 +132,9 @@ export function CarouselManagerSection({
         <div className="rounded-xl bg-secondary-container/30 border border-secondary-fixed/50 p-sm text-on-secondary-container text-xs flex items-center gap-xs">
           <span className="material-symbols-outlined text-base">info</span>
           <span>
-            Limite totale de <strong>{maxSlidesInput}</strong> diapositives atteinte (Produits + Images). Pour en rajouter, désélectionnez des produits ou supprimez des images.
+            Limite totale de <strong>{maxSlidesInput - 1}</strong> diapositives
+            atteinte (Produits + Images). Pour en rajouter, désélectionnez des
+            produits ou supprimez des images.
           </span>
         </div>
       )}
@@ -137,20 +142,32 @@ export function CarouselManagerSection({
       {/* Slide Controls Inputs */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-sm max-w-lg">
         <div className="flex flex-col gap-xs">
-          <label className="text-sm font-bold text-on-surface-variant">Nombre maximum de diapositives</label>
+          <label className="text-sm font-bold text-on-surface-variant">
+            Nombre maximum de diapositives
+          </label>
           <input
             type="number"
             min={1}
-            {...register('carousel_max_slides', { required: true, min: 1, valueAsNumber: true })}
+            {...register("carousel_max_slides", {
+              required: true,
+              min: 1,
+              valueAsNumber: true,
+            })}
             className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary w-full"
           />
         </div>
         <div className="flex flex-col gap-xs">
-          <label className="text-sm font-bold text-on-surface-variant">Limite des nouveaux produits</label>
+          <label className="text-sm font-bold text-on-surface-variant">
+            Limite des nouveaux produits
+          </label>
           <input
             type="number"
             min={1}
-            {...register('new_products_limit', { required: true, min: 1, valueAsNumber: true })}
+            {...register("new_products_limit", {
+              required: true,
+              min: 1,
+              valueAsNumber: true,
+            })}
             className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary w-full"
           />
         </div>
@@ -160,10 +177,15 @@ export function CarouselManagerSection({
       <div className="space-y-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm">
           <div>
-            <h3 className="font-semibold text-base text-on-surface">1. Sélectionner des produits</h3>
+            <h3 className="font-semibold text-base text-on-surface">
+              1. Sélectionner des produits
+            </h3>
             <p className="text-xs text-on-surface-variant mt-[2px]">
-              Cochez les produits que vous souhaitez mettre en avant dans les diapositives.
-              <span className="font-bold text-primary ml-xs">({selectedSlugs.length} sélectionné(s))</span>
+              Cochez les produits que vous souhaitez mettre en avant dans les
+              diapositives.
+              <span className="font-bold text-primary ml-xs">
+                ({selectedSlugs.length} sélectionné(s))
+              </span>
             </p>
           </div>
           {/* Search Bar */}
@@ -184,7 +206,7 @@ export function CarouselManagerSection({
           </div>
         </div>
 
-        <div 
+        <div
           onScroll={handleChecklistScroll}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-sm max-h-[220px] overflow-y-auto border border-outline-variant/20 rounded-xl p-sm bg-surface-container-low/30"
         >
@@ -196,11 +218,11 @@ export function CarouselManagerSection({
             visibleProducts.map((product) => {
               const isChecked = selectedSlugs.includes(product.slug);
               const disabled = !isChecked && isLimitReached;
-              
+
               return (
-                <label 
-                  key={product.id} 
-                  className={`flex items-center gap-sm border rounded-xl p-sm cursor-pointer transition-all ${isChecked ? 'border-primary bg-primary-container/5' : 'border-outline-variant/30 hover:bg-surface-container-low'} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                <label
+                  key={product.id}
+                  className={`flex items-center gap-sm border rounded-xl p-sm cursor-pointer transition-all ${isChecked ? "border-primary bg-primary-container/5" : "border-outline-variant/30 hover:bg-surface-container-low"} ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
                 >
                   <input
                     type="checkbox"
@@ -208,16 +230,28 @@ export function CarouselManagerSection({
                     disabled={disabled}
                     onChange={(e) => {
                       if (e.target.checked) {
-                        setValue('carousel_products', [...selectedSlugs, product.slug], { shouldDirty: true });
+                        setValue(
+                          "carousel_products",
+                          [...selectedSlugs, product.slug],
+                          { shouldDirty: true },
+                        );
                       } else {
-                        setValue('carousel_products', selectedSlugs.filter((s) => s !== product.slug), { shouldDirty: true });
+                        setValue(
+                          "carousel_products",
+                          selectedSlugs.filter((s) => s !== product.slug),
+                          { shouldDirty: true },
+                        );
                       }
                     }}
                     className="h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary cursor-pointer disabled:cursor-not-allowed"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-on-surface truncate text-sm">{product.title}</p>
-                    <p className="text-xs text-on-surface-variant capitalize">{product.category}</p>
+                    <p className="font-semibold text-on-surface truncate text-sm">
+                      {product.title}
+                    </p>
+                    <p className="text-xs text-on-surface-variant capitalize">
+                      {product.category}
+                    </p>
                   </div>
                 </label>
               );
@@ -235,29 +269,50 @@ export function CarouselManagerSection({
       {/* Subsection B: Custom Uploaded Slides list */}
       <div className="space-y-sm pt-sm">
         <div>
-          <h3 className="font-semibold text-base text-on-surface">2. Téléverser de nouvelles images</h3>
+          <h3 className="font-semibold text-base text-on-surface">
+            2. Téléverser de nouvelles images
+          </h3>
           <p className="text-xs text-on-surface-variant mt-[2px]">
-            Gérez des diapositives d'images sur-mesure (promotions, nouveautés, fêtes).
-            <span className="font-bold text-primary ml-xs">({slides.length} image(s))</span>
+            Gérez des diapositives d'images sur-mesure (promotions, nouveautés,
+            fêtes).
+            <span className="font-bold text-primary ml-xs">
+              ({slides.length} image(s))
+            </span>
           </p>
         </div>
 
         {slides.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-lg text-center text-on-surface-variant border-2 border-dashed border-outline-variant/30 rounded-2xl">
-            <span className="material-symbols-outlined text-4xl text-outline mb-xs">add_photo_alternate</span>
+            <span className="material-symbols-outlined text-4xl text-outline mb-xs">
+              add_photo_alternate
+            </span>
             <p className="font-semibold text-sm">Aucune image personnalisée</p>
-            <p className="text-xs">Utilisez le bouton "Ajouter une image" en haut à droite pour importer une diapositive.</p>
+            <p className="text-xs">
+              Utilisez le bouton "Ajouter une image" en haut à droite pour
+              importer une diapositive.
+            </p>
           </div>
         ) : (
           <div className="space-y-sm">
             {slides.map((slide, index) => (
-              <div key={slide.id} className="flex flex-col sm:flex-row items-center gap-md border border-outline-variant/30 rounded-2xl p-md bg-surface-container-low">
+              <div
+                key={slide.id}
+                className="flex flex-col sm:flex-row items-center gap-md border border-outline-variant/30 rounded-2xl p-md bg-surface-container-low"
+              >
                 <div className="relative aspect-[16/9] w-full sm:w-40 rounded-xl overflow-hidden bg-neutral-900 flex-shrink-0">
-                  <img src={slide.imageUrl} alt={slide.title} className="object-cover w-full h-full" />
+                  <img
+                    src={slide.imageUrl}
+                    alt={slide.title}
+                    className="object-cover w-full h-full"
+                  />
                 </div>
                 <div className="flex-grow min-w-0 text-left w-full">
-                  <h3 className="font-semibold text-on-surface text-base truncate">{slide.title}</h3>
-                  <p className="text-xs text-on-surface-variant line-clamp-2 mt-xs">{slide.description}</p>
+                  <h3 className="font-semibold text-on-surface text-base truncate">
+                    {slide.title}
+                  </h3>
+                  <p className="text-xs text-on-surface-variant line-clamp-2 mt-xs">
+                    {slide.description}
+                  </p>
                   {slide.linkUrl && (
                     <span className="inline-block text-[11px] font-bold text-primary mt-sm bg-primary/10 px-sm py-0.5 rounded-full truncate max-w-full">
                       Lien: {slide.linkUrl}
@@ -268,20 +323,24 @@ export function CarouselManagerSection({
                   <button
                     type="button"
                     disabled={index === 0}
-                    onClick={() => handleMoveSlide(index, 'up')}
+                    onClick={() => handleMoveSlide(index, "up")}
                     className="p-sm rounded-full text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors disabled:opacity-30"
                     title="Monter"
                   >
-                    <span className="material-symbols-outlined text-xl">arrow_upward</span>
+                    <span className="material-symbols-outlined text-xl">
+                      arrow_upward
+                    </span>
                   </button>
                   <button
                     type="button"
                     disabled={index === slides.length - 1}
-                    onClick={() => handleMoveSlide(index, 'down')}
+                    onClick={() => handleMoveSlide(index, "down")}
                     className="p-sm rounded-full text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors disabled:opacity-30"
                     title="Descendre"
                   >
-                    <span className="material-symbols-outlined text-xl">arrow_downward</span>
+                    <span className="material-symbols-outlined text-xl">
+                      arrow_downward
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -289,7 +348,9 @@ export function CarouselManagerSection({
                     className="p-sm rounded-full text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors"
                     title="Modifier"
                   >
-                    <span className="material-symbols-outlined text-xl">edit</span>
+                    <span className="material-symbols-outlined text-xl">
+                      edit
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -297,7 +358,9 @@ export function CarouselManagerSection({
                     className="p-sm rounded-full text-error hover:bg-error-container/20 transition-colors"
                     title="Supprimer"
                   >
-                    <span className="material-symbols-outlined text-xl">delete</span>
+                    <span className="material-symbols-outlined text-xl">
+                      delete
+                    </span>
                   </button>
                 </div>
               </div>
