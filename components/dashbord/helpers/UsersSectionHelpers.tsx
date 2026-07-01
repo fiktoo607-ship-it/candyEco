@@ -74,7 +74,7 @@ export function UsersFilters({
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-sm w-full lg:w-auto">
           {/* Sort By Dropdown */}
           <div className="relative flex-grow sm:flex-initial">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
+            <span className="material-symbols-outlined notranslate absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none" translate="no">
               sort
             </span>
             <select

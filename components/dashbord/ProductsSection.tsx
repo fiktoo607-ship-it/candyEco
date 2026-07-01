@@ -79,7 +79,7 @@ export default function ProductsSection() {
 
             {/* Sort Select */}
             <div className="relative w-full sm:w-64 flex-shrink-0">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
+              <span className="material-symbols-outlined notranslate absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none" translate="no">
                 sort
               </span>
               <select
