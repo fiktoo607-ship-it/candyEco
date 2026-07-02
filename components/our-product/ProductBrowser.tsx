@@ -62,6 +62,7 @@ export default function ProductBrowser() {
   const [tagSearchQuery, setTagSearchQuery] = useState("");
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -180,7 +181,7 @@ export default function ProductBrowser() {
     <div className="space-y-lg w-full">
       {/* Top Filter and Search Controls (Full Width) */}
       <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md md:p-lg shadow-soft space-y-md">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-md items-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-md items-end">
           {/* Search Bar (Spans 2 columns on medium+ screens) */}
           <div className="md:col-span-2 space-y-xs">
             <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
@@ -189,51 +190,66 @@ export default function ProductBrowser() {
             <SearchBar value={searchQuery} onChange={setSearchQuery} />
           </div>
 
-          {/* Tag Selection (Spans 1 column) */}
-          <div className="relative space-y-xs">
-            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-              Filtrer par tags
-            </label>
-            <div className="relative">
-              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-xl pointer-events-none select-none">
-                sell
-              </span>
-              <input
-                type="text"
-                value={tagSearchQuery}
-                onChange={(e) => {
-                  setTagSearchQuery(e.target.value);
-                  setShowTagDropdown(true);
-                }}
-                onFocus={() => setShowTagDropdown(true)}
-                placeholder="Rechercher un tag (ex: لوز)..."
-                className="w-full h-12 pl-11 pr-4 rounded-full border border-outline-variant bg-surface-container-low text-base text-on-surface placeholder-outline outline-none transition-all focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
-              />
-              {/* Tag Search Dropdown */}
-              {showTagDropdown && (
-                <div 
-                  ref={dropdownRef}
-                  className="absolute z-30 mt-xs w-full max-h-60 overflow-y-auto rounded-xl border border-outline-variant/30 bg-surface-container-lowest shadow-lg py-xs scrollbar-thin"
-                >
-                  {suggestedTags.length === 0 ? (
-                    <div className="px-md py-sm text-sm text-on-surface-variant">
-                      Aucun tag trouvé
-                    </div>
-                  ) : (
-                    suggestedTags.map((tag) => (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => handleSelectTag(tag)}
-                        className="w-full text-left px-md py-sm text-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors font-medium flex items-center gap-xs"
-                      >
-                        <span className="text-primary font-bold">#</span>
-                        {tag}
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
+          {/* Tag Selection / Category Filter Container on Mobile */}
+          <div className="grid grid-cols-2 md:grid-cols-1 gap-sm">
+            {/* Tag Selection */}
+            <div className="relative space-y-xs">
+              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider md:block hidden">
+                Filtrer par tags
+              </label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-xl pointer-events-none select-none">
+                  sell
+                </span>
+                <input
+                  type="text"
+                  value={tagSearchQuery}
+                  onChange={(e) => {
+                    setTagSearchQuery(e.target.value);
+                    setShowTagDropdown(true);
+                  }}
+                  onFocus={() => setShowTagDropdown(true)}
+                  placeholder="Tag (ex: لوز)..."
+                  className="w-full h-12 pl-11 pr-4 rounded-full border border-outline-variant bg-surface-container-low text-xs sm:text-base text-on-surface placeholder-outline outline-none transition-all focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
+                />
+                {/* Tag Search Dropdown */}
+                {showTagDropdown && (
+                  <div 
+                    ref={dropdownRef}
+                    className="absolute z-30 mt-xs w-full max-h-60 overflow-y-auto rounded-xl border border-outline-variant/30 bg-surface-container-lowest shadow-lg py-xs scrollbar-thin"
+                  >
+                    {suggestedTags.length === 0 ? (
+                      <div className="px-md py-sm text-sm text-on-surface-variant">
+                        Aucun tag trouvé
+                      </div>
+                    ) : (
+                      suggestedTags.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => handleSelectTag(tag)}
+                          className="w-full text-left px-md py-sm text-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors font-medium flex items-center gap-xs"
+                        >
+                          <span className="text-primary font-bold">#</span>
+                          {tag}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Category Filter Button (Mobile Only) */}
+            <div className="lg:hidden relative">
+              <button
+                type="button"
+                onClick={() => setIsFilterModalOpen(true)}
+                className="w-full h-12 rounded-full border border-outline-variant bg-surface-container-low text-xs sm:text-sm font-semibold text-primary hover:bg-surface-container-high transition-colors flex items-center justify-center gap-xs"
+              >
+                <span className="material-symbols-outlined text-lg">filter_alt</span>
+                Catégories
+              </button>
             </div>
           </div>
         </div>
@@ -275,14 +291,14 @@ export default function ProductBrowser() {
 
       {/* Main product catalog layout */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-lg items-start">
-        {/* Sidebar Filter Section */}
-        <aside className="lg:col-span-1 space-y-md rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft lg:sticky lg:top-24">
+        {/* Sidebar Filter Section - Hidden on Mobile */}
+        <aside className="hidden lg:block lg:col-span-1 space-y-md rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft lg:sticky lg:top-24">
           {/* Category Tabs */}
           <div className="space-y-xs">
             <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
               Catégorie
             </label>
-            <div className="flex flex-col gap-xs">
+            <div className="flex flex-col gap-xs w-full">
               {filters.map((filter) => {
                 const active = activeCategory === filter.value;
                 return (
@@ -292,7 +308,7 @@ export default function ProductBrowser() {
                     onClick={() => {
                       setActiveCategory(filter.value as typeof activeCategory);
                     }}
-                    className={`text-left rounded-lg px-md py-xs text-sm font-semibold transition-all ${
+                    className={`text-left rounded-lg px-md py-xs text-sm font-semibold transition-all whitespace-nowrap ${
                       active 
                         ? 'bg-primary-container text-on-primary-container border-l-4 border-primary pl-3' 
                         : 'text-on-surface-variant hover:bg-surface-variant/40 hover:text-primary'
@@ -346,6 +362,50 @@ export default function ProductBrowser() {
           )}
         </div>
       </div>
+
+      {/* Mobile Category Filter Modal */}
+      {isFilterModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-md bg-black/40 backdrop-blur-sm animate-fade-in lg:hidden">
+          <div className="w-full max-w-sm rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-lg space-y-md animate-scale-up">
+            <header className="flex items-center justify-between border-b border-outline-variant/20 pb-xs">
+              <h3 className="font-display text-lg font-bold text-on-surface flex items-center gap-xs">
+                <span className="material-symbols-outlined text-primary">filter_alt</span>
+                Filtrer par catégorie
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsFilterModalOpen(false)}
+                className="rounded-full p-xs text-on-surface-variant hover:bg-surface-container-low transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg select-none">close</span>
+              </button>
+            </header>
+            
+            <div className="flex flex-col gap-sm py-xs">
+              {filters.map((filter) => {
+                const active = activeCategory === filter.value;
+                return (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    onClick={() => {
+                      setActiveCategory(filter.value as typeof activeCategory);
+                      setIsFilterModalOpen(false);
+                    }}
+                    className={`text-left rounded-lg px-md py-sm text-sm font-semibold transition-all ${
+                      active 
+                        ? 'bg-primary text-white border-l-4 border-secondary pl-3 shadow-soft' 
+                        : 'text-on-surface-variant bg-surface-container-low hover:bg-surface-container-high hover:text-primary'
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

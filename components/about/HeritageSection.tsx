@@ -11,7 +11,7 @@ export default function HeritageSection({ title, desc1, desc2 }: HeritageSection
         <img
           src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQ9D8JLa_bfz2-LqILaPS5Y5BNwRA_3_bfuzgyv-_AiSHUdnRMTf5_AZb6INTxhlP88O8s1X6XR4AHvNDEXK2EDRRgpY4cna0MCbdHkCPv5-jz00MwRuChHhuklDPaHhX_dCvMy5Dv9urTEaOek3gFOHeGFvTCbs0nYdUqQJqghQfUlyn25b0pdgqrw3irttdyHjTFncU2Z5NssW_4gRAVVey6EbOYqQdOcZJoP5395MAXo8JM1qL2SqWTp83OEnG2GDgZVOXJyyo"
           alt="Boulanger"
-          className="h-[520px] w-full object-cover"
+          className="h-[300px] sm:h-[400px] md:h-[520px] w-full object-cover"
         />
       </div>
       <div>

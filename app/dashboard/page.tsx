@@ -42,7 +42,9 @@ export default function DashboardPage() {
               : 'Méthodes de livraison'}
           </h1>
           <div className="flex items-center gap-md">
-            <NotificationBell />
+            <div className="hidden md:block">
+              <NotificationBell />
+            </div>
             
             {activeTab === 'products' && (
               <button

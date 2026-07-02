@@ -318,7 +318,7 @@ export default function ProductsSection() {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
-                className="rounded-xl border border-outline-variant px-sm py-xs text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 flex items-center justify-center font-bold"
+                className="rounded-xl border border-outline-variant text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 flex items-center justify-center font-bold p-0"
               >
                 ‹
               </button>
@@ -328,7 +328,7 @@ export default function ProductsSection() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`rounded-xl px-sm py-xs text-xs md:text-sm font-semibold transition-all h-9 min-w-9 flex items-center justify-center ${
+                      className={`rounded-xl text-xs md:text-sm font-semibold transition-all h-9 w-9 flex items-center justify-center p-0 ${
                         currentPage === page
                           ? "bg-primary text-white shadow-soft font-bold"
                           : "border border-outline-variant text-on-surface hover:bg-surface-container-low"
@@ -344,7 +344,7 @@ export default function ProductsSection() {
                 onClick={() =>
                   setCurrentPage(Math.min(currentPage + 1, totalPages))
                 }
-                className="rounded-xl border border-outline-variant px-sm py-xs text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 flex items-center justify-center font-bold"
+                className="rounded-xl border border-outline-variant text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 flex items-center justify-center font-bold p-0"
               >
                 ›
               </button>

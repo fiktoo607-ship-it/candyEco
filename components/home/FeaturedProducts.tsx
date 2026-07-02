@@ -81,6 +81,35 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
     setDragOffset(0);
   };
 
+  // Touch handlers for swiping on mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setDragStartX(e.targetTouches[0].clientX);
+    setIsDragging(true);
+    setDragOffset(0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || dragStartX === null) return;
+    const currentX = e.targetTouches[0].clientX;
+    const diff = currentX - dragStartX;
+    setDragOffset(diff);
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    setDragStartX(null);
+    startAutoCycle();
+
+    const threshold = 50; // lower threshold for touch
+    if (dragOffset < -threshold) {
+      setCurrentSlide((prev) => (prev + 1) % slidesCount);
+    } else if (dragOffset > threshold) {
+      setCurrentSlide((prev) => (prev - 1 + slidesCount) % slidesCount);
+    }
+    setDragOffset(0);
+  };
+
   return (
     <section 
       className="mx-auto max-w-container-max px-gutter py-xl relative select-none"
@@ -88,6 +117,9 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUpOrLeave}
       onMouseLeave={handleMouseUpOrLeave}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Title Header */}
       <div className="mb-lg text-center flex flex-col items-center justify-center relative">
@@ -97,34 +129,32 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
         <div className="mx-auto mt-sm h-1 w-16 rounded-full bg-primary-container" />
       </div>
 
-      {/* Slides Container */}
-      <div className="relative overflow-hidden w-full min-h-[3550px] sm:min-h-[1850px] lg:min-h-[1250px]">
-        {Array.from({ length: slidesCount }).map((_, slideIndex) => {
-          const slideProducts = products.slice(
-            slideIndex * itemsPerSlide,
-            (slideIndex + 1) * itemsPerSlide,
-          );
-          const isActive = slideIndex === currentSlide;
+      {/* Slides Container - Dynamic height through inline translate flexbox */}
+      <div className="overflow-hidden w-full">
+        <div 
+          className="flex transition-transform duration-[800ms] ease-in-out"
+          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+        >
+          {Array.from({ length: slidesCount }).map((_, slideIndex) => {
+            const slideProducts = products.slice(
+              slideIndex * itemsPerSlide,
+              (slideIndex + 1) * itemsPerSlide,
+            );
 
-          return (
-            <div
-              key={slideIndex}
-              className={`w-full transition-all duration-[800ms] ease-in-out absolute inset-0 grid grid-cols-1 gap-lg sm:grid-cols-2 lg:grid-cols-3 ${
-                isActive
-                  ? "opacity-100 translate-x-0 z-10"
-                  : slideIndex < currentSlide
-                    ? "opacity-0 -translate-x-[50%] z-0 pointer-events-none"
-                    : "opacity-0 translate-x-[50%] z-0 pointer-events-none"
-              }`}
-            >
-              {slideProducts.map((product) => (
-                <div key={product.title} className="h-full">
-                  <ProductCard product={product} />
-                </div>
-              ))}
-            </div>
-          );
-        })}
+            return (
+              <div
+                key={slideIndex}
+                className="w-full flex-shrink-0 grid grid-cols-1 gap-lg sm:grid-cols-2 lg:grid-cols-3"
+              >
+                {slideProducts.map((product) => (
+                  <div key={product.title} className="h-full">
+                    <ProductCard product={product} />
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Dotted Slide Indicators (Replaces Manual Arrow Buttons) */}

@@ -10,25 +10,28 @@ export default function CartItemsList() {
       {items.map((item) => (
         <div
           key={item.product.id}
-          className="flex items-center gap-md rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft"
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-sm sm:gap-md rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-sm sm:p-md shadow-soft"
         >
-          <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-surface-variant/30 flex-shrink-0">
-            <Image
-              src={item.product.imageUrl}
-              alt={item.product.title}
-              fill
-              className="object-cover"
-            />
+          {/* Product Image & Info Group */}
+          <div className="flex items-center gap-sm sm:gap-md flex-1 min-w-0">
+            <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-surface-variant/30 flex-shrink-0">
+              <Image
+                src={item.product.imageUrl}
+                alt={item.product.title}
+                fill
+                className="object-cover"
+              />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-lg text-on-surface line-clamp-1">{item.product.title}</h3>
+              <p className="text-sm text-on-surface-variant mt-xs">{item.product.category}</p>
+              <p className="text-primary font-bold mt-xs">{item.product.price}</p>
+            </div>
           </div>
 
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg text-on-surface line-clamp-1">{item.product.title}</h3>
-            <p className="text-sm text-on-surface-variant mt-xs">{item.product.category}</p>
-            <p className="text-primary font-bold mt-xs">{item.product.price}</p>
-          </div>
-
-          {/* Quantity Controls & Remove */}
-          <div className="flex items-center gap-sm">
+          {/* Quantity Controls & Remove - Stacks nicely on mobile with divider */}
+          <div className="flex items-center justify-between sm:justify-end gap-sm w-full sm:w-auto border-t border-outline-variant/20 pt-sm sm:border-t-0 sm:pt-0">
             <div className="flex items-center border border-outline-variant rounded-lg overflow-hidden bg-surface-container-low h-9">
               <button
                 type="button"
@@ -49,7 +52,11 @@ export default function CartItemsList() {
 
             <button
               type="button"
-              onClick={() => removeItem(item.product.id)}
+              onClick={() => {
+                if (window.confirm("Voulez-vous vraiment supprimer cet article de votre panier ?")) {
+                  removeItem(item.product.id);
+                }
+              }}
               className="rounded-lg p-2 text-error hover:bg-error/10 transition-colors flex items-center justify-center"
               title={dictionary.cart.list.remove}
             >

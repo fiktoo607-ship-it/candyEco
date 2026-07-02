@@ -156,7 +156,11 @@ export function ProductImageUpload({
             </div>
             <button
               type="button"
-              onClick={() => setImageUrl("")}
+              onClick={() => {
+                if (window.confirm("Voulez-vous vraiment enlever cette image ?")) {
+                  setImageUrl("");
+                }
+              }}
               className="rounded-xl bg-error/10 px-md py-sm text-xs font-bold text-error hover:bg-error/20 transition-colors flex items-center gap-xs"
             >
               <span className="material-symbols-outlined text-sm">delete</span>

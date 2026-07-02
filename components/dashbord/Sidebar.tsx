@@ -3,6 +3,7 @@ import { signOut } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import NotificationBell from './NotificationBell';
 
 export default function Sidebar() {
   const { activeTab, setActiveTab } = useDashboardStore();
@@ -22,16 +23,19 @@ export default function Sidebar() {
           />
         </Link>
         
-        {/* Hamburger Menu Button */}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-surface-container-low text-on-surface md:hidden focus:outline-none"
-          aria-label="Toggle navigation menu"
-        >
-          <span className="material-symbols-outlined text-2xl select-none">
-            {isOpen ? 'close' : 'menu'}
-          </span>
-        </button>
+        {/* Mobile Actions (Notification Bell next to Hamburger) */}
+        <div className="flex items-center gap-sm md:hidden">
+          <NotificationBell />
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-surface-container-low text-on-surface focus:outline-none"
+            aria-label="Toggle navigation menu"
+          >
+            <span className="material-symbols-outlined text-2xl select-none">
+              {isOpen ? 'close' : 'menu'}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Navigation container - hidden on mobile unless open */}

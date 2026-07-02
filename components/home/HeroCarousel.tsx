@@ -125,8 +125,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="relative isolate w-full overflow-hidden bg-neutral-950"
-      style={{ height: '100vh' }}
+      className="relative isolate w-full overflow-hidden bg-neutral-950 h-screen"
     >
       {/* Slides Container */}
       <div className="absolute inset-0 h-full w-full">
@@ -154,31 +153,31 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
               <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-transparent lg:bg-gradient-to-r lg:from-neutral-950/95 lg:via-neutral-950/50 lg:to-transparent z-10" />
 
               {/* Text & Content Overlay in a Glassmorphic block */}
-              <div className="relative mx-auto flex h-full max-w-container-max items-end lg:items-center px-gutter pb-28 lg:pb-0 lg:py-xl z-20">
+              <div className="relative mx-auto flex h-full max-w-container-max items-end lg:items-center px-gutter pb-16 xs:pb-24 lg:pb-0 lg:py-xl z-20">
                 <div
-                  className="w-full max-w-2xl text-left text-white rounded-3xl p-md md:p-12 transition-all duration-500 hover:border-white/20"
+                  className="w-full max-w-2xl text-left text-white rounded-3xl p-sm xs:p-md md:p-12 transition-all duration-500 hover:border-white/20"
                   dir="ltr"
                 >
                   {/* Elegant Typography */}
-                  <h1 className="mt-md font-display text-4xl font-black leading-tight md:text-5xl lg:text-6xl tracking-tight text-white drop-shadow-md max-w-[15ch] md:max-w-[18ch]">
+                  <h1 className="mt-sm sm:mt-md font-display text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-white drop-shadow-md max-w-[15ch] md:max-w-[18ch]">
                     {slide.title}
                   </h1>
 
-                  <p className="mt-md max-w-xl text-lg md:text-2xl leading-relaxed text-neutral-300 font-medium line-clamp-4 lg:line-clamp-none">
+                  <p className="mt-xs sm:mt-md max-w-xl text-xs xs:text-sm sm:text-lg md:text-2xl leading-relaxed text-neutral-300 font-medium line-clamp-3 sm:line-clamp-4 lg:line-clamp-none">
                     {slide.description}
                   </p>
 
                    {/* Action Buttons */}
                   {slide.primaryLink && (
-                    <div className="mt-lg flex flex-wrap gap-sm">
+                    <div className="mt-sm sm:mt-lg flex flex-wrap gap-xs sm:gap-sm">
                       {slide.primaryLink.isComingSoon ? (
-                        <div className="rounded-xl bg-[#EAB308] px-[50px] py-[16px] text-base font-extrabold text-neutral-950 shadow-lg shadow-yellow-500/10 cursor-default select-none">
+                        <div className="rounded-xl bg-[#2d0b87] px-6 py-2.5 xs:px-8 xs:py-3 md:px-[50px] md:py-[16px] text-xs xs:text-sm md:text-base font-extrabold text-white shadow-lg shadow-blue-900/10 cursor-default select-none">
                           {slide.primaryLink.label}
                         </div>
                       ) : (
                         <Link
                           href={slide.primaryLink.href}
-                          className="rounded-xl bg-[#EAB308] px-[50px] py-[16px] text-base font-extrabold text-neutral-950 shadow-lg shadow-yellow-500/20 transition-all hover:scale-[1.02] hover:bg-[#CA8A04] active:scale-[0.98]"
+                          className="rounded-xl bg-[#2d0b87] px-6 py-2.5 xs:px-8 xs:py-3 md:px-[50px] md:py-[16px] text-xs xs:text-sm md:text-base font-extrabold text-white shadow-lg shadow-blue-900/20 transition-all hover:scale-[1.02] hover:bg-[#1a0558] active:scale-[0.98]"
                         >
                           {slide.primaryLink.label}
                         </Link>
@@ -251,7 +250,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
                 onClick={() => handleDotClick(index)}
                 className={`h-3 transition-all duration-300 ease-out rounded-full ${
                   isActive
-                    ? "w-8 bg-secondary-fixed shadow-md shadow-secondary-fixed/50"
+                    ? "w-8 bg-[#2d0b87] shadow-md shadow-[#2d0b87]/50"
                     : "w-3 bg-white/40 hover:bg-white/70 hover:scale-110"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
