@@ -111,9 +111,8 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
   };
 
   return (
-    <section 
-      id="featured-products-carousel"
-      className="mx-auto max-w-container-max px-gutter pt-md pb-xl md:py-xl relative select-none"
+    <section
+      className="mx-auto max-w-container-max px-gutter py-xl relative select-none"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUpOrLeave}
@@ -132,7 +131,7 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
 
       {/* Slides Container - Dynamic height through inline translate flexbox */}
       <div className="overflow-hidden w-full">
-        <div 
+        <div
           className="flex transition-transform duration-[800ms] ease-in-out"
           style={{ transform: `translateX(-${currentSlide * 100}%)` }}
         >

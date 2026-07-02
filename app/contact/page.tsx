@@ -8,7 +8,7 @@ export default function ContactPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="mx-auto flex max-w-container-max flex-1 flex-col px-gutter pt-md pb-xl md:py-xl">
+      <main className="mx-auto flex max-w-container-max flex-1 flex-col px-gutter py-xl">
         <ContactHero />
 
         <section className="mt-xl grid gap-xl lg:grid-cols-12">

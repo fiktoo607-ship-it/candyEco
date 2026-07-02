@@ -24,11 +24,10 @@ export default function CartPage() {
     return (
       <div className="flex min-h-screen flex-col">
         <SiteHeader />
-        <main className="mx-auto flex max-w-container-max flex-1 flex-col items-center justify-center px-gutter pt-md pb-xl md:py-xl">
-          <div className="flex flex-col items-center gap-md">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <p className="text-sm font-semibold animate-pulse">Chargement de votre panier...</p>
-          </div>
+        <main className="mx-auto flex max-w-container-max flex-1 flex-col items-center justify-center px-gutter py-xl">
+          <span className="material-symbols-outlined text-4xl text-primary animate-spin">
+            sync
+          </span>
         </main>
         <SiteFooter />
       </div>
@@ -43,16 +42,27 @@ export default function CartPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="mx-auto flex max-w-container-max flex-1 flex-col px-gutter pt-md pb-xl md:py-xl w-full" dir="ltr">
+      <main
+        className="mx-auto flex max-w-container-max flex-1 flex-col px-gutter py-xl w-full"
+        dir="ltr"
+      >
         <header className="text-center mb-xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">{dictionary.cart.header.tagline}</p>
-          <h1 className="mt-sm font-display text-5xl font-bold text-on-surface">{dictionary.cart.header.title}</h1>
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">
+            {dictionary.cart.header.tagline}
+          </p>
+          <h1 className="mt-sm font-display text-5xl font-bold text-on-surface">
+            {dictionary.cart.header.title}
+          </h1>
         </header>
 
         {isSuccess ? (
           <div className="mx-auto max-w-md rounded-2xl border border-emerald-100 bg-emerald-50/50 p-xl text-center shadow-soft">
-            <span className="material-symbols-outlined text-5xl text-emerald-600 mb-sm">check_circle</span>
-            <h2 className="text-2xl font-bold text-on-surface">{dictionary.cart.success.title}</h2>
+            <span className="material-symbols-outlined text-5xl text-emerald-600 mb-sm">
+              check_circle
+            </span>
+            <h2 className="text-2xl font-bold text-on-surface">
+              {dictionary.cart.success.title}
+            </h2>
             <p className="mt-md text-on-surface-variant leading-relaxed">
               {dictionary.cart.success.description}
             </p>
@@ -75,9 +85,15 @@ export default function CartPage() {
           </div>
         ) : items.length === 0 ? (
           <div className="mx-auto max-w-md text-center py-xl">
-            <span className="material-symbols-outlined text-5xl text-on-surface-variant mb-sm">shopping_cart_off</span>
-            <h2 className="text-2xl font-bold text-on-surface">{dictionary.cart.empty.title}</h2>
-            <p className="mt-sm text-on-surface-variant">{dictionary.cart.empty.description}</p>
+            <span className="material-symbols-outlined text-5xl text-on-surface-variant mb-sm">
+              shopping_cart_off
+            </span>
+            <h2 className="text-2xl font-bold text-on-surface">
+              {dictionary.cart.empty.title}
+            </h2>
+            <p className="mt-sm text-on-surface-variant">
+              {dictionary.cart.empty.description}
+            </p>
             <Link
               href="/our-product"
               className="mt-lg inline-block rounded-xl bg-primary px-xl py-sm font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint"
