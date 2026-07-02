@@ -112,7 +112,8 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
 
   return (
     <section 
-      className="mx-auto max-w-container-max px-gutter py-xl relative select-none"
+      id="featured-products-carousel"
+      className="mx-auto max-w-container-max px-gutter pt-md pb-xl md:py-xl relative select-none"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUpOrLeave}

@@ -24,8 +24,11 @@ export default function CartPage() {
     return (
       <div className="flex min-h-screen flex-col">
         <SiteHeader />
-        <main className="mx-auto flex max-w-container-max flex-1 flex-col items-center justify-center px-gutter py-xl">
-          <span className="material-symbols-outlined text-4xl text-primary animate-spin">sync</span>
+        <main className="mx-auto flex max-w-container-max flex-1 flex-col items-center justify-center px-gutter pt-md pb-xl md:py-xl">
+          <div className="flex flex-col items-center gap-md">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <p className="text-sm font-semibold animate-pulse">Chargement de votre panier...</p>
+          </div>
         </main>
         <SiteFooter />
       </div>
@@ -40,7 +43,7 @@ export default function CartPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="mx-auto flex max-w-container-max flex-1 flex-col px-gutter py-xl w-full" dir="ltr">
+      <main className="mx-auto flex max-w-container-max flex-1 flex-col px-gutter pt-md pb-xl md:py-xl w-full" dir="ltr">
         <header className="text-center mb-xl">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">{dictionary.cart.header.tagline}</p>
           <h1 className="mt-sm font-display text-5xl font-bold text-on-surface">{dictionary.cart.header.title}</h1>

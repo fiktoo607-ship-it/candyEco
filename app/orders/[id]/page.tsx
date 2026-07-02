@@ -89,7 +89,7 @@ export default function OrderTrackingPage() {
     <div className="flex min-h-screen flex-col bg-surface">
       <SiteHeader />
       
-      <main className="mx-auto flex max-w-4xl flex-1 flex-col px-gutter py-xl w-full">
+      <main className="mx-auto flex max-w-4xl flex-1 flex-col px-gutter pt-md pb-xl md:py-xl w-full">
         {loading ? (
           <div className="flex flex-1 flex-col items-center justify-center py-20">
             <span className="material-symbols-outlined text-4xl text-primary animate-spin">sync</span>

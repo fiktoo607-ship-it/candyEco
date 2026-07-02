@@ -38,7 +38,7 @@ export default function NewProductsSection({ products }: NewProductsSectionProps
         {products.map((product) => (
           <div
             key={product.id || product.slug}
-            className="w-[85vw] flex-shrink-0 snap-start sm:w-[45vw] md:w-auto md:flex-shrink"
+            className="w-[72vw] xs:w-[70vw] sm:w-[45vw] md:w-auto md:flex-shrink-0 snap-start"
           >
             <ProductCard product={product} />
           </div>
