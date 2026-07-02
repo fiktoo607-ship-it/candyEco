@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useProducts } from '@/lib/hooks/use-products';
 import { useDashboardStore } from '@/lib/dashboard-store';
+import { formatPrice } from '@/lib/price';
 
 export default function ProductsSection() {
   const { data: products = [], isLoading, error: productsError } = useProducts(true);
@@ -156,7 +157,7 @@ export default function ProductsSection() {
                       </div>
                       {/* Price Tag */}
                       <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md px-sm py-[2px] rounded-lg">
-                        <span className="text-xs font-bold text-white">{product.price}</span>
+                        <span className="text-xs font-bold text-white">{formatPrice(product.price)}</span>
                       </div>
                     </div>
 
@@ -252,8 +253,8 @@ export default function ProductsSection() {
                           {product.category}
                         </span>
                       </td>
-                      <td className="p-md font-bold text-primary">
-                        {product.price}
+                      <td className="p-md font-bold text-primary whitespace-nowrap">
+                        {formatPrice(product.price)}
                       </td>
                       <td className="p-md">
                         <span

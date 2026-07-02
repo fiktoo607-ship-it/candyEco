@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { useCartStore } from '@/lib/cart-store';
 import dictionary from '@/lib/copy-dictionary.json';
+import { formatPrice } from '@/lib/price';
 
 export default function CartItemsList() {
   const { items, removeItem, updateQuantity } = useCartStore();
@@ -26,7 +27,7 @@ export default function CartItemsList() {
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-lg text-on-surface line-clamp-1">{item.product.title}</h3>
               <p className="text-sm text-on-surface-variant mt-xs">{item.product.category}</p>
-              <p className="text-primary font-bold mt-xs">{item.product.price}</p>
+              <p className="text-primary font-bold mt-xs">{formatPrice(item.product.price)}</p>
             </div>
           </div>
 

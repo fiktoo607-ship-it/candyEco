@@ -219,27 +219,9 @@ export function UsersTable({
                       <span className="text-xs text-on-surface-variant italic px-sm font-semibold">
                         Vous (Actif)
                       </span>
-                    ) : confirmDeleteId === user.id ? (
-                      <div className="inline-flex items-center gap-xs w-full">
-                        <button
-                          onClick={() => onDeleteUser(user.id)}
-                          disabled={deleteLoading}
-                          className="flex-grow rounded-xl bg-error px-sm py-[8px] text-xs font-bold text-white hover:bg-error-container hover:text-on-error-container transition-all flex items-center justify-center gap-xs shadow-soft"
-                        >
-                          <span className="material-symbols-outlined text-sm">check</span>
-                          Confirmer
-                        </button>
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          disabled={deleteLoading}
-                          className="flex-grow rounded-xl border border-outline-variant bg-surface px-sm py-[8px] text-xs font-semibold text-on-surface hover:bg-surface-container-low transition-all flex items-center justify-center gap-xs"
-                        >
-                          Annuler
-                        </button>
-                      </div>
                     ) : (
                       <button
-                        onClick={() => setConfirmDeleteId(user.id)}
+                        onClick={() => onDeleteUser(user.id)}
                         className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-sm py-[8px] text-xs font-bold text-error hover:bg-rose-500/10 transition-colors flex items-center gap-xs"
                         title="Supprimer l'utilisateur"
                       >
@@ -315,26 +297,9 @@ export function UsersTable({
                       <span className="text-xs text-on-surface-variant italic px-sm font-semibold">
                         Vous (Actif)
                       </span>
-                    ) : confirmDeleteId === user.id ? (
-                      <div className="inline-flex items-center gap-xs">
-                        <button
-                          onClick={() => onDeleteUser(user.id)}
-                          disabled={deleteLoading}
-                          className="rounded-xl bg-error px-sm py-xs text-xs font-bold text-white hover:bg-error-container hover:text-on-error-container transition-all shadow-soft h-[34px] flex items-center justify-center"
-                        >
-                          {deleteLoading ? '...' : 'Confirmer'}
-                        </button>
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          disabled={deleteLoading}
-                          className="rounded-xl border border-outline-variant bg-surface px-sm py-xs text-xs font-semibold text-on-surface hover:bg-surface-container-low transition-all h-[34px] flex items-center justify-center"
-                        >
-                          Annuler
-                        </button>
-                      </div>
                     ) : (
                       <button
-                        onClick={() => setConfirmDeleteId(user.id)}
+                        onClick={() => onDeleteUser(user.id)}
                         className="inline-flex items-center justify-center h-8 w-8 rounded-xl border border-rose-500/20 text-on-surface-variant hover:text-error hover:bg-rose-500/5 transition-colors"
                         title="Supprimer l'utilisateur"
                       >

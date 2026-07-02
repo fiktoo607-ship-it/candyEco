@@ -105,7 +105,6 @@ export function useQnaSection() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Voulez-vous vraiment supprimer cette question ?')) return;
 
     try {
       const res = await fetch(`/api/faqs/${id}`, {

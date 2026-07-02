@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useCartStore } from '@/lib/cart-store';
 import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
+import { formatPrice } from '@/lib/price';
 
 export interface ProductCardProps {
   product: {
@@ -118,7 +119,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Price and Read More Button */}
           <div className="flex items-center justify-between">
             <span className="text-base sm:text-xl font-bold text-primary">
-              {product.price}
+              {formatPrice(product.price)}
             </span>
             <Link
               href={`/our-product/${product.slug}`}

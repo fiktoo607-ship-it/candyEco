@@ -1,12 +1,13 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useQnaSection } from './hooks/useQnaSection';
 import {
   QnaFilters,
   QnaTable,
   QnaModal
 } from './helpers/QnaSectionHelpers';
+import DashboardDeleteModal from './helpers/DashboardDeleteModal';
 
 export default function QnaSection() {
   const {
@@ -27,6 +28,8 @@ export default function QnaSection() {
     handleSave,
     handleDelete,
   } = useQnaSection();
+
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   return (
     <div className="flex flex-col gap-md">
@@ -49,7 +52,7 @@ export default function QnaSection() {
         isLoading={isLoading}
         filteredFaqs={filteredFaqs}
         onOpenEdit={handleOpenEdit}
-        onDelete={handleDelete}
+        onDelete={(id) => setDeleteTargetId(id)}
       />
 
       {/* FAQ Modal */}
@@ -62,6 +65,20 @@ export default function QnaSection() {
         answerText={answerText}
         setAnswerText={setAnswerText}
         onSave={handleSave}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DashboardDeleteModal
+        isOpen={deleteTargetId !== null}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={async () => {
+          if (deleteTargetId) {
+            await handleDelete(deleteTargetId);
+            setDeleteTargetId(null);
+          }
+        }}
+        title="Supprimer la question"
+        message="Voulez-vous vraiment supprimer cette question fréquente ? Cette action est permanente et ne peut pas être annulée."
       />
     </div>
   );

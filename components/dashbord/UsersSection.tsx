@@ -6,6 +6,7 @@ import {
   UsersFilters,
   UsersTable
 } from './helpers/UsersSectionHelpers';
+import DashboardDeleteModal from './helpers/DashboardDeleteModal';
 
 export default function UsersSection() {
   const {
@@ -73,7 +74,21 @@ export default function UsersSection() {
         confirmDeleteId={confirmDeleteId}
         setConfirmDeleteId={setConfirmDeleteId}
         deleteLoading={deleteLoading}
-        onDeleteUser={handleDeleteUser}
+        onDeleteUser={(id) => setConfirmDeleteId(id)}
+      />
+
+      {/* Custom Delete Modal */}
+      <DashboardDeleteModal
+        isOpen={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={async () => {
+          if (confirmDeleteId) {
+            await handleDeleteUser(confirmDeleteId);
+          }
+        }}
+        isSubmitting={deleteLoading}
+        title="Supprimer l'utilisateur"
+        message="Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est permanente et ne peut pas être annulée."
       />
     </div>
   );

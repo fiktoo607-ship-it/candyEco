@@ -1,11 +1,12 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useDeliverySection } from './hooks/useDeliverySection';
 import { 
   DeliveryForm, 
   DeliveryTable 
 } from './helpers/DeliverySectionHelpers';
+import DashboardDeleteModal from './helpers/DashboardDeleteModal';
 
 export default function DeliverySection() {
   const {
@@ -29,6 +30,8 @@ export default function DeliverySection() {
     handleToggleActive,
     handleDelete,
   } = useDeliverySection();
+
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -74,7 +77,21 @@ export default function DeliverySection() {
         methods={methods}
         onToggleActive={handleToggleActive}
         onEdit={handleEditClick}
-        onDelete={handleDelete}
+        onDelete={(id) => setDeleteTargetId(id)}
+      />
+
+      {/* Custom Delete Modal */}
+      <DashboardDeleteModal
+        isOpen={deleteTargetId !== null}
+        onClose={() => setDeleteTargetId(null)}
+        onConfirm={async () => {
+          if (deleteTargetId) {
+            await handleDelete(deleteTargetId);
+            setDeleteTargetId(null);
+          }
+        }}
+        title="Supprimer la méthode de livraison"
+        message="Voulez-vous vraiment supprimer cette méthode de livraison ? Cette action est permanente et ne peut pas être annulée."
       />
     </div>
   );

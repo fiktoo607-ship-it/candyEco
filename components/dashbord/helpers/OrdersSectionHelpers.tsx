@@ -1,5 +1,6 @@
 import React from 'react';
 import { Order } from '@/lib/hooks/use-orders';
+import { formatPrice } from '@/lib/price';
 
 export function formatFrenchDate(dateInput: Date | string): string {
   const date = new Date(dateInput);
@@ -267,7 +268,7 @@ export function OrdersTable({
               <div className="space-y-sm pt-sm border-t border-outline-variant/10 mt-auto">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-on-surface-variant">Prix Total</span>
-                  <span className="text-base font-bold text-primary">{order.totalPrice}</span>
+                  <span className="text-base font-bold text-primary">{formatPrice(order.totalPrice)}</span>
                 </div>
 
                 <div className="flex items-center justify-end gap-sm w-full">
@@ -353,7 +354,7 @@ export function OrdersTable({
                     ))}
                   </div>
                 </td>
-                <td className="p-md font-bold text-primary">{order.totalPrice}</td>
+                <td className="p-md font-bold text-primary">{formatPrice(order.totalPrice)}</td>
                 <td className="p-md text-xs text-on-surface-variant">
                   {formatFrenchDate(order.createdAt)}
                 </td>
@@ -620,7 +621,7 @@ export function OrderDetailsModal({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-sm pt-sm border-t border-outline-variant/20">
             <div>
               <span className="text-[10px] text-on-surface-variant font-bold block uppercase tracking-wider">Prix Total</span>
-              <span className="text-base md:text-lg font-bold text-primary">{order.totalPrice}</span>
+              <span className="text-base md:text-lg font-bold text-primary">{formatPrice(order.totalPrice)}</span>
             </div>
             <div>
               <span className="text-[10px] text-on-surface-variant font-bold block uppercase tracking-wider">Date de commande</span>

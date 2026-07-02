@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatPrice } from '@/lib/price';
 
 export interface DeliveryMethod {
   id: string;
@@ -203,7 +204,7 @@ export function DeliveryTable({
               <div className="space-y-sm pt-sm border-t border-outline-variant/10 mt-auto">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-on-surface-variant font-medium">Prix additionnel</span>
-                  <span className="text-sm font-bold text-primary">{method.price.toFixed(2)} €</span>
+                  <span className="text-sm font-bold text-primary">{formatPrice(method.price)}</span>
                 </div>
 
                 <div className="flex items-center justify-end gap-xs">
@@ -257,7 +258,7 @@ export function DeliveryTable({
                     {method.description || '—'}
                   </td>
                   <td className="px-lg py-md font-bold text-primary">
-                    {method.price.toFixed(2)} €
+                    {formatPrice(method.price)}
                   </td>
                   <td className="px-lg py-md">
                     <button

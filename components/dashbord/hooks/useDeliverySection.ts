@@ -116,7 +116,6 @@ export function useDeliverySection() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Voulez-vous vraiment supprimer cette méthode de livraison ?')) return;
 
     try {
       const res = await fetch(`/api/delivery-methods/${id}`, {

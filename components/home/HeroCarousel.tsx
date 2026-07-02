@@ -121,11 +121,11 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
   }
 
   return (
-    <section
+    <section 
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="relative isolate w-full overflow-hidden bg-neutral-950 h-screen"
+      className="relative isolate w-full overflow-hidden bg-neutral-950 h-[calc(100dvh-5rem)]"
     >
       {/* Slides Container */}
       <div className="absolute inset-0 h-full w-full">
@@ -149,11 +149,11 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
                 }`}
               />
 
-              {/* Directional Gradient Mask (Premium Dark Overlay) */}
-              <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-transparent lg:bg-gradient-to-r lg:from-neutral-950/95 lg:via-neutral-950/50 lg:to-transparent z-10" />
+              {/* Dark Overlay Mask for High Text Contrast */}
+              <div className="absolute inset-0 bg-black/60 lg:bg-gradient-to-r lg:from-neutral-950/95 lg:via-neutral-950/50 lg:to-transparent z-10" />
 
               {/* Text & Content Overlay in a Glassmorphic block */}
-              <div className="relative mx-auto flex h-full max-w-container-max items-end lg:items-center px-gutter pb-16 xs:pb-24 lg:pb-0 lg:py-xl z-20">
+              <div className="relative mx-auto flex h-full max-w-container-max items-center justify-start px-gutter z-20">
                 <div
                   className="w-full max-w-2xl text-left text-white rounded-3xl p-sm xs:p-md md:p-12 transition-all duration-500 hover:border-white/20"
                   dir="ltr"
