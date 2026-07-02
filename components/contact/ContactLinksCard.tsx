@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { SocialIcon } from '@/lib/social-icons';
-import { getDictionary } from '@/lib/config';
+import { getDictionaryWithDbOverrides } from '@/lib/config';
 
 export default async function ContactLinksCard() {
-  const dictionary = getDictionary();
+  const dictionary = await getDictionaryWithDbOverrides();
   const social = dictionary.contact?.social || {};
 
   const socialLinks = [
@@ -12,7 +12,7 @@ export default async function ContactLinksCard() {
   ];
 
   return (
-    <div className="rounded-2xl border border-surface-container bg-surface-container-lowest p-lg shadow-soft">
+    <div className="rounded-2xl border border-surface-container bg-surface-container-lowest p-6 md:p-lg shadow-soft">
       <h2 className="font-display text-3xl font-bold text-on-surface">{dictionary.contact.links.title}</h2>
       <div className="mt-md space-y-sm">
         {socialLinks.map((link) => (

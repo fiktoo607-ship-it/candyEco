@@ -75,14 +75,14 @@ export default function SiteHeader() {
         </div>
       )}
       <header className="sticky top-0 z-50 border-b border-outline-variant/30 bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex h-20 max-w-container-max items-center justify-between px-gutter">
+      <div className="mx-auto flex h-20 max-w-container-max items-center justify-between px-4 md:px-gutter">
         <Link href="/home" className="flex items-center">
           <Image
             src="/logo-title.png"
             alt={THEME_CONFIG.brand.logoText}
             width={198}
             height={40}
-            className="h-10 w-auto object-contain"
+            className="h-8 w-auto object-contain md:h-10"
             priority
           />
         </Link>
@@ -161,8 +161,8 @@ export default function SiteHeader() {
         </div>
 
         {/* Mobile Actions */}
-        <div className="flex items-center gap-sm md:hidden">
-          <Link href="/cart" className="relative flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-3 text-primary">
+        <div className="flex items-center gap-2 md:hidden">
+          <Link href="/cart" className="relative flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-2 text-primary">
             <ShoppingCartIcon className="h-6 w-6" />
             {mounted && totalItemsCount > 0 && (
               <span
@@ -176,7 +176,7 @@ export default function SiteHeader() {
           <button
             type="button"
             onClick={toggleMobileMenu}
-            className="inline-flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-3 text-primary"
+            className="inline-flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-2 text-primary"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}

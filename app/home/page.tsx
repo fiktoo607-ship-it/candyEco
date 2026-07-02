@@ -2,14 +2,12 @@ import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import HomeProductSection from '@/components/home/HomeProductSection';
 import { prisma } from '@/lib/prisma';
-import { getDictionary, initCmsConfigIfNeeded } from '@/lib/config';
+import { getDictionaryWithDbOverrides } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  // Ensure config is initialized in JSON first
-  initCmsConfigIfNeeded();
-  const dictionary = getDictionary();
+  const dictionary = await getDictionaryWithDbOverrides();
 
   let displayFeatured: any[] = [];
   try {

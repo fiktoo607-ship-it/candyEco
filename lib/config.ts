@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { THEME_CONFIG } from './theme';
+import { prisma } from './prisma';
 
 const getFilePath = () => path.join(process.cwd(), 'lib', 'copy-dictionary.json');
 
@@ -128,6 +129,17 @@ export function initCmsConfigIfNeeded() {
  */
 export async function getSiteConfig<T>(key: string): Promise<T> {
   try {
+    const dbConfig = await prisma.siteConfig.findUnique({
+      where: { key },
+    });
+    if (dbConfig) {
+      return JSON.parse(dbConfig.value) as T;
+    }
+  } catch (dbError) {
+    console.error(`[Config Service] Database error reading key "${key}":`, dbError);
+  }
+
+  try {
     const dict = initCmsConfigIfNeeded();
     const path = CMS_MAP[key];
     if (path) {
@@ -137,7 +149,7 @@ export async function getSiteConfig<T>(key: string): Promise<T> {
       }
     }
   } catch (error) {
-    console.error(`[Config Service] Error reading key "${key}":`, error);
+    console.error(`[Config Service] File error reading key "${key}":`, error);
   }
   return DEFAULT_CONFIGS[key] as T;
 }
@@ -147,6 +159,16 @@ export async function getSiteConfig<T>(key: string): Promise<T> {
  */
 export async function saveSiteConfig(key: string, value: any): Promise<void> {
   try {
+    await prisma.siteConfig.upsert({
+      where: { key },
+      update: { value: JSON.stringify(value) },
+      create: { key, value: JSON.stringify(value) },
+    });
+  } catch (dbError) {
+    console.error(`[Config Service] Database error saving key "${key}":`, dbError);
+  }
+
+  try {
     const dict = initCmsConfigIfNeeded();
     const path = CMS_MAP[key];
     if (path) {
@@ -154,7 +176,7 @@ export async function saveSiteConfig(key: string, value: any): Promise<void> {
       saveDictionary(dict);
     }
   } catch (error) {
-    console.error(`[Config Service] Error saving key "${key}":`, error);
+    console.warn(`[Config Service] Skip local file write for key "${key}" (expected in read-only Serverless environments)`);
   }
 }
 
@@ -165,11 +187,31 @@ export async function getAllSiteConfigs(): Promise<Record<string, any>> {
   const configs: Record<string, any> = {};
   
   try {
-    const dict = initCmsConfigIfNeeded();
+    const dbConfigs = await prisma.siteConfig.findMany();
+    const dbMap: Record<string, any> = {};
+    for (const item of dbConfigs) {
+      try {
+        dbMap[item.key] = JSON.parse(item.value);
+      } catch {
+        dbMap[item.key] = item.value;
+      }
+    }
+
+    let dict: any = {};
+    try {
+      dict = initCmsConfigIfNeeded();
+    } catch {
+      // Ignore read-only file system issues during initialization
+    }
+
     for (const key of Object.keys(DEFAULT_CONFIGS)) {
-      const path = CMS_MAP[key];
-      const val = path ? getNestedValue(dict, path) : undefined;
-      configs[key] = val !== undefined ? val : DEFAULT_CONFIGS[key];
+      if (dbMap[key] !== undefined) {
+        configs[key] = dbMap[key];
+      } else {
+        const path = CMS_MAP[key];
+        const val = path ? getNestedValue(dict, path) : undefined;
+        configs[key] = val !== undefined ? val : DEFAULT_CONFIGS[key];
+      }
     }
   } catch (error) {
     console.error('[Config Service] Error reading all configurations, using defaults:', error);
@@ -177,4 +219,36 @@ export async function getAllSiteConfigs(): Promise<Record<string, any>> {
   }
   
   return configs;
+}
+
+/**
+ * Reads the dictionary file and overlays values from the database SiteConfig.
+ * This ensures serverless environments reflect dynamic config changes.
+ */
+export async function getDictionaryWithDbOverrides() {
+  let dict: any = {};
+  try {
+    dict = getDictionary();
+  } catch (err) {
+    console.error('[Config Service] Failed to read static dictionary file:', err);
+  }
+
+  try {
+    const dbConfigs = await prisma.siteConfig.findMany();
+    for (const item of dbConfigs) {
+      const path = CMS_MAP[item.key];
+      if (path) {
+        try {
+          const parsedValue = JSON.parse(item.value);
+          setNestedValue(dict, path, parsedValue);
+        } catch {
+          setNestedValue(dict, path, item.value);
+        }
+      }
+    }
+  } catch (dbError) {
+    console.error('[Config Service] Failed to overlay database configs on dictionary:', dbError);
+  }
+
+  return dict;
 }

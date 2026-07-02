@@ -1,14 +1,14 @@
-import { getDictionary } from '@/lib/config';
+import { getDictionaryWithDbOverrides } from '@/lib/config';
 
 export default async function BakeryVisitCard() {
-  const dictionary = getDictionary();
+  const dictionary = await getDictionaryWithDbOverrides();
   const visit = dictionary.contact?.visit || {};
   const addressParts = (visit.address_value || '').split(', ');
   const hoursParts = (visit.hours_value || '').split(' | ');
 
   return (
     <div className="space-y-lg lg:col-span-5">
-      <div className="rounded-2xl border border-surface-container bg-surface-container-lowest p-lg shadow-soft">
+      <div className="rounded-2xl border border-surface-container bg-surface-container-lowest p-6 md:p-lg shadow-soft">
         <h2 className="font-display text-3xl font-bold text-on-surface">
           {visit.title}
         </h2>

@@ -3,12 +3,12 @@ import SiteHeader from '@/components/site-header';
 import AboutHero from '@/components/about/AboutHero';
 import HeritageSection from '@/components/about/HeritageSection';
 import ValuesSection from '@/components/about/ValuesSection';
-import { getDictionary } from '@/lib/config';
+import { getDictionaryWithDbOverrides } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AboutPage() {
-  const dictionary = getDictionary();
+  const dictionary = await getDictionaryWithDbOverrides();
   const heroTitle = dictionary.about?.hero?.title || "";
   const heroDescription = dictionary.about?.hero?.description || "";
   const heritageTitle = dictionary.about?.heritage?.title || "";
