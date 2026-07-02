@@ -11,8 +11,14 @@ export function getDictionary() {
 }
 
 export function saveDictionary(data: any) {
-  const filePath = getFilePath();
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      const filePath = getFilePath();
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (err) {
+      console.warn('[Config Service] Failed to write static dictionary file:', err);
+    }
+  }
 }
 
 // Default configuration fallbacks
@@ -168,15 +174,17 @@ export async function saveSiteConfig(key: string, value: any): Promise<void> {
     console.error(`[Config Service] Database error saving key "${key}":`, dbError);
   }
 
-  try {
-    const dict = initCmsConfigIfNeeded();
-    const path = CMS_MAP[key];
-    if (path) {
-      setNestedValue(dict, path, value);
-      saveDictionary(dict);
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      const dict = initCmsConfigIfNeeded();
+      const path = CMS_MAP[key];
+      if (path) {
+        setNestedValue(dict, path, value);
+        saveDictionary(dict);
+      }
+    } catch (error) {
+      console.warn(`[Config Service] Skip local file write for key "${key}":`, error);
     }
-  } catch (error) {
-    console.warn(`[Config Service] Skip local file write for key "${key}" (expected in read-only Serverless environments)`);
   }
 }
 
