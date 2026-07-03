@@ -171,13 +171,13 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
                   {slide.primaryLink && (
                     <div className="mt-sm sm:mt-lg flex flex-wrap gap-xs sm:gap-sm">
                       {slide.primaryLink.isComingSoon ? (
-                        <div className="rounded-xl bg-[#2d0b87] px-6 py-2.5 xs:px-8 xs:py-3 md:px-[50px] md:py-[16px] text-xs xs:text-sm md:text-base font-extrabold text-white shadow-lg shadow-blue-900/10 cursor-default select-none">
+                        <div className="rounded-xl bg-[#deb53d] px-6 py-2.5 xs:px-8 xs:py-3 md:px-[50px] md:py-[16px] text-xs xs:text-sm md:text-base font-extrabold text-neutral-950 shadow-lg shadow-[#deb53d]/10 cursor-default select-none">
                           {slide.primaryLink.label}
                         </div>
                       ) : (
                         <Link
                           href={slide.primaryLink.href}
-                          className="rounded-xl bg-[#2d0b87] px-6 py-2.5 xs:px-8 xs:py-3 md:px-[50px] md:py-[16px] text-xs xs:text-sm md:text-base font-extrabold text-white shadow-lg shadow-blue-900/20 transition-all hover:scale-[1.02] hover:bg-[#1a0558] active:scale-[0.98]"
+                          className="rounded-xl bg-[#deb53d] px-6 py-2.5 xs:px-8 xs:py-3 md:px-[50px] md:py-[16px] text-xs xs:text-sm md:text-base font-extrabold text-neutral-950 shadow-lg shadow-[#deb53d]/20 transition-all hover:scale-[1.02] hover:bg-[#ca9e2b] active:scale-[0.98]"
                         >
                           {slide.primaryLink.label}
                         </Link>
@@ -250,7 +250,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
                 onClick={() => handleDotClick(index)}
                 className={`h-3 transition-all duration-300 ease-out rounded-full ${
                   isActive
-                    ? "w-8 bg-[#2d0b87] shadow-md shadow-[#2d0b87]/50"
+                    ? "w-8 bg-[#deb53d] shadow-md shadow-[#deb53d]/50"
                     : "w-3 bg-white/40 hover:bg-white/70 hover:scale-110"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}

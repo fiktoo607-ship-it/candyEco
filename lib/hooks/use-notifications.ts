@@ -53,3 +53,25 @@ export function useMarkNotifications() {
     },
   });
 }
+
+export function useClearNotifications() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/notifications', {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to clear notifications');
+      }
+
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+}

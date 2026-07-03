@@ -65,3 +65,19 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await prisma.orderNotification.deleteMany({});
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : 'Failed to delete notifications';
+    console.error('[Notifications API] Error deleting notifications:', error);
+    return NextResponse.json({ error: errMsg }, { status: 500 });
+  }
+}

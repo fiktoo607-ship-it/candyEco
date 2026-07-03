@@ -14,7 +14,7 @@ html {
 
 body {
   @apply bg-background text-on-background antialiased;
-  font-family: var(--font-cairo), sans-serif;
+  font-family: var(--font-outfit), sans-serif;
   min-height: 100vh;
 }
 

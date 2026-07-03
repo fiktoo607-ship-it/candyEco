@@ -1,18 +1,18 @@
 import type { Metadata } from 'next';
-import { Cairo, Playfair_Display } from 'next/font/google';
+import { Outfit, Fredoka } from 'next/font/google';
 import './globals.css';
 import Providers from '@/components/providers';
 import { THEME_CONFIG } from '@/lib/theme';
 
-const cairo = Cairo({
-  subsets: ['arabic', 'latin'],
-  variable: '--font-cairo',
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
   display: 'swap'
 });
 
-const playfair = Playfair_Display({
+const fredoka = Fredoka({
   subsets: ['latin'],
-  variable: '--font-playfair',
+  variable: '--font-fredoka',
   display: 'swap'
 });
 
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" dir="ltr" className={`${cairo.variable} ${playfair.variable}`}>
+    <html lang="fr" dir="ltr" className={`${outfit.variable} ${fredoka.variable}`}>
       <head>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
       </head>

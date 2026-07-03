@@ -80,9 +80,9 @@ export default function SiteHeader() {
           <Image
             src="/logo-title.png"
             alt={THEME_CONFIG.brand.logoText}
-            width={198}
-            height={40}
-            className="h-8 w-auto object-contain md:h-10"
+            width={280}
+            height={56}
+            className="h-10 w-auto object-contain md:h-14 transition-all duration-300 hover:scale-[1.03]"
             priority
           />
         </Link>
@@ -108,7 +108,7 @@ export default function SiteHeader() {
             <ShoppingCartIcon className="h-6 w-6" />
             {mounted && totalItemsCount > 0 && (
               <span
-                style={{ backgroundColor: THEME_CONFIG.colorRoles.accent10.yellowPrimary, color: THEME_CONFIG.colorRoles.accent10.textOnYellow }}
+                style={{ backgroundColor: "#deb53d", color: "#0a0a0a" }}
                 className="absolute -top-xs -right-xs flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold shadow-soft"
               >
                 {totalItemsCount}
@@ -166,7 +166,7 @@ export default function SiteHeader() {
             <ShoppingCartIcon className="h-6 w-6" />
             {mounted && totalItemsCount > 0 && (
               <span
-                style={{ backgroundColor: THEME_CONFIG.colorRoles.accent10.yellowPrimary, color: THEME_CONFIG.colorRoles.accent10.textOnYellow }}
+                style={{ backgroundColor: "#deb53d", color: "#0a0a0a" }}
                 className="absolute -top-xs -right-xs flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold shadow-soft"
               >
                 {totalItemsCount}

@@ -127,9 +127,9 @@ export const THEME_CONFIG: ThemeConfig = {
       textMuted: "#30048d", // النصوص الفرعية والوصف (Deep Brand Color)
     },
     accent10: {
-      yellowPrimary: "#EAB308", // الأصفر الذهبي المميز للأزرار والهايلايت
-      yellowLight: "#EAB308",   // نفس درجة الأصفر للأزرار الفورية
-      textOnYellow: "#0a0a0a",  // لون النص داكن جداً (neutral-950) لتباين مثالي وسهل القراءة
+      yellowPrimary: "#2a1082", // اللون الأزرق الداكن للأزرار والهايلايت (البطاقات)
+      yellowLight: "#2a1082",   // نفس درجة اللون الأزرق للأزرار الفورية
+      textOnYellow: "#ffffff",  // لون النص أبيض لتباين مثالي وسهل القراءة
     },
   },
 
@@ -153,7 +153,7 @@ export const THEME_CONFIG: ThemeConfig = {
     soft: "0 15px 30px -15px rgba(48, 4, 141, 0.08)",
   },
   fonts: {
-    body: ["var(--font-cairo)", "sans-serif"],
-    display: ["var(--font-playfair)", "serif"],
+    body: ["var(--font-outfit)", "sans-serif"],
+    display: ["var(--font-fredoka)", "sans-serif"],
   },
 };

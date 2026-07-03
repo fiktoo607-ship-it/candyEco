@@ -27,7 +27,7 @@ export default function DashboardPage() {
 
       {/* Main Content Area */}
       <section className="flex-1 flex flex-col">
-        <header className="md:sticky md:top-0 z-10 flex h-auto min-h-[5rem] py-md md:py-0 md:h-20 items-center justify-between border-b border-outline-variant/30 bg-surface/90 backdrop-blur-md px-gutter shadow-soft flex-wrap gap-md">
+        <header className="md:sticky md:top-0 z-30 flex h-auto min-h-[5rem] py-md md:py-0 md:h-20 items-center justify-between border-b border-outline-variant/30 bg-surface/90 backdrop-blur-md px-gutter shadow-soft flex-wrap gap-md">
           <h1 className="font-display text-2xl md:text-3xl font-bold text-on-surface">
             {activeTab === 'products'
               ? 'Gérer les produits'

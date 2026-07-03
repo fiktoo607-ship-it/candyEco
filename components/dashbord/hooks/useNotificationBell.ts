@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNotifications, useMarkNotifications, OrderNotification } from '@/lib/hooks/use-notifications';
+import { useNotifications, useMarkNotifications, useClearNotifications, OrderNotification } from '@/lib/hooks/use-notifications';
 import { useDashboardStore } from '@/lib/dashboard-store';
 
 export function useNotificationBell() {
@@ -120,6 +120,14 @@ export function useNotificationBell() {
     }
   };
 
+  const clearMutation = useClearNotifications();
+
+  const handleClearAll = () => {
+    if (notifications.length > 0) {
+      clearMutation.mutate();
+    }
+  };
+
   return {
     isOpen,
     setIsOpen,
@@ -129,6 +137,7 @@ export function useNotificationBell() {
     unreadCount,
     handleNotificationClick,
     handleMarkAllRead,
+    handleClearAll,
     setActiveTab,
   };
 }

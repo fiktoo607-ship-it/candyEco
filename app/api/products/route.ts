@@ -48,13 +48,13 @@ export async function GET(request?: NextRequest) {
         hasWhere = true;
         const tagsList = tagsParam.split(',').map(t => t.trim()).filter(Boolean);
         if (tagsList.length > 0) {
-          where.AND = tagsList.map(tag => ({
-            tags: {
-              some: {
-                name: tag
+          where.tags = {
+            some: {
+              name: {
+                in: tagsList
               }
             }
-          }));
+          };
         }
       }
 

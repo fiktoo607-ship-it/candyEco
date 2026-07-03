@@ -14,6 +14,7 @@ export default function NotificationBell() {
     unreadCount,
     handleNotificationClick,
     handleMarkAllRead,
+    handleClearAll,
     setActiveTab,
   } = useNotificationBell();
 
@@ -95,6 +96,18 @@ export default function NotificationBell() {
               ))
             )}
           </div>
+
+          {notifications.length > 0 && (
+            <div className="border-t border-outline-variant/30 pt-sm mt-sm flex justify-end">
+              <button
+                onClick={handleClearAll}
+                className="text-xs font-semibold text-error hover:text-red-700 hover:underline transition-all flex items-center gap-xs"
+              >
+                <span className="material-symbols-outlined text-base">delete_sweep</span>
+                Effacer tout
+              </button>
+            </div>
+          )}
         </div>
       )}
 
