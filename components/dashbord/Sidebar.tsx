@@ -10,7 +10,7 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <aside className="sticky top-0 z-20 flex w-full flex-col border-b border-outline-variant/30 bg-surface-container-lowest shadow-soft md:min-h-screen md:w-64 md:border-b-0 md:border-r">
+    <aside className="sticky top-0 z-30 flex w-full flex-col border-b border-outline-variant/30 bg-surface-container-lowest shadow-soft md:min-h-screen md:w-64 md:border-b-0 md:border-r">
       <div className="flex items-center justify-between p-md md:p-lg">
         <Link href="/home" className="hover:opacity-85 transition-opacity">
           <Image

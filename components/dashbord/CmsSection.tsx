@@ -93,30 +93,32 @@ export default function CmsSection() {
 
       <form onSubmit={handleSubmit} className="space-y-md md:space-y-lg">
         {/* Floating Save Actions (Glassmorphism design) */}
-        <div className="sticky top-[72px] md:top-[80px] z-20 flex flex-col sm:flex-row sm:items-center justify-between gap-sm border border-outline-variant/30 bg-surface/85 backdrop-blur-lg p-sm md:p-md rounded-2xl shadow-soft mb-md transition-all">
-          <div className="flex items-center gap-xs">
-            <span className={`material-symbols-outlined text-lg ${isDirty ? "text-amber-500 animate-pulse" : "text-emerald-500"}`}>
-              {isDirty ? "pending_actions" : "check_circle"}
-            </span>
-            <p className="text-xs md:text-sm font-semibold text-on-surface-variant">
-              {isDirty ? "Modifications non enregistrées" : "Tout est à jour"}
-            </p>
+        {isDirty && (
+          <div className="sticky top-[72px] md:top-[80px] z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-sm border border-outline-variant/30 bg-surface/85 backdrop-blur-lg p-sm md:p-md rounded-2xl shadow-soft mb-md transition-all animate-fade-in">
+            <div className="flex items-center gap-xs">
+              <span className="material-symbols-outlined text-lg text-amber-500 animate-pulse">
+                pending_actions
+              </span>
+              <p className="text-xs md:text-sm font-semibold text-on-surface-variant">
+                Modifications non enregistrées
+              </p>
+            </div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full sm:w-auto justify-center rounded-full bg-primary px-lg py-sm font-semibold text-white shadow-soft hover:bg-surface-tint active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-xs text-sm"
+            >
+              {isSubmitting ? (
+                <svg className="w-4 h-4 text-white animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+              ) : (
+                <span className="material-symbols-outlined text-lg">save</span>
+              )}
+              Enregistrer les modifications
+            </button>
           </div>
-          <button
-            type="submit"
-            disabled={isSubmitting || !isDirty}
-            className="w-full sm:w-auto justify-center rounded-full bg-primary px-lg py-sm font-semibold text-white shadow-soft hover:bg-surface-tint active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-xs text-sm"
-          >
-            {isSubmitting ? (
-              <svg className="w-4 h-4 text-white animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-              </svg>
-            ) : (
-              <span className="material-symbols-outlined text-lg">save</span>
-            )}
-            Enregistrer les modifications
-          </button>
-        </div>
+        )}
 
         {/* SECTION: Statut de la Boutique */}
         <ShopStatusSection register={register} watch={watch} setValue={setValue} />

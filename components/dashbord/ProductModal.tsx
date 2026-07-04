@@ -56,7 +56,7 @@ export default function ProductModal() {
   if (!isModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-sm md:p-md bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-30 flex items-center justify-center p-sm md:p-md bg-black/60 backdrop-blur-sm animate-fade-in">
       <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up flex flex-col max-h-[90vh]">
         <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low flex-shrink-0">
           <h2 className="font-display text-xl font-bold text-on-surface flex items-center gap-xs">

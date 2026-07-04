@@ -36,12 +36,12 @@ export default function NotificationBell() {
 
       {/* Backdrop to close dropdown on click outside */}
       {isOpen && (
-        <div className="fixed inset-0 z-30" onClick={() => setIsOpen(false)} />
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] sm:bg-transparent sm:backdrop-blur-none" onClick={() => setIsOpen(false)} />
       )}
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-sm w-[calc(100vw-2rem)] sm:w-96 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft z-40 transition-all duration-200 origin-top-right">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-sm sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:translate-x-0 sm:translate-y-0 sm:mt-sm sm:w-96 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft z-50 transition-all duration-200 origin-center sm:origin-top-right">
           <div className="flex items-center justify-between border-b border-outline-variant/30 pb-sm mb-sm">
             <h3 className="font-display text-lg font-bold text-on-surface">Notifications</h3>
             {unreadCount > 0 && (

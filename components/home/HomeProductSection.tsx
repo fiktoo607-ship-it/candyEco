@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import HeroCarousel from "./HeroCarousel";
 import FeaturedProducts from "./FeaturedProducts";
 import StorySection from "./StorySection";
@@ -33,22 +33,37 @@ export default function HomeProductSection({
 }: HomeProductSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: allProducts = [], isLoading } = useProducts();
+  const searchBarRef = useRef<HTMLDivElement>(null);
 
   const isSearchActive = searchQuery.trim() !== "";
   const filteredProducts = isSearchActive
     ? filterProductsByTitle(allProducts, searchQuery)
     : [];
 
+  const handleSearchFocus = () => {
+    if (searchBarRef.current) {
+      const rect = searchBarRef.current.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const targetScroll = rect.top + scrollTop - 80; // 80px offset for the sticky header
+      window.scrollTo({
+        top: targetScroll,
+        behavior: "smooth",
+      });
+    }
+  };
+
   return (
     <div className="space-y-md">
+      <HeroCarousel slides={carouselSlides} />
+
+      <div ref={searchBarRef} className="mx-auto max-w-container-max px-gutter py-sm">
+        <div className="mx-auto max-w-xl">
+          <SearchBar value={searchQuery} onChange={setSearchQuery} onFocus={handleSearchFocus} />
+        </div>
+      </div>
+
       {!isSearchActive ? (
         <>
-          <HeroCarousel slides={carouselSlides} />
-          <div className="mx-auto max-w-container-max px-gutter py-sm">
-            <div className="mx-auto max-w-xl">
-              <SearchBar value={searchQuery} onChange={setSearchQuery} />
-            </div>
-          </div>
           <NewProductsSection products={initialNewProducts} />
           <PopularProductsSection products={initialPopularProducts} />
           <FeaturedProducts products={initialFeaturedProducts} />
@@ -56,11 +71,7 @@ export default function HomeProductSection({
           <FaqSection faqs={initialFaqs} />
         </>
       ) : (
-        <div className="mx-auto max-w-container-max px-gutter py-md space-y-lg">
-          <div className="mx-auto max-w-xl">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} />
-          </div>
-
+        <div className="mx-auto max-w-container-max px-gutter pb-lg">
           <div className="space-y-md">
             <div className="border-b border-outline-variant/30 pb-sm">
               <h2 className="font-display text-3xl font-bold text-on-surface">

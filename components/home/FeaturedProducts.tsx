@@ -26,9 +26,39 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [itemsPerSlide, setItemsPerSlide] = useState(6);
 
-  const itemsPerSlide = 6;
-  const slidesCount = Math.ceil(products.length / itemsPerSlide) || 1;
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const handleMediaQueryChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      setItemsPerSlide(e.matches ? 2 : 6);
+    };
+    
+    handleMediaQueryChange(mediaQuery);
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleMediaQueryChange);
+      return () => mediaQuery.removeEventListener("change", handleMediaQueryChange);
+    } else {
+      mediaQuery.addListener(handleMediaQueryChange);
+      return () => mediaQuery.removeListener(handleMediaQueryChange);
+    }
+  }, []);
+
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const currentItemsPerSlide = isMounted ? itemsPerSlide : 6;
+  const slidesCount = Math.ceil(products.length / currentItemsPerSlide) || 1;
+
+  useEffect(() => {
+    if (currentSlide >= slidesCount) {
+      setCurrentSlide(0);
+    }
+  }, [slidesCount, currentSlide]);
 
   const startAutoCycle = () => {
     stopAutoCycle();
@@ -137,17 +167,17 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
         >
           {Array.from({ length: slidesCount }).map((_, slideIndex) => {
             const slideProducts = products.slice(
-              slideIndex * itemsPerSlide,
-              (slideIndex + 1) * itemsPerSlide,
+              slideIndex * currentItemsPerSlide,
+              (slideIndex + 1) * currentItemsPerSlide,
             );
 
             return (
               <div
                 key={slideIndex}
-                className="w-full flex-shrink-0 grid grid-cols-1 gap-lg sm:grid-cols-2 lg:grid-cols-3"
+                className="w-full flex-shrink-0 grid grid-cols-1 gap-sm sm:gap-lg sm:grid-cols-2 lg:grid-cols-3"
               >
                 {slideProducts.map((product) => (
-                  <div key={product.title} className="h-full">
+                  <div key={product.id || product.slug} className="h-full">
                     <ProductCard product={product} />
                   </div>
                 ))}

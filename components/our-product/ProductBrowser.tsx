@@ -191,7 +191,7 @@ export default function ProductBrowser() {
           </div>
 
           {/* Tag Selection / Category Filter Container on Mobile */}
-          <div className="grid grid-cols-2 md:grid-cols-1 gap-sm">
+          <div className="grid grid-cols-1 gap-sm">
             {/* Tag Selection */}
             <div className="relative space-y-xs">
               <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider md:block hidden">

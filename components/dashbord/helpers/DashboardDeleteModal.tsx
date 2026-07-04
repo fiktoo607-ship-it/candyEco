@@ -20,7 +20,7 @@ export default function DashboardDeleteModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-md bg-black/40 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-md bg-black/40 backdrop-blur-sm animate-fade-in">
       <div className="w-full max-w-md overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up">
         <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low">
           <h2 className="font-display text-xl font-bold text-error flex items-center gap-xs">
