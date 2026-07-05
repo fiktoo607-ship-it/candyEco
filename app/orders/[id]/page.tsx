@@ -285,11 +285,11 @@ export default function OrderTrackingPage() {
                         key={item.id}
                         className="flex justify-between items-center py-sm first:pt-0 last:pb-0"
                       >
-                        <div className="flex flex-col">
-                          <span className="font-bold text-on-surface text-sm">
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="font-bold text-on-surface text-sm line-clamp-1">
                             {item.product?.title || "Produit"}
                           </span>
-                          <span className="text-xs text-on-surface-variant">
+                          <span className="text-xs text-on-surface-variant whitespace-nowrap">
                             Prix unitaire: {formatPrice(item.priceAtPurchase)}
                           </span>
                           {order.status === "DELIVERED" &&
@@ -305,7 +305,7 @@ export default function OrderTrackingPage() {
                               </Link>
                             )}
                         </div>
-                        <span className="text-sm font-bold text-primary flex items-center">
+                        <span className="text-sm font-bold text-primary flex items-center whitespace-nowrap flex-shrink-0 ml-sm">
                           x{item.quantity}
                         </span>
                       </div>

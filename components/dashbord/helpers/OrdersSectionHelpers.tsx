@@ -356,8 +356,8 @@ export function OrdersTable({
                   <div className="space-y-xs pr-xs">
                     {(isExpanded ? order.items : order.items.slice(0, 2)).map((item) => (
                       <div key={item.id} className="flex justify-between items-center text-xs text-on-surface gap-sm border-b border-outline-variant/5 pb-xs last:border-0 last:pb-0">
-                        <span className="line-clamp-1 font-medium">{item.product?.title || 'Produit Inconnu'}</span>
-                        <span className="text-primary font-bold bg-primary-container/10 px-xs py-[2px] rounded-md">x{item.quantity}</span>
+                        <span className="line-clamp-1 font-medium flex-1 min-w-0">{item.product?.title || 'Produit Inconnu'}</span>
+                        <span className="text-primary font-bold bg-primary-container/10 px-xs py-[2px] rounded-md whitespace-nowrap flex-shrink-0">x{item.quantity}</span>
                       </div>
                     ))}
                   </div>
@@ -496,8 +496,8 @@ export function OrdersTable({
                   <div className="flex flex-col gap-xs text-xs text-on-surface max-w-[250px]">
                     {order.items.map((item) => (
                       <div key={item.id} className="flex justify-between gap-md border-b border-outline-variant/10 pb-[2px] last:border-0 last:pb-0">
-                        <span className="line-clamp-1 font-medium">{item.product?.title || 'Produit Inconnu'}</span>
-                        <span className="text-primary font-bold whitespace-nowrap bg-primary-container/10 px-xs rounded-md">x{item.quantity}</span>
+                        <span className="line-clamp-1 font-medium flex-1 min-w-0">{item.product?.title || 'Produit Inconnu'}</span>
+                        <span className="text-primary font-bold whitespace-nowrap flex-shrink-0 bg-primary-container/10 px-xs rounded-md">x{item.quantity}</span>
                       </div>
                     ))}
                   </div>
