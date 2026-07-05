@@ -10,6 +10,8 @@ import {
   useDeleteCarouselSlide,
   CarouselSlide
 } from '@/lib/hooks/use-carousel';
+import { useDashboardStore } from '@/lib/dashboard-store';
+
 
 interface FormValues {
   carousel_products: string[];
@@ -51,10 +53,10 @@ export function useCmsSection() {
   const deleteSlideMutation = useDeleteCarouselSlide();
   const uploadImageMutation = useUploadImage();
 
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const { showToast } = useDashboardStore();
   const [productSearchQuery, setProductSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(9);
+
 
   // Carousel slide modal states
   const [slideModalOpen, setSlideModalOpen] = useState(false);
@@ -162,7 +164,7 @@ export function useCmsSection() {
   const handleSlideSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!slideTitle || !slideImageUrl) {
-      alert("Le titre et l'image sont obligatoires.");
+      showToast("Le titre et l'image sont obligatoires.", "error");
       return;
     }
 
@@ -179,6 +181,7 @@ export function useCmsSection() {
             linkUrl: slideLinkUrl || null,
           }
         });
+        showToast("Diapositive mise à jour avec succès !", "success");
       } else {
         await createSlideMutation.mutateAsync({
           title: slideTitle,
@@ -186,11 +189,12 @@ export function useCmsSection() {
           imageUrl: slideImageUrl,
           linkUrl: slideLinkUrl || null,
         });
+        showToast("Diapositive ajoutée avec succès !", "success");
       }
       handleCloseSlideModal();
     } catch (err) {
       console.error("Failed to save slide:", err);
-      alert("Une erreur est survenue lors de l'enregistrement de la diapositive.");
+      showToast("Une erreur est survenue lors de l'enregistrement de la diapositive.", "error");
     } finally {
       setIsSlideSubmitting(false);
     }
@@ -201,9 +205,10 @@ export function useCmsSection() {
 
     try {
       await deleteSlideMutation.mutateAsync(id);
+      showToast("Diapositive supprimée avec succès !", "success");
     } catch (err) {
       console.error("Failed to delete slide:", err);
-      alert("Échec de la suppression de la diapositive.");
+      showToast("Échec de la suppression de la diapositive.", "error");
     }
   };
 
@@ -222,15 +227,14 @@ export function useCmsSection() {
         updateSlideMutation.mutateAsync({ id: currentSlide.id, payload: { order: targetOrder } }),
         updateSlideMutation.mutateAsync({ id: targetSlide.id, payload: { order: currentOrder } })
       ]);
+      showToast("Diapositives réorganisées !", "success");
     } catch (err) {
       console.error("Failed to reorder slide:", err);
-      alert("Échec de la réorganisation de la diapositive.");
+      showToast("Échec de la réorganisation de la diapositive.", "error");
     }
   };
 
   const onSubmit = async (data: any) => {
-    setSaveSuccess(false);
-    setSaveError(null);
     try {
       const validProductSlugs = products.map(p => p.slug);
       const cleanedProducts = (data.carousel_products || []).filter((slug: string) => validProductSlugs.includes(slug));
@@ -240,18 +244,15 @@ export function useCmsSection() {
       };
       await updateMutation.mutateAsync(cleanedData);
       setValue('carousel_products', cleanedProducts);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 4000);
+      showToast("Configurations enregistrées avec succès !", "success");
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Échec de l'enregistrement des configurations.");
+      showToast(err instanceof Error ? err.message : "Échec de l'enregistrement des configurations.", "error");
     }
   };
 
   return {
     isConfigLoading: isConfigLoading || isSlidesLoading || isProductsLoading,
     configError,
-    saveSuccess,
-    saveError,
     isSubmitting,
     isDirty,
     register,

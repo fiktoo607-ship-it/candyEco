@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { User } from '../helpers/UsersSectionHelpers';
+import { useDashboardStore } from '@/lib/dashboard-store';
 
 export function useUsersSection() {
+  const { showToast } = useDashboardStore();
   const { data: session } = useSession();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,10 +52,13 @@ export function useUsersSection() {
       }
 
       setUsers((prev) => prev.filter((user) => user.id !== id));
+      showToast("Utilisateur supprimé avec succès !", "success");
       setConfirmDeleteId(null);
       setDeleteLoading(false);
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'Une erreur est survenue.');
+      const errMsg = err instanceof Error ? err.message : 'Une erreur est survenue.';
+      setDeleteError(errMsg);
+      showToast(errMsg, "error");
       setDeleteLoading(false);
     }
   };

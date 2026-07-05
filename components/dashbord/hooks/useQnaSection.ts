@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useDashboardStore } from '@/lib/dashboard-store';
 
 export interface Faq {
   id: string;
@@ -9,6 +10,7 @@ export interface Faq {
 }
 
 export function useQnaSection() {
+  const { showToast } = useDashboardStore();
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,15 +99,15 @@ export function useQnaSection() {
         throw new Error(data.error || 'Erreur lors de l\'enregistrement.');
       }
 
+      showToast(modalMode === 'create' ? "Question fréquente ajoutée avec succès !" : "Question fréquente mise à jour avec succès !", "success");
       setIsModalOpen(false);
       fetchFaqs();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Une erreur est survenue.');
+      showToast(err instanceof Error ? err.message : 'Une erreur est survenue.', "error");
     }
   };
 
   const handleDelete = async (id: string) => {
-
     try {
       const res = await fetch(`/api/faqs/${id}`, {
         method: 'DELETE',
@@ -115,9 +117,10 @@ export function useQnaSection() {
         throw new Error('Erreur lors de la suppression.');
       }
 
+      showToast("Question fréquente supprimée avec succès !", "success");
       fetchFaqs();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Une erreur est survenue.');
+      showToast(err instanceof Error ? err.message : 'Une erreur est survenue.', "error");
     }
   };
 

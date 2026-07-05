@@ -11,11 +11,23 @@ import ProductModal from '@/components/dashbord/ProductModal';
 import DeleteModal from '@/components/dashbord/DeleteModal';
 import NotificationBell from '@/components/dashbord/NotificationBell';
 import { useDashboardStore } from '@/lib/dashboard-store';
+import { useEffect } from 'react';
+
 
 const CATEGORIES = ['gâteau', 'aliments traditionnel'];
 
 export default function DashboardPage() {
-  const { activeTab, openCreate } = useDashboardStore();
+  const { activeTab, openCreate, toast, setToast } = useDashboardStore();
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast, setToast]);
+
 
   return (
     <main
@@ -88,6 +100,29 @@ export default function DashboardPage() {
 
       {/* Delete Confirmation Modal */}
       <DeleteModal />
+
+      {/* Global Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 right-6 z-[60] rounded-xl px-md py-sm text-white shadow-lg flex items-center gap-sm animate-fade-in border ${
+            toast.type === 'success'
+              ? 'bg-emerald-600 border-emerald-500/30'
+              : 'bg-error border-error-container/20'
+          }`}
+        >
+          <span className="material-symbols-outlined text-xl select-none">
+            {toast.type === 'success' ? 'check_circle' : 'error'}
+          </span>
+          <span className="font-semibold text-sm">{toast.message}</span>
+          <button
+            onClick={() => setToast(null)}
+            className="ml-xs hover:opacity-80 transition-opacity p-0.5 rounded-full hover:bg-white/10"
+            aria-label="Fermer"
+          >
+            <span className="material-symbols-outlined text-base block select-none">close</span>
+          </button>
+        </div>
+      )}
     </main>
   );
 }

@@ -6,6 +6,7 @@ export default function DeleteModal() {
     isDeleteOpen,
     setIsDeleteOpen,
     productToDelete,
+    showToast,
   } = useDashboardStore();
 
   const deleteMutation = useDeleteProduct();
@@ -18,13 +19,14 @@ export default function DeleteModal() {
     try {
       await deleteMutation.mutateAsync(productToDelete.id);
       setIsDeleteOpen(false);
+      showToast("Produit supprimé avec succès !", "success");
     } catch (err) {
       console.error(err);
       const errMsg =
         err instanceof Error
           ? err.message
           : "Une erreur est survenue lors de la suppression.";
-      alert(errMsg);
+      showToast(errMsg, "error");
     }
   };
 

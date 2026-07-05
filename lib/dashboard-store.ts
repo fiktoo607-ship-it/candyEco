@@ -66,6 +66,11 @@ interface DashboardState {
   openCreate: (defaultCategory: string) => void;
   openEdit: (product: Product) => void;
   openDelete: (product: Product) => void;
+
+  // Toast notifications
+  toast: { message: string; type: 'success' | 'error' } | null;
+  setToast: (toast: { message: string; type: 'success' | 'error' } | null) => void;
+  showToast: (message: string, type: 'success' | 'error') => void;
 }
 
 export const useDashboardStore = create<DashboardState>((set) => ({
@@ -167,4 +172,10 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     productToDelete: p,
     isDeleteOpen: true,
   }),
+
+  toast: null,
+  setToast: (toast) => set({ toast }),
+  showToast: (message, type) => {
+    set({ toast: { message, type } });
+  },
 }));

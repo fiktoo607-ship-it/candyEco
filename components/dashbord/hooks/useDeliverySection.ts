@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { DeliveryMethod } from '../helpers/DeliverySectionHelpers';
+import { useDashboardStore } from '@/lib/dashboard-store';
 
 export function useDeliverySection() {
+  const { showToast } = useDashboardStore();
   const [methods, setMethods] = useState<DeliveryMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,10 +91,13 @@ export function useDeliverySection() {
         throw new Error(data.error || 'Une erreur est survenue lors de l’enregistrement.');
       }
 
+      showToast(isEditing ? "Méthode de livraison mise à jour avec succès !" : "Méthode de livraison ajoutée avec succès !", "success");
       resetForm();
       fetchMethods();
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Erreur réseau.');
+      const errMsg = err instanceof Error ? err.message : 'Erreur réseau.';
+      setSubmitError(errMsg);
+      showToast(errMsg, "error");
     } finally {
       setSubmitLoading(false);
     }
@@ -108,27 +113,33 @@ export function useDeliverySection() {
         }),
       });
       if (res.ok) {
+        showToast("Statut de la méthode de livraison mis à jour avec succès !", "success");
         fetchMethods();
+      } else {
+        const data = await res.json();
+        showToast(data.error || "Erreur lors de la mise à jour du statut.", "error");
       }
     } catch (err) {
       console.error('Error toggling active status:', err);
+      showToast("Erreur lors de la mise à jour du statut.", "error");
     }
   };
 
   const handleDelete = async (id: string) => {
-
     try {
       const res = await fetch(`/api/delivery-methods/${id}`, {
         method: 'DELETE',
       });
       if (res.ok) {
+        showToast("Méthode de livraison supprimée avec succès !", "success");
         fetchMethods();
       } else {
         const data = await res.json();
-        alert(data.error || 'Erreur lors de la suppression.');
+        showToast(data.error || 'Erreur lors de la suppression.', "error");
       }
     } catch (err) {
       console.error('Error deleting method:', err);
+      showToast("Une erreur est survenue lors de la suppression.", "error");
     }
   };
 

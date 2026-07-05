@@ -70,11 +70,11 @@ export function useProductModal() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isUploading) {
-      alert("Veuillez attendre la fin du chargement de l'image.");
+      store.showToast("Veuillez attendre la fin du chargement de l'image.", "error");
       return;
     }
     if (!store.title || !store.slug || !store.price || !store.imageUrl || !store.description || !store.story) {
-      alert('Veuillez remplir tous les champs obligatoires.');
+      store.showToast("Veuillez remplir tous les champs obligatoires.", "error");
       return;
     }
 
@@ -97,16 +97,18 @@ export function useProductModal() {
     try {
       if (store.modalMode === 'create') {
         await createMutation.mutateAsync(payload);
+        store.showToast("Produit créé avec succès !", "success");
       } else {
         if (!store.editingId) return;
         await updateMutation.mutateAsync({ id: store.editingId, payload });
+        store.showToast("Produit mis à jour avec succès !", "success");
       }
       store.setIsModalOpen(false);
     } catch (err) {
       console.error(err);
       const errMsg =
         err instanceof Error ? err.message : "Une erreur est survenue lors de l'enregistrement.";
-      alert(errMsg);
+      store.showToast(errMsg, "error");
     }
   };
 

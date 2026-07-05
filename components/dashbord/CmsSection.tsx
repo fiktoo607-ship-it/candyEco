@@ -15,8 +15,6 @@ export default function CmsSection() {
   const {
     isConfigLoading,
     configError,
-    saveSuccess,
-    saveError,
     isSubmitting,
     isDirty,
     register,
@@ -76,21 +74,6 @@ export default function CmsSection() {
 
   return (
     <div className="space-y-md md:space-y-lg pb-xl relative font-sans">
-      {/* Toast Notifications */}
-      {saveSuccess && (
-        <div className="fixed bottom-6 right-6 md:top-24 md:bottom-auto z-50 rounded-xl bg-emerald-600 px-md py-sm text-white shadow-lg flex items-center gap-sm animate-fade-in border border-emerald-500/30">
-          <span className="material-symbols-outlined text-xl">check_circle</span>
-          <span className="font-semibold text-sm">Configurations enregistrées avec succès !</span>
-        </div>
-      )}
-
-      {saveError && (
-        <div className="fixed bottom-6 right-6 md:top-24 md:bottom-auto z-50 rounded-xl bg-error px-md py-sm text-white shadow-lg flex items-center gap-sm animate-fade-in border border-error-container/20">
-          <span className="material-symbols-outlined text-xl">error</span>
-          <span className="font-semibold text-sm">{saveError}</span>
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-md md:space-y-lg">
         {/* Floating Save Actions (Glassmorphism design) */}
         {isDirty && (
