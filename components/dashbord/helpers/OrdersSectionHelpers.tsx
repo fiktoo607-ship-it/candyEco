@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Order } from '@/lib/hooks/use-orders';
 import { formatPrice } from '@/lib/price';
 
@@ -155,12 +155,15 @@ interface OrdersTableProps {
   isLoading: boolean;
   error: Error | null;
   ordersPerPage: number;
+  setOrdersPerPage: (size: number) => void;
   orderCurrentPage: number;
   setOrderCurrentPage: (page: number) => void;
   totalPages: number;
   totalOrders: number;
   updateStatusMutation: any;
   onViewDetails: (order: Order) => void;
+  onStatusChangeClick: (id: string, status: string, currentStatus: string, reference: string) => void;
+  onToastMessage: (message: string, type: 'success' | 'error') => void;
 }
 
 export function OrdersTable({
@@ -168,13 +171,46 @@ export function OrdersTable({
   isLoading,
   error,
   ordersPerPage,
+  setOrdersPerPage,
   orderCurrentPage,
   setOrderCurrentPage,
   totalPages,
   totalOrders,
   updateStatusMutation,
   onViewDetails,
+  onStatusChangeClick,
+  onToastMessage,
 }: OrdersTableProps) {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [expandedOrderIds, setExpandedOrderIds] = useState<string[]>([]);
+
+  // Reset selected ids on page or orders change
+  React.useEffect(() => {
+    setSelectedIds([]);
+  }, [orderCurrentPage, orders]);
+
+  const toggleExpandOrder = (orderId: string) => {
+    if (expandedOrderIds.includes(orderId)) {
+      setExpandedOrderIds(expandedOrderIds.filter(id => id !== orderId));
+    } else {
+      setExpandedOrderIds([...expandedOrderIds, orderId]);
+    }
+  };
+
+  const handleBulkStatusUpdate = async (status: string) => {
+    if (selectedIds.length === 0) return;
+    try {
+      await Promise.all(
+        selectedIds.map(id => updateStatusMutation.mutateAsync({ id, status }))
+      );
+      setSelectedIds([]);
+      onToastMessage("Les statuts des commandes ont été mis à jour avec succès.", "success");
+    } catch (err: any) {
+      console.error("Bulk update failed:", err);
+      onToastMessage(err.message || "Une erreur est survenue lors de la mise à jour groupée.", "error");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-md">
@@ -212,6 +248,54 @@ export function OrdersTable({
 
   return (
     <>
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="flex items-center justify-between bg-primary/5 border border-primary/20 p-sm px-md rounded-xl m-md animate-fade-in gap-md flex-wrap">
+          <div className="flex items-center gap-xs">
+            <span className="material-symbols-outlined text-primary text-xl">library_add_check</span>
+            <span className="text-sm font-semibold text-primary">
+              {selectedIds.length} commande(s) sélectionnée(s)
+            </span>
+          </div>
+          <div className="flex items-center gap-xs flex-wrap">
+            <button
+              onClick={() => handleBulkStatusUpdate('ACCEPTED')}
+              disabled={updateStatusMutation.isPending}
+              className="rounded-xl bg-emerald-600 px-md py-xs text-xs font-bold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center gap-xs shadow-soft"
+            >
+              <span className="material-symbols-outlined text-sm">thumb_up</span>
+              Accepter
+            </button>
+            <button
+              onClick={() => handleBulkStatusUpdate('DELIVERED')}
+              disabled={updateStatusMutation.isPending}
+              className="rounded-xl bg-blue-600 px-md py-xs text-xs font-bold text-white hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-xs shadow-soft"
+            >
+              <span className="material-symbols-outlined text-sm">local_shipping</span>
+              Livrer
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm("Voulez-vous vraiment annuler ces commandes ?")) {
+                  handleBulkStatusUpdate('CANCELLED');
+                }
+              }}
+              disabled={updateStatusMutation.isPending}
+              className="rounded-xl bg-rose-600 px-md py-xs text-xs font-bold text-white hover:bg-rose-700 transition-colors disabled:opacity-50 flex items-center gap-xs shadow-soft"
+            >
+              <span className="material-symbols-outlined text-sm">cancel</span>
+              Annuler
+            </button>
+            <button
+              onClick={() => setSelectedIds([])}
+              className="text-xs font-semibold text-on-surface-variant hover:text-on-surface hover:underline transition-colors px-xs"
+            >
+              Annuler la sélection
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Mobile/Tablet Card Grid Layout (< 1024px) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-md p-md lg:hidden bg-surface/20">
         {orders.map((order) => {
@@ -222,14 +306,30 @@ export function OrdersTable({
             CANCELLED: { bg: 'bg-rose-500/10 border-rose-500/30 text-rose-800', label: 'Annulée' },
           }[order.status as 'PENDING' | 'ACCEPTED' | 'DELIVERED' | 'CANCELLED'] || { bg: 'bg-surface-variant', label: order.status };
 
+          const isExpanded = expandedOrderIds.includes(order.id);
+
           return (
             <div key={order.id} className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft space-y-md hover:border-primary/20 transition-all flex flex-col justify-between">
               <div className="space-y-sm">
                 {/* Card Header */}
                 <div className="flex items-center justify-between gap-sm border-b border-outline-variant/10 pb-sm">
-                  <span className="font-mono text-xs font-semibold text-on-surface-variant bg-surface-container-high px-sm py-[2px] rounded-lg">
-                    {order.reference || `#${order.id.substring(0, 8).toUpperCase()}`}
-                  </span>
+                  <div className="flex items-center gap-xs">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(order.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds([...selectedIds, order.id]);
+                        } else {
+                          setSelectedIds(selectedIds.filter(id => id !== order.id));
+                        }
+                      }}
+                      className="rounded border-outline-variant text-primary focus:ring-primary cursor-pointer w-4 h-4"
+                    />
+                    <span className="font-mono text-xs font-semibold text-on-surface-variant bg-surface-container-high px-sm py-[2px] rounded-lg">
+                      {order.reference || `#${order.id.substring(0, 8).toUpperCase()}`}
+                    </span>
+                  </div>
                   <span className={`rounded-full px-sm py-[2px] text-xs font-bold border ${statusConfig.bg}`}>
                     {statusConfig.label}
                   </span>
@@ -253,14 +353,26 @@ export function OrdersTable({
                     <span className="material-symbols-outlined text-xs">shopping_basket</span>
                     Articles ({order.items.length})
                   </p>
-                  <div className="space-y-xs max-h-24 overflow-y-auto pr-xs">
-                    {order.items.map((item) => (
+                  <div className="space-y-xs pr-xs">
+                    {(isExpanded ? order.items : order.items.slice(0, 2)).map((item) => (
                       <div key={item.id} className="flex justify-between items-center text-xs text-on-surface gap-sm border-b border-outline-variant/5 pb-xs last:border-0 last:pb-0">
                         <span className="line-clamp-1 font-medium">{item.product?.title || 'Produit Inconnu'}</span>
                         <span className="text-primary font-bold bg-primary-container/10 px-xs py-[2px] rounded-md">x{item.quantity}</span>
                       </div>
                     ))}
                   </div>
+                  {order.items.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => toggleExpandOrder(order.id)}
+                      className="text-[10px] font-bold text-primary hover:text-surface-tint mt-xs flex items-center gap-[2px] transition-colors w-full justify-center pt-xs border-t border-outline-variant/5"
+                    >
+                      <span>{isExpanded ? "Voir moins" : `Voir ${order.items.length - 2} de plus`}</span>
+                      <span className="material-symbols-outlined text-xs select-none">
+                        {isExpanded ? "expand_less" : "expand_more"}
+                      </span>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -272,41 +384,49 @@ export function OrdersTable({
                 </div>
 
                 <div className="flex items-center justify-end gap-sm w-full">
-                  <div className="flex items-center gap-xs w-full justify-end">
+                  <div className="flex items-center gap-xs w-full justify-between sm:justify-end">
                     {updateStatusMutation.isPending && updateStatusMutation.variables?.id === order.id && (
                       <svg className="w-4 h-4 text-primary animate-spin flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                       </svg>
                     )}
 
-                    {order.status === 'PENDING' && (
-                      <button
-                        onClick={() => {
-                          updateStatusMutation.mutate({ id: order.id, status: 'ACCEPTED' });
-                        }}
+                    {/* Status Dropdown on Mobile */}
+                    <div className="relative flex-1 sm:flex-initial">
+                      <select
+                        value={order.status}
                         disabled={updateStatusMutation.isPending}
-                        className="flex-grow sm:flex-grow-0 rounded-xl bg-emerald-600 px-sm py-[8px] text-xs font-bold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-xs shadow-soft"
-                      >
-                        <span className="material-symbols-outlined text-sm">thumb_up</span>
-                        Accepter
-                      </button>
-                    )}
-                    {order.status === 'ACCEPTED' && (
-                      <button
-                        onClick={() => {
-                          updateStatusMutation.mutate({ id: order.id, status: 'DELIVERED' });
+                        onChange={(e) => {
+                          onStatusChangeClick(
+                            order.id,
+                            e.target.value,
+                            order.status,
+                            order.reference || `#${order.id.substring(0, 8).toUpperCase()}`
+                          );
                         }}
-                        disabled={updateStatusMutation.isPending}
-                        className="flex-grow sm:flex-grow-0 rounded-xl bg-blue-600 px-sm py-[8px] text-xs font-bold text-white hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-xs shadow-soft"
+                        className={`w-full rounded-xl border px-sm pr-7 py-xs text-xs font-bold outline-none cursor-pointer focus:border-primary disabled:opacity-50 appearance-none h-[34px] ${
+                          order.status === 'PENDING'
+                            ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900'
+                            : order.status === 'ACCEPTED'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
+                            : order.status === 'DELIVERED'
+                            ? 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900'
+                            : 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900'
+                        }`}
                       >
-                        <span className="material-symbols-outlined text-sm">local_shipping</span>
-                        Livrer
-                      </button>
-                    )}
+                        <option value="PENDING">En attente</option>
+                        <option value="ACCEPTED">Acceptée</option>
+                        <option value="DELIVERED">Livrée</option>
+                        <option value="CANCELLED">Annulée</option>
+                      </select>
+                      <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none select-none text-base">
+                        arrow_drop_down
+                      </span>
+                    </div>
 
                     <button
                       onClick={() => onViewDetails(order)}
-                      className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-[8px] text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors flex items-center justify-center gap-xs"
+                      className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-[8px] text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors flex items-center justify-center gap-xs h-[34px]"
                     >
                       <span className="material-symbols-outlined text-sm">visibility</span>
                       Détails
@@ -324,6 +444,20 @@ export function OrdersTable({
         <table className="min-w-[1000px] w-full border-collapse text-left">
           <thead>
             <tr className="border-b border-outline-variant/30 bg-surface-container-low text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
+              <th className="p-md w-12">
+                <input
+                  type="checkbox"
+                  checked={orders.length > 0 && selectedIds.length === orders.length}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedIds(orders.map(o => o.id));
+                    } else {
+                      setSelectedIds([]);
+                    }
+                  }}
+                  className="rounded border-outline-variant text-primary focus:ring-primary cursor-pointer w-4 h-4"
+                />
+              </th>
               <th className="p-md">ID Commande</th>
               <th className="p-md">Détails Client</th>
               <th className="p-md">Articles Commandés</th>
@@ -335,6 +469,20 @@ export function OrdersTable({
           <tbody className="divide-y divide-outline-variant/20">
             {orders.map((order) => (
               <tr key={order.id} className="group transition-colors hover:bg-surface/50">
+                <td className="p-md w-12">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(order.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds([...selectedIds, order.id]);
+                      } else {
+                        setSelectedIds(selectedIds.filter(id => id !== order.id));
+                      }
+                    }}
+                    className="rounded border-outline-variant text-primary focus:ring-primary cursor-pointer w-4 h-4"
+                  />
+                </td>
                 <td className="p-md font-mono text-xs text-on-surface-variant">
                   {order.reference || `#${order.id.substring(0, 8).toUpperCase()}`}
                 </td>
@@ -370,10 +518,12 @@ export function OrdersTable({
                         value={order.status}
                         disabled={updateStatusMutation.isPending}
                         onChange={(e) => {
-                          updateStatusMutation.mutate({
-                            id: order.id,
-                            status: e.target.value,
-                          });
+                          onStatusChangeClick(
+                            order.id,
+                            e.target.value,
+                            order.status,
+                            order.reference || `#${order.id.substring(0, 8).toUpperCase()}`
+                          );
                         }}
                         className={`rounded-xl border px-sm pr-7 py-xs text-xs font-bold outline-none cursor-pointer focus:border-primary disabled:opacity-50 appearance-none h-[34px] ${
                           order.status === 'PENDING'
@@ -397,10 +547,12 @@ export function OrdersTable({
                     {order.status === 'PENDING' && (
                       <button
                         onClick={() => {
-                          updateStatusMutation.mutate({
-                            id: order.id,
-                            status: 'ACCEPTED',
-                          });
+                          onStatusChangeClick(
+                            order.id,
+                            'ACCEPTED',
+                            order.status,
+                            order.reference || `#${order.id.substring(0, 8).toUpperCase()}`
+                          );
                         }}
                         disabled={updateStatusMutation.isPending}
                         className="rounded-xl bg-emerald-600 px-sm py-xs text-xs font-bold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 shadow-soft h-[34px] flex items-center gap-xs"
@@ -412,10 +564,12 @@ export function OrdersTable({
                     {order.status === 'ACCEPTED' && (
                       <button
                         onClick={() => {
-                          updateStatusMutation.mutate({
-                            id: order.id,
-                            status: 'DELIVERED',
-                          });
+                          onStatusChangeClick(
+                            order.id,
+                            'DELIVERED',
+                            order.status,
+                            order.reference || `#${order.id.substring(0, 8).toUpperCase()}`
+                          );
                         }}
                         disabled={updateStatusMutation.isPending}
                         className="rounded-xl bg-blue-600 px-sm py-xs text-xs font-bold text-white hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-soft h-[34px] flex items-center gap-xs"
@@ -442,10 +596,33 @@ export function OrdersTable({
       {/* Orders Pagination Footer (Responsive design) */}
       {totalPages > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between border-t border-outline-variant/30 p-md gap-sm bg-surface-container-lowest/80 flex-wrap">
-          <span className="text-xs md:text-sm text-on-surface-variant font-medium text-center sm:text-left">
-            Affichage de {(orderCurrentPage - 1) * ordersPerPage + 1} à{' '}
-            {Math.min(orderCurrentPage * ordersPerPage, totalOrders)} sur {totalOrders} commandes
-          </span>
+          <div className="flex flex-col sm:flex-row items-center gap-md">
+            <span className="text-xs md:text-sm text-on-surface-variant font-medium text-center sm:text-left">
+              Affichage de {(orderCurrentPage - 1) * ordersPerPage + 1} à{' '}
+              {Math.min(orderCurrentPage * ordersPerPage, totalOrders)} sur {totalOrders} commandes
+            </span>
+            <div className="flex items-center gap-xs">
+              <span className="text-xs text-on-surface-variant font-medium">Afficher :</span>
+              <div className="relative">
+                <select
+                  value={ordersPerPage}
+                  onChange={(e) => {
+                    setOrdersPerPage(Number(e.target.value));
+                    setOrderCurrentPage(1);
+                  }}
+                  className="rounded-xl border border-outline-variant bg-surface-container-low pl-sm pr-6 py-xs text-xs text-on-surface outline-none focus:border-primary cursor-pointer h-8 appearance-none"
+                >
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                </select>
+                <span className="material-symbols-outlined absolute right-1 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
+                  arrow_drop_down
+                </span>
+              </div>
+            </div>
+          </div>
           <div className="flex gap-xs items-center overflow-x-auto max-w-full py-1">
             <button
               disabled={orderCurrentPage === 1}
@@ -492,6 +669,13 @@ interface OrderDetailsModalProps {
   onClose: () => void;
   updateStatusMutation: any;
   onUpdateOrderLocal: (updatedOrder: Order) => void;
+  onStatusChangeClick: (
+    id: string,
+    status: string,
+    currentStatus: string,
+    reference: string,
+    onConfirmExtra?: () => void
+  ) => void;
 }
 
 export function OrderDetailsModal({
@@ -499,6 +683,7 @@ export function OrderDetailsModal({
   onClose,
   updateStatusMutation,
   onUpdateOrderLocal,
+  onStatusChangeClick,
 }: OrderDetailsModalProps) {
   if (!order) return null;
 
@@ -649,14 +834,16 @@ export function OrderDetailsModal({
           {order.status === 'PENDING' && (
             <button
               onClick={() => {
-                updateStatusMutation.mutate({
-                  id: order.id,
-                  status: 'ACCEPTED',
-                });
-                onUpdateOrderLocal({
-                  ...order,
-                  status: 'ACCEPTED',
-                });
+                onStatusChangeClick(
+                  order.id,
+                  'ACCEPTED',
+                  order.status,
+                  order.reference || `#${order.id.substring(0, 8).toUpperCase()}`,
+                  () => onUpdateOrderLocal({
+                    ...order,
+                    status: 'ACCEPTED',
+                  })
+                );
               }}
               disabled={updateStatusMutation.isPending}
               className="rounded-xl bg-emerald-600 px-md py-sm text-sm font-semibold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center gap-xs shadow-soft"
@@ -668,14 +855,16 @@ export function OrderDetailsModal({
           {order.status === 'ACCEPTED' && (
             <button
               onClick={() => {
-                updateStatusMutation.mutate({
-                  id: order.id,
-                  status: 'DELIVERED',
-                });
-                onUpdateOrderLocal({
-                  ...order,
-                  status: 'DELIVERED',
-                });
+                onStatusChangeClick(
+                  order.id,
+                  'DELIVERED',
+                  order.status,
+                  order.reference || `#${order.id.substring(0, 8).toUpperCase()}`,
+                  () => onUpdateOrderLocal({
+                    ...order,
+                    status: 'DELIVERED',
+                  })
+                );
               }}
               disabled={updateStatusMutation.isPending}
               className="rounded-xl bg-blue-600 px-md py-sm text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-xs shadow-soft"
@@ -690,6 +879,82 @@ export function OrderDetailsModal({
           >
             Fermer
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// 4. OrderStatusConfirmModal
+// ============================================================================
+
+interface OrderStatusConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  reference: string;
+  currentStatus: string;
+  newStatus: string;
+}
+
+export function OrderStatusConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  reference,
+  currentStatus,
+  newStatus,
+}: OrderStatusConfirmModalProps) {
+  if (!isOpen) return null;
+
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case 'PENDING': return 'En attente';
+      case 'ACCEPTED': return 'Acceptée';
+      case 'DELIVERED': return 'Livrée';
+      case 'CANCELLED': return 'Annulée';
+      default: return status;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-md bg-black/40 backdrop-blur-sm animate-fade-in">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up">
+        <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low">
+          <h2 className="font-display text-base font-bold text-primary flex items-center gap-xs">
+            <span className="material-symbols-outlined text-primary text-xl">published_with_changes</span>
+            Confirmer le changement
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-xs text-on-surface-variant transition-colors hover:bg-surface-container-high"
+          >
+            <span className="material-symbols-outlined text-xl">close</span>
+          </button>
+        </header>
+
+        <div className="p-md space-y-md">
+          <p className="text-on-surface-variant leading-relaxed text-sm">
+            Voulez-vous vraiment changer le statut de la commande <strong className="text-on-surface">{reference}</strong> de <strong className="text-amber-600">{statusLabel(currentStatus)}</strong> à <strong className="text-emerald-600">{statusLabel(newStatus)}</strong> ?
+          </p>
+
+          <footer className="flex justify-end gap-sm pt-md border-t border-outline-variant/10">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-outline-variant px-md py-sm text-sm font-semibold hover:bg-surface-container-low"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={onConfirm}
+              className="rounded-lg bg-primary px-md py-sm text-sm font-semibold text-white hover:bg-surface-tint shadow-soft flex items-center gap-xs"
+            >
+              Confirmer
+            </button>
+          </footer>
         </div>
       </div>
     </div>

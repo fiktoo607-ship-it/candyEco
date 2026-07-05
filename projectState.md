@@ -217,11 +217,21 @@
   - `components/cart/CheckoutForm.tsx`: Removed the local fallback array for `DeliveryMethod`.
   - `components/home/HeroCarousel.tsx`: Removed the static fallback slides array, rendering nothing (`null`) if no slides are returned from the database.
 
+### 22. Dashboard UI/UX Enhancements
+- **Description**: Centralized currency symbol to Euro, added Google Material Symbols navigation icons with flex alignment in Sidebar, updated tab routing conditions with safe fallbacks, added category filter dropdown and reset filters button with custom skeleton loaders in ProductsSection, added checkboxes for bulk status updates, expandable order items, and page-size selector in OrdersSection, and added manually triggered slug generator from title, enabled vertical resizing on Description/Story textareas, and polished empty image upload preview UI in ProductModal.
+- **Components**:
+  - `components/dashbord/Sidebar.tsx`: Added Material Symbols icons to nav buttons, updating alignment via flex.
+  - `components/dashbord/ProductsSection.tsx`: Added Category Filter dropdown, "Reset Filters" button, and responsive skeleton loaders.
+  - `components/dashbord/helpers/OrdersSectionHelpers.tsx`: Added checkboxes for bulk status updates (Accept, Deliver, Cancel), mobile card order items expandability, and a page-size selector.
+  - `components/dashbord/helpers/ProductModalHelpers.tsx`: Added manual slug regenerator button, enabled vertical resizing on Description/Story textareas, and improved empty image upload state UI.
+  - `lib/price.ts`: Centralized currency to Euro (`CURRENCY_SYMBOL = '€'`).
+  - `tests/price.test.ts`: Added unit tests verifying Euro price formatting.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 129 tests pass successfully under `vitest` (`npx vitest run`).
-  - Added new integration tests under `tests/api/tags.test.ts` to verify filtering and tag validation constraints.
+  - All 134 tests pass successfully under `vitest` (`npx vitest run`).
+  - Added new integration tests under `tests/price.test.ts` to verify Euro format conversions.
 
 

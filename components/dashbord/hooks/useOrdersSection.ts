@@ -16,7 +16,7 @@ export function useOrdersSection() {
   const [sortOrder, setSortOrder] = useState('desc');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  const ordersPerPage = 5;
+  const [ordersPerPage, setOrdersPerPage] = useState(5);
 
   const { data: ordersData, isLoading: isOrdersLoading, error: ordersError } = useOrders({
     page: orderCurrentPage,
@@ -43,6 +43,7 @@ export function useOrdersSection() {
     selectedOrder,
     setSelectedOrder,
     ordersPerPage,
+    setOrdersPerPage,
     orders: ordersData?.data || [],
     isLoading: isOrdersLoading,
     error: ordersError,

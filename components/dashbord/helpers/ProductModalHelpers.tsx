@@ -61,9 +61,28 @@ export function ProductBasicInfo({
           />
         </div>
         <div className="flex flex-col gap-xs">
-          <label className="text-sm font-bold text-on-surface-variant">
-            Slug *
-          </label>
+          <div className="flex justify-between items-center">
+            <label className="text-sm font-bold text-on-surface-variant">
+              Slug *
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                setSlug(
+                  title
+                    .toLowerCase()
+                    .trim()
+                    .replace(/\s+/g, "-")
+                    .replace(/[^a-z0-9-ء-ي]/g, "")
+                );
+              }}
+              className="text-xs font-bold text-primary hover:text-surface-tint flex items-center gap-[2px] transition-colors"
+              title="Générer le slug à partir du titre"
+            >
+              <span className="material-symbols-outlined text-sm">autorenew</span>
+              Générer
+            </button>
+          </div>
           <input
             type="text"
             required
@@ -168,14 +187,18 @@ export function ProductImageUpload({
             </button>
           </div>
         ) : (
-          <label className="flex flex-col items-center justify-center cursor-pointer py-md w-full">
-            <span className="material-symbols-outlined text-3xl text-primary mb-xs">cloud_upload</span>
-            <span className="text-sm font-bold text-on-surface">
-              Cliquez pour charger une image
-            </span>
-            <span className="text-xs text-on-surface-variant/80 mt-[2px]">
-              PNG, JPG, WEBP jusqu'à 10 Mo
-            </span>
+          <label className="flex flex-col items-center justify-center cursor-pointer py-md w-full gap-sm">
+            <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant/40">
+              <span className="material-symbols-outlined text-3xl">image</span>
+            </div>
+            <div className="text-center">
+              <span className="text-sm font-bold text-primary hover:underline block">
+                Aucune image chargée. Cliquez pour en importer une.
+              </span>
+              <span className="text-xs text-on-surface-variant/80 mt-[2px] block">
+                PNG, JPG, WEBP jusqu'à 10 Mo
+              </span>
+            </div>
             <input
               type="file"
               accept="image/*"
@@ -424,7 +447,7 @@ export function ProductDescriptionStory({
           placeholder="Décrivez brièvement le produit..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
+          className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 resize-y"
         />
       </div>
 
@@ -438,7 +461,7 @@ export function ProductDescriptionStory({
           placeholder="Racontez l'histoire/l'héritage du produit..."
           value={story}
           onChange={(e) => setStory(e.target.value)}
-          className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
+          className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 resize-y"
         />
       </div>
     </>

@@ -1,12 +1,14 @@
+export const CURRENCY_SYMBOL = '€';
+
 /**
  * Formats a price string or number into the requested format:
- * "value £" (aligned with Euro-style placement, replacing $ with £).
+ * "value €" (aligned with Euro-style placement, replacing $ with €).
  */
 export function formatPrice(price: string | number | undefined | null): string {
   if (price === undefined || price === null) return '—';
   
   if (typeof price === 'number') {
-    return `${price.toFixed(2)} £`;
+    return `${price.toFixed(2)} ${CURRENCY_SYMBOL}`;
   }
   
   // Extract digits and dot
@@ -14,9 +16,9 @@ export function formatPrice(price: string | number | undefined | null): string {
   const num = parseFloat(cleaned);
   
   if (isNaN(num)) {
-    // If it cannot be parsed as a number, just replace $ with £
-    return price.replace(/\$/g, '£');
+    // If it cannot be parsed as a number, just replace $ or £ with €
+    return price.replace(/[\$£]/g, CURRENCY_SYMBOL);
   }
   
-  return `${num.toFixed(2)} £`;
+  return `${num.toFixed(2)} ${CURRENCY_SYMBOL}`;
 }

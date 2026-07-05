@@ -101,10 +101,13 @@ describe('Products API - Pagination & Filtering', () => {
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
       where: {
-        AND: [
-          { tags: { some: { name: 'لوز' } } },
-          { tags: { some: { name: 'شوكولا' } } }
-        ]
+        tags: {
+          some: {
+            name: {
+              in: ['لوز', 'شوكولا']
+            }
+          }
+        }
       },
       orderBy: [
         { visibility: 'desc' },

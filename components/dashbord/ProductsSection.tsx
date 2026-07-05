@@ -8,6 +8,7 @@ export default function ProductsSection() {
   const { data: products = [], isLoading, error: productsError } = useProducts(true);
   const error = productsError instanceof Error ? productsError.message : null;
   const [sortBy, setSortBy] = useState<'default' | 'rating-desc' | 'rating-asc'>('default');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   const {
     searchQuery,
@@ -20,13 +21,17 @@ export default function ProductsSection() {
 
   const itemsPerPage = 5;
 
-  // Filter products by search query
-  const filteredProducts = products.filter(
-    (p) =>
+  // Filter products by search query and category
+  const filteredProducts = products.filter((p) => {
+    const matchesSearch =
       p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      p.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      categoryFilter === 'all' ||
+      p.category.toLowerCase() === categoryFilter.toLowerCase();
+    return matchesSearch && matchesCategory;
+  });
 
   // Sort products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -46,10 +51,10 @@ export default function ProductsSection() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = sortedProducts.slice(indexOfFirstItem, indexOfLastItem);
 
-  // Reset page when query changes
+  // Reset page when query or category changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, setCurrentPage]);
+  }, [searchQuery, categoryFilter, setCurrentPage]);
 
   return (
     <>
@@ -63,7 +68,7 @@ export default function ProductsSection() {
       <div className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-soft border border-outline-variant/10">
         {/* Search and Filters */}
         <div className="flex flex-col gap-md border-b border-outline-variant/30 p-md lg:flex-row lg:items-center lg:justify-between bg-surface-container-lowest/50">
-          <div className="flex flex-col gap-sm sm:flex-row sm:items-center w-full lg:w-auto flex-1">
+          <div className="flex flex-col gap-sm sm:flex-row sm:items-center w-full lg:w-auto flex-1 flex-wrap">
             {/* Search Input */}
             <label className="relative w-full lg:w-80 flex-shrink-0">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
@@ -77,6 +82,25 @@ export default function ProductsSection() {
                 className="w-full rounded-xl border border-outline-variant bg-surface-container-low py-sm pl-10 pr-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </label>
+
+            {/* Category Select */}
+            <div className="relative w-full sm:w-64 flex-shrink-0">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
+                category
+              </span>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full rounded-xl border border-outline-variant bg-surface-container-low pl-9 pr-8 py-sm text-base text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer h-[46px] appearance-none"
+              >
+                <option value="all">Toutes les catégories</option>
+                <option value="gâteau">Gâteaux</option>
+                <option value="aliments traditionnel">Aliments Traditionnels</option>
+              </select>
+              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
+                arrow_drop_down
+              </span>
+            </div>
 
             {/* Sort Select */}
             <div className="relative w-full sm:w-64 flex-shrink-0">
@@ -96,6 +120,22 @@ export default function ProductsSection() {
                 arrow_drop_down
               </span>
             </div>
+
+            {/* Reset Filters Button */}
+            {(searchQuery !== '' || categoryFilter !== 'all' || sortBy !== 'default') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setCategoryFilter('all');
+                  setSortBy('default');
+                }}
+                className="rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-sm font-semibold text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-xs h-[46px] text-primary"
+              >
+                <span className="material-symbols-outlined text-base">filter_alt_off</span>
+                <span>Réinitialiser</span>
+              </button>
+            )}
           </div>
           <div className="text-sm text-on-surface-variant font-medium flex-shrink-0 mt-sm lg:mt-0 lg:text-right border-t border-outline-variant/10 pt-sm lg:border-t-0 lg:pt-0">
             Total des produits :{" "}
@@ -103,13 +143,45 @@ export default function ProductsSection() {
           </div>
         </div>
 
-        {/* Loading Indicator */}
+        {/* Loading Skeletons */}
         {isLoading ? (
-          <div className="flex h-64 flex-col items-center justify-center gap-md">
-            <svg className="w-10 h-10 text-primary animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-            </svg>
-            <p className="text-on-surface-variant">Chargement des produits...</p>
+          <div className="p-md space-y-md">
+            {/* Desktop Table Skeleton (Hidden on Mobile) */}
+            <div className="hidden lg:block space-y-sm">
+              <div className="h-12 bg-surface-container-low rounded-xl animate-pulse" />
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex gap-md items-center py-sm border-b border-outline-variant/10 animate-pulse">
+                  <div className="h-16 w-16 bg-surface-container-low rounded-xl" />
+                  <div className="flex-1 space-y-xs">
+                    <div className="h-4 bg-surface-container-low rounded-lg w-1/3" />
+                    <div className="h-3 bg-surface-container-low rounded-lg w-1/2" />
+                  </div>
+                  <div className="h-6 bg-surface-container-low rounded-xl w-24" />
+                  <div className="h-6 bg-surface-container-low rounded-xl w-16" />
+                  <div className="h-8 bg-surface-container-low rounded-xl w-20" />
+                </div>
+              ))}
+            </div>
+            {/* Mobile Cards Skeleton (Hidden on Desktop) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-md lg:hidden">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md space-y-md animate-pulse">
+                  <div className="aspect-video w-full rounded-xl bg-surface-container-low" />
+                  <div className="space-y-sm">
+                    <div className="flex justify-between">
+                      <div className="h-4 bg-surface-container-low rounded-xl w-1/4" />
+                      <div className="h-4 bg-surface-container-low rounded-xl w-1/6" />
+                    </div>
+                    <div className="h-5 bg-surface-container-low rounded-lg w-3/4" />
+                    <div className="h-3 bg-surface-container-low rounded-lg w-full" />
+                  </div>
+                  <div className="flex justify-end gap-sm pt-sm border-t border-outline-variant/10">
+                    <div className="h-8 bg-surface-container-low rounded-xl w-20" />
+                    <div className="h-8 bg-surface-container-low rounded-xl w-20" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : currentItems.length === 0 ? (
           <div className="flex h-64 flex-col items-center justify-center gap-sm text-on-surface-variant bg-surface/10">

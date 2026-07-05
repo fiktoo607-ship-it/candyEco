@@ -72,8 +72,13 @@ export default function DashboardPage() {
             <QnaSection />
           ) : activeTab === 'users' ? (
             <UsersSection />
-          ) : (
+          ) : activeTab === 'delivery-methods' ? (
             <DeliverySection />
+          ) : (
+            <div className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-xl text-center shadow-soft">
+              <span className="material-symbols-outlined text-4xl text-on-surface-variant/40 mb-sm">tab_unselected</span>
+              <p className="text-on-surface-variant font-medium">Onglet non trouvé</p>
+            </div>
           )}
         </div>
       </section>
