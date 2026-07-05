@@ -36,6 +36,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
   
   const [phoneError, setPhoneError] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     if (session?.user) {
@@ -73,14 +74,15 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
     if (!storeEnabled) {
-      alert("La boutique est fermée pour le moment. Prise de commande impossible.");
+      setFormError("La boutique est fermée pour le moment. Prise de commande impossible.");
       return;
     }
     if (items.length === 0) return;
 
     if (!customerName || !customerPhone || !shippingAddress || !selectedMethod) {
-      alert(dictionary.cart.form.validationError);
+      setFormError(dictionary.cart.form.validationError);
       return;
     }
 
@@ -119,7 +121,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
       onSuccess(createdOrder.id);
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : dictionary.cart.form.submitError);
+      setFormError(err instanceof Error ? err.message : dictionary.cart.form.submitError);
     }
   };
 
@@ -133,6 +135,14 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
         <span className="text-on-surface-variant font-medium">{dictionary.cart.form.total}</span>
         <span className="text-2xl font-bold text-primary">{formatPrice(totalPrice)}</span>
       </div>
+
+      {/* Inline Form Error Banner */}
+      {formError && (
+        <div className="mb-sm rounded-xl bg-error-container/40 border border-error/20 p-sm text-sm font-medium text-error flex items-start gap-xs animate-fade-in">
+          <span className="material-symbols-outlined text-base select-none shrink-0 mt-[2px]">error</span>
+          <span>{formError}</span>
+        </div>
+      )}
 
       <form onSubmit={handleCheckout} className="space-y-sm">
         <div>
@@ -229,11 +239,11 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
                 <div className="flex flex-col">
                   <span className="text-sm font-bold text-on-surface">
                     {method.name === 'Home Delivery'
-                      ? 'Home Delivery (Livraison à domicile)'
+                      ? 'Livraison à domicile'
                       : method.name === 'Office Pickup'
-                      ? 'Office Pickup (Retrait au bureau)'
+                      ? 'Retrait au bureau'
                       : method.name === 'Store Pickup'
-                      ? 'Store Pickup (Retrait en magasin)'
+                      ? 'Retrait en magasin'
                       : method.name}
                   </span>
                   {method.description && (

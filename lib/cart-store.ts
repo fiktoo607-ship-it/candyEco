@@ -10,6 +10,7 @@ export interface CartProduct {
   category: string;
   description: string;
   state: string;
+  limitBay?: number | null;
 }
 
 export interface CartItem {
@@ -66,7 +67,7 @@ export const useCartStore = create<CartState>()(
         }, 0);
       },
       getTotalItemsCount: () => {
-        return get().items.length;
+        return get().items.reduce((total, item) => total + item.quantity, 0);
       },
     }),
     {

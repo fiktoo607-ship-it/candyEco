@@ -46,6 +46,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       category: product.category,
       description: product.description,
       state: product.state,
+      limitBay: product.limitBay,
     }, quantity);
   };
 
@@ -64,7 +65,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-surface-variant bg-surface-container-lowest shadow-soft transition-transform duration-300 hover:-translate-y-1 flex flex-col h-full">
+    <article className="overflow-hidden rounded-2xl border border-surface-variant bg-surface-container-lowest shadow-soft transition-transform duration-300 hover:-translate-y-1 flex flex-col h-full group">
       <Link
         href={`/our-product/${product.slug}`}
         className="relative aspect-[4/3] overflow-hidden bg-surface-variant cursor-pointer block"
@@ -73,7 +74,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           src={product.imageUrl}
           alt={product.title}
           fill
-          className="object-cover"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 1024px) 100vw, 33vw"
         />
         {badge ? (

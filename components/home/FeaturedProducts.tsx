@@ -29,20 +29,17 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
   const [itemsPerSlide, setItemsPerSlide] = useState(6);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 639px)");
-    const handleMediaQueryChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      setItemsPerSlide(e.matches ? 2 : 6);
+    const getItemsPerSlide = () => {
+      if (window.innerWidth < 640) return 1;
+      if (window.innerWidth < 1024) return 2;
+      return 3;
     };
-    
-    handleMediaQueryChange(mediaQuery);
 
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener("change", handleMediaQueryChange);
-      return () => mediaQuery.removeEventListener("change", handleMediaQueryChange);
-    } else {
-      mediaQuery.addListener(handleMediaQueryChange);
-      return () => mediaQuery.removeListener(handleMediaQueryChange);
-    }
+    setItemsPerSlide(getItemsPerSlide());
+
+    const handleResize = () => setItemsPerSlide(getItemsPerSlide());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const [isMounted, setIsMounted] = useState(false);
@@ -174,7 +171,7 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
             return (
               <div
                 key={slideIndex}
-                className="w-full flex-shrink-0 grid grid-cols-1 gap-sm sm:gap-lg sm:grid-cols-2 lg:grid-cols-3"
+                className={`w-full flex-shrink-0 grid gap-sm sm:gap-lg ${currentItemsPerSlide === 1 ? 'grid-cols-1' : currentItemsPerSlide === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}
               >
                 {slideProducts.map((product) => (
                   <div key={product.id || product.slug} className="h-full">

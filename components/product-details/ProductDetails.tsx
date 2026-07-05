@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useCartStore } from '@/lib/cart-store';
+import { useSession } from 'next-auth/react';
 import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
 import { formatPrice } from '@/lib/price';
@@ -23,6 +25,9 @@ interface ProductData {
 
 export default function ProductDetails({ product }: { product: ProductData }) {
   const addItem = useCartStore((state) => state.addItem);
+  const { data: session, status } = useSession();
+  const minQuantity = product.limitBay && product.limitBay > 0 ? product.limitBay : 1;
+  const [quantity, setQuantity] = useState(minQuantity);
   const [hoverRating, setHoverRating] = useState(0);
   const [hasRated, setHasRated] = useState(false);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
@@ -150,6 +155,10 @@ export default function ProductDetails({ product }: { product: ProductData }) {
           <h2 className="text-lg font-bold text-on-surface-variant">Évaluer ce produit</h2>
           {loadingCanRate ? (
             <span className="text-xs text-on-surface-variant animate-pulse">Vérification de l'éligibilité...</span>
+          ) : status === 'unauthenticated' ? (
+            <p className="mt-xs text-xs text-on-surface-variant/70">
+              <Link href="/login" className="font-semibold text-primary hover:underline">Connectez-vous</Link> puis passez une commande livrée pour évaluer ce produit.
+            </p>
           ) : !canRate ? (
             <p className="mt-xs text-xs text-on-surface-variant/70 italic">
               Vous pouvez évaluer ce produit uniquement après qu'une commande le contenant a été livrée.
@@ -183,9 +192,41 @@ export default function ProductDetails({ product }: { product: ProductData }) {
           )}
         </div>
 
-        <div className="mt-lg border-t border-outline-variant/20 pt-md">
+        <div className="mt-lg border-t border-outline-variant/20 pt-md space-y-sm">
+          {/* Quantity Selector */}
+          {isActionable && (
+            <div>
+              <label className="text-sm font-bold text-on-surface-variant mb-xs block">
+                Quantité {minQuantity > 1 && <span className="text-xs font-normal text-outline">(min. {minQuantity})</span>}
+              </label>
+              <div className="flex items-center border border-outline-variant/60 rounded-full bg-surface-container-low p-0.5 w-40">
+                <button
+                  type="button"
+                  onClick={() => setQuantity((prev) => (prev > minQuantity ? prev - 1 : prev))}
+                  disabled={quantity <= minQuantity}
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  title={`Minimum: ${minQuantity}`}
+                >
+                  <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
+                  </svg>
+                </button>
+                <span className="flex-1 text-center text-sm font-bold text-on-surface">{quantity}</span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((prev) => prev + 1)}
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors"
+                >
+                  <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
           <button
-            onClick={() => addItem(product)}
+            onClick={() => addItem({ ...product, limitBay: product.limitBay }, quantity)}
             disabled={!isActionable}
             style={isActionable ? { backgroundColor: THEME_CONFIG.colorRoles.accent10.yellowPrimary, color: THEME_CONFIG.colorRoles.accent10.textOnYellow } : undefined}
             className="w-full rounded-xl px-md py-md text-base font-bold shadow-soft transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"

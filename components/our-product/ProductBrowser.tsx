@@ -209,7 +209,7 @@ export default function ProductBrowser() {
                     setShowTagDropdown(true);
                   }}
                   onFocus={() => setShowTagDropdown(true)}
-                  placeholder="Tag (ex: لوز)..."
+                  placeholder="Tag (ex: amande)..."
                   className="w-full h-12 pl-11 pr-4 rounded-full border border-outline-variant bg-surface-container-low text-xs sm:text-base text-on-surface placeholder-outline outline-none transition-all focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
                 />
                 {/* Tag Search Dropdown */}

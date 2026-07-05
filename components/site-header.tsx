@@ -126,6 +126,15 @@ export default function SiteHeader() {
                   Tableau de bord
                 </Link>
               )}
+              {session.user.role !== 'admin' && (
+                <Link
+                  href="/orders"
+                  className="rounded-full bg-surface-container px-md py-sm text-sm font-semibold text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors ml-sm flex items-center gap-xs"
+                >
+                  <span className="material-symbols-outlined text-base select-none">package_2</span>
+                  Mes commandes
+                </Link>
+              )}
               <div className="flex items-center gap-xs ml-sm border-l border-outline-variant/30 pl-sm">
                 {session.user.image ? (
                   <Image
@@ -209,6 +218,15 @@ export default function SiteHeader() {
                     className="rounded-xl px-md py-sm text-base font-semibold text-primary bg-primary/10 hover:bg-primary/20 transition-colors text-center"
                   >
                     Tableau de bord
+                  </Link>
+                )}
+                {session.user.role !== 'admin' && (
+                  <Link
+                    href="/orders"
+                    className="rounded-xl px-md py-sm text-base font-semibold text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-colors flex items-center gap-xs"
+                  >
+                    <span className="material-symbols-outlined text-base select-none">package_2</span>
+                    Mes commandes
                   </Link>
                 )}
                 <div className="flex items-center justify-between border-t border-outline-variant/20 pt-sm mt-xs px-md">
