@@ -22,7 +22,7 @@
 - **Description**: Re-engineered the homepage carousel and admin dashboard to merge product selection checklist items and custom uploaded database slides, up to a user-defined max slides limit. Repositioned and redesigned the Next/Prev navigation buttons.
 - **Components**:
   - `components/dashbord/CmsSection.tsx`: Configures slide limit (`carousel_max_slides`), product selection checklist, and custom image uploads, dynamically enforcing the limit constraints.
-  - `components/home/HeroCarousel.tsx`: Made `order` type field optional. Moved the Prev/Next navigation buttons from the bottom indicators bar to the left and right edges of the slide, styled with a premium glassmorphic circle design. Converted the bottom indicators to clean, borderless, larger diamond shapes (`rotate-45`) with expanded spacing and scale animations.
+  - `components/home/HeroCarousel.tsx`: Made `order` type field optional. Moved the Prev/Next navigation buttons from the bottom indicators bar to the left and right edges of the slide, styled with a premium glassmorphic circle design. Converted the bottom indicators to clean, borderless, larger diamond shapes (`rotate-45`) with expanded spacing and scale animations. Set the active indicator dot color to `#2a1082` (with matching shadow) and styled the "Coming Soon" button as a disabled light grey element (`bg-neutral-200 text-neutral-500`).
   - `app/home/page.tsx`: Merges checklist products (first) and custom uploaded slides (second) from database, capped by `carousel_max_slides`.
 - **APIs & Database**:
   - `prisma/schema.prisma`: Added `CarouselSlide` model.
@@ -58,9 +58,9 @@
   - `app/api/products/[id]/route.ts`: Implemented `POST` handler for user rating submissions, calculating running average.
 
 ### 6. Homepage New Products Section
-- **Description**: Displays the newest products on the homepage directly below the Hero Carousel, using a responsive slider/grid layout and a configurable limit from the admin dashboard.
+- **Description**: Displays the newest products on the homepage directly below the Hero Carousel, using a single-card infinite looping slider layout.
 - **Components**:
-  - `components/home/NewProductsSection.tsx`: Renders the products using a responsive grid layout on desktop, transitioning to a touch-swipeable horizontal scroll container on mobile and tablet.
+  - `components/home/NewProductsSection.tsx`: Renders the products using a single-card infinite looping slider layout on all screen sizes. Uses larger, circular dot indicators styled in `#2a1082`.
   - `components/home/HomeProductSection.tsx`: Configured to receive the list of new products and render the new section directly below `HeroCarousel`.
   - `components/dashbord/CmsSection.tsx`: Form interface updated to allow configuring `new_products_limit` with standard validation.
 - **APIs & Database**:
@@ -69,10 +69,17 @@
   - `app/home/page.tsx`: Queries the database for products ordered by `createdAt` desc, filtering for active products (`state: 'exist'`), using the configured limit.
 
 ### 7. Homepage Popular Products Section
-- **Description**: Displays the most ordered products on the homepage directly below the New Products section, automatically updating based on orders count.
+- **Description**: Displays the most ordered products on the homepage directly below the New Products section, using a single-card infinite looping slider layout.
 - **Components**:
-  - `components/home/PopularProductsSection.tsx`: Renders the products using a responsive grid layout on desktop, transitioning to a touch-swipeable horizontal scroll container on mobile and tablet.
+  - `components/home/PopularProductsSection.tsx`: Renders the products using a single-card infinite looping slider layout on all screen sizes. Uses larger, circular dot indicators styled in `#2a1082`.
   - `components/home/HomeProductSection.tsx`: Configured to receive the list of popular products and render the new section directly below `NewProductsSection`.
+
+### 7b. Homepage Featured Products Section (Créations Vedettes)
+- **Description**: Displays featured products on the homepage using a single-card infinite looping slider layout.
+- **Components**:
+  - `components/home/FeaturedProducts.tsx`: Renders featured products using a single-card infinite looping slider layout on all screen sizes. Uses larger, circular dot indicators styled in `#2a1082`.
+- **Integrations**:
+  - `app/home/page.tsx`: Limits database query to exactly 5 featured products.
 - **APIs & Database**:
   - `app/home/page.tsx`: Queries database order statistics using `Prisma` aggregation (`groupBy` on `OrderItem` by `productId` summing `quantity` in desc order) to fetch the top 4 most ordered products, falling back to general active products if necessary.
 

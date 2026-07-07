@@ -22,43 +22,48 @@ interface PopularProductsSectionProps {
 }
 
 export default function PopularProductsSection({ products }: PopularProductsSectionProps) {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const N = products?.length ?? 0;
+
+  const [itemsPerView, setItemsPerView] = useState(3);
+  const [isMounted, setIsMounted] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(3); // initialized to default itemsPerView
+  const [isTransitioning, setIsTransitioning] = useState(true);
+
   const [dragStartX, setDragStartX] = useState<number | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const [itemsPerSlide, setItemsPerSlide] = useState(4);
-  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
     
-    const getItemsPerSlide = () => {
+    const getItemsPerView = () => {
+      if (typeof window === 'undefined') return 3;
       if (window.innerWidth < 640) return 1;
       if (window.innerWidth < 1024) return 2;
       return 3;
     };
 
-    setItemsPerSlide(getItemsPerSlide());
+    const initialItems = getItemsPerView();
+    setItemsPerView(initialItems);
+    setCurrentSlide(initialItems);
 
-    const handleResize = () => setItemsPerSlide(getItemsPerSlide());
+    const handleResize = () => {
+      const newItems = getItemsPerView();
+      setItemsPerView(newItems);
+      setCurrentSlide(newItems);
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const currentItemsPerSlide = isMounted ? itemsPerSlide : 4;
-  const slidesCount = Math.ceil((products || []).length / currentItemsPerSlide) || 1;
-
-  useEffect(() => {
-    if (currentSlide >= slidesCount) {
-      setCurrentSlide(0);
-    }
-  }, [slidesCount, currentSlide]);
+  const currentItemsPerView = isMounted ? itemsPerView : 3;
 
   const startAutoCycle = () => {
     stopAutoCycle();
+    if (N <= currentItemsPerView) return;
     timerRef.current = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slidesCount);
+      setCurrentSlide((prev) => prev + 1);
     }, 5000);
   };
 
@@ -72,12 +77,34 @@ export default function PopularProductsSection({ products }: PopularProductsSect
   useEffect(() => {
     startAutoCycle();
     return () => stopAutoCycle();
-  }, [slidesCount]);
+  }, [N, currentItemsPerView]);
+
+  const handleTransitionEnd = () => {
+    if (N <= currentItemsPerView) return;
+    if (currentSlide === currentItemsPerView - 1) {
+      setIsTransitioning(false);
+      setCurrentSlide(N + currentItemsPerView - 1);
+    } else if (currentSlide === N + currentItemsPerView) {
+      setIsTransitioning(false);
+      setCurrentSlide(currentItemsPerView);
+    }
+  };
+
+  useEffect(() => {
+    if (!isTransitioning) {
+      const timer = setTimeout(() => {
+        setIsTransitioning(true);
+      }, 30);
+      return () => clearTimeout(timer);
+    }
+  }, [isTransitioning]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (N <= currentItemsPerView) return;
     setDragStartX(e.clientX);
     setIsDragging(true);
     setDragOffset(0);
+    stopAutoCycle();
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -95,17 +122,19 @@ export default function PopularProductsSection({ products }: PopularProductsSect
 
     const threshold = 80;
     if (dragOffset < -threshold) {
-      setCurrentSlide((prev) => (prev + 1) % slidesCount);
+      setCurrentSlide((prev) => prev + 1);
     } else if (dragOffset > threshold) {
-      setCurrentSlide((prev) => (prev - 1 + slidesCount) % slidesCount);
+      setCurrentSlide((prev) => prev - 1);
     }
     setDragOffset(0);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (N <= currentItemsPerView) return;
     setDragStartX(e.targetTouches[0].clientX);
     setIsDragging(true);
     setDragOffset(0);
+    stopAutoCycle();
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -123,14 +152,45 @@ export default function PopularProductsSection({ products }: PopularProductsSect
 
     const threshold = 50;
     if (dragOffset < -threshold) {
-      setCurrentSlide((prev) => (prev + 1) % slidesCount);
+      setCurrentSlide((prev) => prev + 1);
     } else if (dragOffset > threshold) {
-      setCurrentSlide((prev) => (prev - 1 + slidesCount) % slidesCount);
+      setCurrentSlide((prev) => prev - 1);
     }
     setDragOffset(0);
   };
 
   if (!products || products.length === 0) return null;
+
+  // Static grid fallback if products count fits on the screen
+  if (N <= currentItemsPerView) {
+    return (
+      <section className="mx-auto max-w-container-max px-gutter py-md relative select-none">
+        {/* Title Header */}
+        <div className="mb-lg text-center flex flex-col items-center justify-center relative">
+          <h2 className="font-display text-4xl font-bold text-on-surface">
+            {dictionary.home.popularProducts?.title || "Produits Populaires"}
+          </h2>
+          <div className="mx-auto mt-sm h-1 w-16 rounded-full bg-primary-container" />
+        </div>
+
+        <div className="flex justify-center w-full">
+          <div className="grid gap-sm sm:gap-lg grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 w-full max-w-5xl justify-items-center">
+            {products.map((product) => (
+              <div key={product.id || product.slug} className="w-full max-w-[320px]">
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const prepended = products.slice(-currentItemsPerView);
+  const appended = products.slice(0, currentItemsPerView);
+  const displayProducts = [...prepended, ...products, ...appended];
+
+  const activeIndicatorIndex = (currentSlide - currentItemsPerView + N) % N;
 
   return (
     <section
@@ -154,47 +214,40 @@ export default function PopularProductsSection({ products }: PopularProductsSect
       {/* Slides Container */}
       <div className="overflow-hidden w-full">
         <div
-          className="flex transition-transform duration-[800ms] ease-in-out"
-          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          className={`flex w-full ${isTransitioning ? 'transition-transform duration-[800ms] ease-in-out' : ''}`}
+          style={{ transform: `translateX(-${currentSlide * (100 / currentItemsPerView)}%)` }}
+          onTransitionEnd={handleTransitionEnd}
         >
-          {Array.from({ length: slidesCount }).map((_, slideIndex) => {
-            const slideProducts = products.slice(
-              slideIndex * currentItemsPerSlide,
-              (slideIndex + 1) * currentItemsPerSlide,
-            );
-
-            return (
-              <div
-                key={slideIndex}
-                className={`w-full flex-shrink-0 grid gap-sm sm:gap-lg ${currentItemsPerSlide === 1 ? 'grid-cols-1' : currentItemsPerSlide === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}
-              >
-                {slideProducts.map((product) => (
-                  <div key={product.id || product.slug} className="h-full">
-                    <ProductCard product={product} />
-                  </div>
-                ))}
+          {displayProducts.map((product, idx) => (
+            <div
+              key={`${product.id || product.slug}-${idx}`}
+              style={{ width: `${100 / currentItemsPerView}%` }}
+              className="flex-shrink-0 flex justify-center px-4"
+            >
+              <div className="w-full max-w-[320px]">
+                <ProductCard product={product} />
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Dotted Slide Indicators */}
-      {slidesCount > 1 && (
-        <div className="mt-lg flex gap-1.5 justify-center items-center z-20 relative">
-          {Array.from({ length: slidesCount }).map((_, index) => {
-            const isActive = index === currentSlide;
+      {N > 1 && (
+        <div className="mt-lg flex gap-3 justify-center items-center z-20 relative">
+          {Array.from({ length: N }).map((_, index) => {
+            const isActive = index === activeIndicatorIndex;
             return (
               <button
                 key={index}
                 onClick={() => {
-                  setCurrentSlide(index);
+                  setCurrentSlide(currentItemsPerView + index);
                   startAutoCycle();
                 }}
-                className={`h-1.5 rounded-full transition-all duration-500 ease-out ${
+                className={`h-3 w-3 rounded-full transition-all duration-300 ease-out ${
                   isActive
-                    ? "w-6 bg-primary shadow-sm shadow-primary/30"
-                    : "w-1.5 bg-neutral-300 hover:bg-neutral-400"
+                    ? "bg-[#2a1082] scale-110 shadow-sm shadow-[#2a1082]/30"
+                    : "bg-neutral-300 hover:bg-neutral-400 hover:scale-105"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />

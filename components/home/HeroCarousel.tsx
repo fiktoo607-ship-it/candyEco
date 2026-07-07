@@ -167,11 +167,11 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
                     {slide.description}
                   </p>
 
-                 {/* Action Buttons */}
+                  {/* Action Buttons */}
                   {slide.primaryLink && (
                     <div className="mt-sm sm:mt-lg flex flex-wrap gap-xs sm:gap-sm">
                       {slide.primaryLink.isComingSoon ? (
-                        <div className="rounded-xl bg-[#deb53d] px-6 py-2.5 xs:px-8 xs:py-3 md:px-[50px] md:py-[16px] text-xs xs:text-sm md:text-base font-extrabold text-neutral-950 shadow-lg shadow-[#deb53d]/10 cursor-default select-none">
+                        <div className="rounded-xl bg-neutral-200 px-6 py-2.5 xs:px-8 xs:py-3 md:px-[50px] md:py-[16px] text-xs xs:text-sm md:text-base font-extrabold text-neutral-500 cursor-not-allowed select-none">
                           {slide.primaryLink.label}
                         </div>
                       ) : (
@@ -250,7 +250,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
                 onClick={() => handleDotClick(index)}
                 className={`h-3 transition-all duration-300 ease-out rounded-full ${
                   isActive
-                    ? "w-8 bg-[#deb53d] shadow-md shadow-[#deb53d]/50"
+                    ? "w-8 bg-[#2a1082] shadow-md shadow-[#2a1082]/50"
                     : "w-3 bg-white/40 hover:bg-white/70 hover:scale-110"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
