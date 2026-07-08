@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { useCartStore } from '@/lib/cart-store';
 import dictionary from '@/lib/copy-dictionary.json';
-import { formatPrice } from '@/lib/price';
+import PriceDisplay from '@/components/PriceDisplay';
 
 export default function CartItemsList() {
   const { items, removeItem, updateQuantity } = useCartStore();
@@ -30,7 +30,7 @@ export default function CartItemsList() {
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-lg text-on-surface line-clamp-1">{item.product.title}</h3>
                 <p className="text-sm text-on-surface-variant mt-xs">{item.product.category}</p>
-                <p className="text-primary font-bold mt-xs">{formatPrice(item.product.price)}</p>
+                <p className="text-primary font-bold mt-xs"><PriceDisplay price={item.product.price} /></p>
                 {minQty > 1 && (
                   <p className="text-xs text-outline mt-[2px]">Min. {minQty} par commande</p>
                 )}
@@ -46,10 +46,10 @@ export default function CartItemsList() {
                 return (
                   <div className="flex flex-col items-start sm:items-end sm:min-w-[120px] mr-0 sm:mr-sm">
                     <span className="text-[10px] uppercase tracking-wider text-on-surface-variant/60 font-semibold sm:hidden">Sous-total</span>
-                    <span className="text-base sm:text-lg font-bold text-primary">{formatPrice(itemTotal)}</span>
+                    <span className="text-base sm:text-lg font-bold text-primary"><PriceDisplay price={itemTotal} /></span>
                     {item.quantity > 1 && (
                       <span className="text-[10px] text-on-surface-variant/70 hidden sm:block">
-                        {formatPrice(item.product.price)} × {item.quantity}
+                        <PriceDisplay price={item.product.price} /> × {item.quantity}
                       </span>
                     )}
                   </div>

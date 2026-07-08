@@ -32,15 +32,17 @@ export default function DashboardPage() {
   return (
     <main
       dir="ltr"
-      className="flex min-h-screen flex-col bg-surface text-on-surface md:flex-row"
+      className="flex min-h-screen flex-col bg-surface text-on-surface desktop:flex-row"
     >
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content Area */}
-      <section className="flex-1 flex flex-col">
-        <header className="md:sticky md:top-0 z-20 flex h-auto min-h-[5rem] py-md md:py-0 md:h-20 items-center justify-between border-b border-outline-variant/30 bg-surface/90 backdrop-blur-md px-gutter shadow-soft flex-wrap gap-md">
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-on-surface">
+      <section className="flex-1 flex flex-col min-w-0">
+        {/* Header: desktop:sticky handles desktop sticky layout. Overflow is visible so notification dropdown shows */}
+        <header className="desktop:sticky desktop:top-0 z-20 desktop:z-40 flex h-auto min-h-[5rem] py-md desktop:py-0 desktop:h-20 items-center justify-between border-b border-outline-variant/30 bg-surface/90 backdrop-blur-md px-gutter shadow-soft flex-wrap gap-md">
+          {/* min-w-0 + flex-1 allow the title to shrink when the header is narrow */}
+          <h1 className="min-w-0 flex-1 font-display text-xl desktop:text-3xl font-bold text-on-surface truncate pr-sm">
             {activeTab === 'products'
               ? 'Gérer les produits'
               : activeTab === 'orders'
@@ -53,27 +55,15 @@ export default function DashboardPage() {
               ? 'Gestion des utilisateurs'
               : 'Méthodes de livraison'}
           </h1>
-          <div className="flex items-center gap-md">
-            <div className="hidden md:block">
+          {/* flex-shrink-0 ensures the action buttons area is never compressed */}
+          <div className="flex items-center gap-md flex-shrink-0">
+            <div className="hidden desktop:block">
               <NotificationBell />
             </div>
-            
-            {activeTab === 'products' && (
-              <button
-                onClick={() => openCreate(CATEGORIES[0])}
-                className="inline-flex items-center gap-xs rounded-full bg-primary px-sm py-xs text-xs font-semibold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint hover:scale-[1.02] md:px-md md:py-sm md:text-sm md:font-semibold"
-              >
-                <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                <span className="hidden sm:inline">Ajouter un nouveau produit</span>
-                <span className="inline sm:hidden">Ajouter</span>
-              </button>
-            )}
           </div>
         </header>
 
-        <div className="mx-auto w-full max-w-container-max flex-1 p-gutter">
+        <div className="w-full flex-1 p-gutter">
           {activeTab === 'products' ? (
             <ProductsSection />
           ) : activeTab === 'orders' ? (

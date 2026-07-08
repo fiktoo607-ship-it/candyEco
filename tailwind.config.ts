@@ -11,6 +11,9 @@ const config: Config = {
       spacing: THEME_CONFIG.spacing,
       fontFamily: THEME_CONFIG.fonts,
       boxShadow: THEME_CONFIG.boxShadow,
+      screens: {
+        desktop: '1300px',
+      },
     }
   },
   plugins: []

@@ -4,7 +4,7 @@ import { useCartStore } from '@/lib/cart-store';
 import { useSubmitOrder } from '@/lib/hooks/use-orders';
 import dictionary from '@/lib/copy-dictionary.json';
 import { useConfig } from '@/lib/hooks/use-config';
-import { formatPrice } from '@/lib/price';
+import PriceDisplay from '@/components/PriceDisplay';
 
 interface CheckoutFormProps {
   onSuccess: (orderId: string) => void;
@@ -133,7 +133,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
       
       <div className="flex justify-between items-center text-base mb-md border-b border-outline-variant/20 pb-sm">
         <span className="text-on-surface-variant font-medium">{dictionary.cart.form.total}</span>
-        <span className="text-2xl font-bold text-primary">{formatPrice(totalPrice)}</span>
+        <span className="text-2xl font-bold text-primary"><PriceDisplay price={totalPrice} /></span>
       </div>
 
       {/* Inline Form Error Banner */}
@@ -250,7 +250,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
                     <span className="text-xs text-on-surface-variant mt-[2px]">{method.description}</span>
                   )}
                   {method.price > 0 && (
-                    <span className="text-xs font-semibold text-primary mt-[2px]">+{formatPrice(method.price)}</span>
+                    <span className="text-xs font-semibold text-primary mt-[2px]">+<PriceDisplay price={method.price} /></span>
                   )}
                 </div>
               </label>

@@ -55,7 +55,7 @@ export function UsersFilters({
 }: UsersFiltersProps) {
   return (
     <div className="flex flex-col gap-md lg:flex-row lg:items-center lg:justify-between bg-surface-container-lowest/50 p-md rounded-2xl border border-outline-variant/10 shadow-soft">
-      <div className="flex flex-col gap-sm sm:flex-row sm:items-center w-full lg:w-auto flex-1">
+      <div className="flex flex-col gap-sm sm:flex-row sm:items-center w-full lg:w-auto flex-1 flex-wrap">
         {/* Search Bar */}
         <label className="relative w-full lg:w-80 flex-shrink-0">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
@@ -71,7 +71,7 @@ export function UsersFilters({
         </label>
 
         {/* Filter Controls Row */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-sm w-full lg:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-sm w-full lg:w-auto flex-wrap">
           {/* Sort By Dropdown */}
           <div className="relative flex-grow sm:flex-initial">
             <span className="material-symbols-outlined notranslate absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none" translate="no">
@@ -239,35 +239,39 @@ export function UsersTable({
 
       {/* Desktop Grid Layout (>= 1024px) */}
       <div className="overflow-x-auto lg:block hidden">
-        <table className="w-full text-left border-collapse">
+        <table className="min-w-[800px] w-full border-collapse text-left">
           <thead>
-            <tr className="border-b border-outline-variant/30 bg-surface-container-low text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-              <th className="px-lg py-md">Nom</th>
-              <th className="px-lg py-md">E-mail / Téléphone</th>
-              <th className="px-lg py-md">Rôle</th>
-              <th className="px-lg py-md">Commandes</th>
-              <th className="px-lg py-md">Score Trust</th>
-              <th className="px-lg py-md">Dernière Activité</th>
-              <th className="px-lg py-md text-right">Actions</th>
+            <tr className="border-b border-outline-variant/30 bg-surface-container-low text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
+              <th className="p-md">Nom</th>
+              <th className="p-md">E-mail / Téléphone</th>
+              <th className="p-md">Rôle</th>
+              <th className="p-md">Commandes</th>
+              <th className="p-md">Score Trust</th>
+              <th className="p-md">Dernière Activité</th>
+              <th className="p-md text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-outline-variant/20 text-sm">
+          <tbody className="divide-y divide-outline-variant/20">
             {filteredUsers.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-lg py-xl text-center text-on-surface-variant">
+                <td colSpan={7} className="p-md text-center text-on-surface-variant">
                   Aucun utilisateur trouvé.
                 </td>
               </tr>
             ) : (
               filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-surface-container-low/30 transition-colors group">
-                  <td className="px-lg py-md font-semibold text-on-surface">
-                    {user.name || 'Sans Nom'}
+                  <td className="p-md">
+                    <div className="max-w-[180px] truncate font-semibold text-on-surface" title={user.name || 'Sans Nom'}>
+                      {user.name || 'Sans Nom'}
+                    </div>
                   </td>
-                  <td className="px-lg py-md text-on-surface-variant font-mono text-xs">
-                    {user.email || user.phone || '—'}
+                  <td className="p-md">
+                    <div className="max-w-[220px] truncate text-on-surface-variant font-mono text-xs" title={user.email || user.phone || '—'}>
+                      {user.email || user.phone || '—'}
+                    </div>
                   </td>
-                  <td className="px-lg py-md">
+                  <td className="p-md">
                     {user.role === 'admin' ? (
                       <span className="inline-flex items-center gap-xs rounded-full bg-primary/10 px-sm py-xs text-xs font-bold text-primary border border-primary/20">
                         <span className="material-symbols-outlined text-xs select-none">shield</span>
@@ -280,19 +284,19 @@ export function UsersTable({
                       </span>
                     )}
                   </td>
-                  <td className="px-lg py-md font-bold text-on-surface-variant">
+                  <td className="p-md font-bold text-on-surface-variant">
                     {user.completedOrderCount}
                   </td>
-                  <td className="px-lg py-md">
+                  <td className="p-md">
                     <span className="inline-flex items-center gap-xs rounded-full bg-emerald-500/10 px-sm py-xs text-xs font-bold text-emerald-600 border border-emerald-500/20">
                       <span className="material-symbols-outlined text-xs select-none">verified_user</span>
                       {user.trustScore}
                     </span>
                   </td>
-                  <td className="px-lg py-md text-on-surface-variant text-xs font-medium">
+                  <td className="p-md text-on-surface-variant text-xs font-medium whitespace-nowrap">
                     {formatFrenchDate(user.latestActivity)}
                   </td>
-                  <td className="px-lg py-md text-right">
+                  <td className="p-md text-right whitespace-nowrap">
                     {session?.user?.id === user.id ? (
                       <span className="text-xs text-on-surface-variant italic px-sm font-semibold">
                         Vous (Actif)

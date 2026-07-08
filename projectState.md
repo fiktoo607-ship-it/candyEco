@@ -234,11 +234,53 @@
   - `lib/price.ts`: Centralized currency to Euro (`CURRENCY_SYMBOL = '€'`).
   - `tests/price.test.ts`: Added unit tests verifying Euro price formatting.
 
+### 23. Fixed & Collapsible Dashboard Sidebar
+- **Description**: Redesigned the desktop dashboard sidebar to support fixed scrolling and custom collapse states without layout overlaps or clipped elements.
+- **Components**:
+  - `components/dashbord/Sidebar.tsx`:
+    - Structured with a parent fixed outer wrapper `div` to maintain position on scroll while leaving the toggle button non-clipped.
+    - Set the collapse toggle button at `absolute -right-4 top-6` so it stays fixed on scroll.
+    - Shortened navigation labels to <= 2 words: *Gérer produits*, *Gestion contenu*, *Questions/Réponses*, and *Méthodes livraison*.
+    - Enforced `whitespace-nowrap` on all button texts.
+    - Applied premium padding and rounded corners (`rounded-xl px-4 py-3`).
+    - Added `justify-between` to the mobile header flex container to separate the logo and action items.
+    - Removed `sticky top-0` from the mobile `<aside>` container so it scrolls naturally with the page, avoiding overlap bugs.
+    - Shifted the desktop responsive breakpoint from 768px (`md:`) to 1300px (`min-[1300px]:`), meaning all viewports below 1300px render the hamburger menu navigation.
+  - `app/dashboard/page.tsx`:
+    - Shifted page layout splitting threshold and header responsiveness configurations from `md:` to `min-[1300px]:` to match the sidebar's collapse breakpoint.
+    - Removed `overflow-hidden` from the page `<header>` to resolve the notification dropdown menu clipping bug.
+    - Removed the "Ajouter un nouveau produit" button from the global header.
+  - `components/dashbord/ProductsSection.tsx`:
+    - Relocated the "Ajouter un produit" button to the right side of the products section filter header, next to the product counter, where it cleanly aligns with its context.
+    - Elevated the header's z-index to `z-20 min-[1300px]:z-40` on desktop so it stacks above scrollable page content.
+  - `components/dashbord/NotificationBell.tsx`:
+    - Changed the dropdown backdrop and layout breakpoints from `sm:` to `desktop:` so the notification dropdown uses `fixed` positioning relative to the viewport on all screen widths < 1300px, avoiding clipping under scrollable wrappers.
+  - `tailwind.config.ts`:
+    - Extended standard screen breakpoints to include a custom `desktop: '1300px'` screen breakpoint for robust compiles.
+
+### 24. Standard Web Notifications Integration
+- **Description**: Implemented native browser system alerts to show desktop popups when new orders arrive, even when the tab is inactive or minimized.
+- **Components**:
+  - `components/dashbord/hooks/useNotificationBell.ts`:
+    - Added standard browser `Notification` permission request and registered a background service worker (`/sw.js`) on hook initialization.
+    - Updated `triggerSystemNotification` to use the Service Worker's `showNotification` API (`navigator.serviceWorker.ready`). This ensures notifications trigger successfully on background/minimized/inactive tabs where standard tab JS is throttled or restricted.
+    - Integrated system alerts directly inside the Server-Sent Events (SSE) `onmessage` event listener to launch background popup alerts when new orders are placed.
+    - Kept audio alerts synchronized by playing the Web Audio API double chime synthesizer next to the native notification toast.
+  - `public/sw.js` [NEW]:
+    - Created a standard background service worker to handle incoming push notifications and click events (focusing/opening the dashboard page).
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
   - All 134 tests pass successfully under `vitest` (`npx vitest run`).
-  - Added new integration tests under `tests/price.test.ts` to verify Euro format conversions.
+
+
+
+
+
+
+
+
 
 

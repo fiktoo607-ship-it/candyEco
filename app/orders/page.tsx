@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import SiteHeader from '@/components/site-header';
 import SiteFooter from '@/components/site-footer';
 import { Order } from '@/lib/hooks/use-orders';
-import { formatPrice } from '@/lib/price';
+import PriceDisplay from '@/components/PriceDisplay';
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
   PENDING:   { label: 'En attente',  color: 'text-amber-700',   bg: 'bg-amber-100/80' },
@@ -149,7 +149,7 @@ export default function OrdersPage() {
                       </div>
 
                       <p className="text-lg font-bold text-on-surface">
-                        {formatPrice(order.totalPrice)}
+                        <PriceDisplay price={order.totalPrice} />
                         <span className="ml-sm text-sm font-normal text-on-surface-variant">
                           &nbsp;&middot;&nbsp;{order.items.length} article{order.items.length > 1 ? 's' : ''}
                         </span>

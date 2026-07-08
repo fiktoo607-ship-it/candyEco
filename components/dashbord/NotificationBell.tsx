@@ -26,7 +26,9 @@ export default function NotificationBell() {
         className="relative flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-3 text-primary hover:bg-surface-container-low transition-colors select-none"
         aria-label="Notifications"
       >
-        <span className="material-symbols-outlined text-2xl">notifications</span>
+        <span className="material-symbols-outlined text-2xl">
+          notifications
+        </span>
         {unreadCount > 0 && (
           <span className="absolute -top-xs -right-xs flex h-5 w-5 items-center justify-center rounded-full bg-error text-[10px] font-bold text-white shadow-soft animate-pulse">
             {unreadCount}
@@ -36,14 +38,19 @@ export default function NotificationBell() {
 
       {/* Backdrop to close dropdown on click outside */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] sm:bg-transparent sm:backdrop-blur-none" onClick={() => setIsOpen(false)} />
+        <div
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] desktop:bg-transparent desktop:backdrop-blur-none"
+          onClick={() => setIsOpen(false)}
+        />
       )}
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-sm sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:translate-x-0 sm:translate-y-0 sm:mt-sm sm:w-96 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft z-50 transition-all duration-200 origin-center sm:origin-top-right">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-sm desktop:absolute desktop:top-auto desktop:left-auto desktop:right-0 desktop:translate-x-0 desktop:translate-y-0 desktop:mt-sm desktop:w-96 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft z-[80] transition-all duration-200 origin-center desktop:origin-top-right">
           <div className="flex items-center justify-between border-b border-outline-variant/30 pb-sm mb-sm">
-            <h3 className="font-display text-lg font-bold text-on-surface">Notifications</h3>
+            <h3 className="font-display text-lg font-bold text-on-surface">
+              Notifications
+            </h3>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
@@ -68,21 +75,26 @@ export default function NotificationBell() {
                   key={n.id}
                   onClick={() => handleNotificationClick(n)}
                   className={`w-full flex items-start gap-sm rounded-xl p-sm text-left transition-all duration-200 border border-transparent hover:bg-surface-container-low hover:border-outline-variant/30 ${
-                    !n.read ? 'bg-primary/5' : 'opacity-85'
+                    !n.read ? "bg-primary/5" : "opacity-85"
                   }`}
                 >
-                  <span className={`material-symbols-outlined rounded-full p-xs text-xl shrink-0 ${
-                    !n.read ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface-variant'
-                  }`}>
+                  <span
+                    className={`material-symbols-outlined rounded-full p-xs text-xl shrink-0 ${
+                      !n.read
+                        ? "bg-primary/10 text-primary"
+                        : "bg-surface-container-high text-on-surface-variant"
+                    }`}
+                  >
                     shopping_bag
                   </span>
-                  
+
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-on-surface truncate">
                       Nouvelle commande
                     </p>
                     <p className="text-xs text-on-surface-variant truncate">
-                      Client : {n.order?.customerName || 'Anonyme'} • {n.order?.totalPrice || '0.00'}
+                      Client : {n.order?.customerName || "Anonyme"} •{" "}
+                      {n.order?.totalPrice || "0.00"}
                     </p>
                     <span className="text-[10px] text-on-surface-variant/60 font-medium">
                       {getRelativeTimeFrench(n.createdAt)}
@@ -103,7 +115,9 @@ export default function NotificationBell() {
                 onClick={handleClearAll}
                 className="text-xs font-semibold text-error hover:text-red-700 hover:underline transition-all flex items-center gap-xs"
               >
-                <span className="material-symbols-outlined text-base">delete_sweep</span>
+                <span className="material-symbols-outlined text-base">
+                  delete_sweep
+                </span>
                 Effacer tout
               </button>
             </div>
@@ -119,18 +133,23 @@ export default function NotificationBell() {
               campaign
             </span>
             <div className="flex-1">
-              <h4 className="font-display font-bold text-on-surface text-base">Nouvelle commande !</h4>
+              <h4 className="font-display font-bold text-on-surface text-base">
+                Nouvelle commande !
+              </h4>
               <p className="text-sm text-on-surface-variant mt-xxs">
-                <strong>{toast.clientName}</strong> vient de passer une commande de <strong>{toast.amount}</strong>.
+                <strong>{toast.clientName}</strong> vient de passer une commande
+                de <strong>{toast.amount}</strong>.
               </p>
               <div className="flex gap-sm mt-xs">
                 <button
                   onClick={() => {
-                    const matchedNotif = notifications.find(n => n.id === toast.id);
+                    const matchedNotif = notifications.find(
+                      (n) => n.id === toast.id,
+                    );
                     if (matchedNotif) {
                       handleNotificationClick(matchedNotif);
                     } else {
-                      setActiveTab('orders');
+                      setActiveTab("orders");
                       setIsOpen(false);
                     }
                     setToast(null);

@@ -7,7 +7,7 @@ import { useCartStore } from '@/lib/cart-store';
 import { useSession } from 'next-auth/react';
 import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
-import { formatPrice } from '@/lib/price';
+import PriceDisplay from '@/components/PriceDisplay';
 
 interface ProductData {
   id: string;
@@ -133,7 +133,7 @@ export default function ProductDetails({ product }: { product: ProductData }) {
             {product.title}
           </h1>
           <p className="mt-md text-2xl font-bold text-primary">
-            {formatPrice(product.price)}
+            <PriceDisplay price={product.price} />
           </p>
         </div>
 

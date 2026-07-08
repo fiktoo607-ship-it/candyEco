@@ -6,7 +6,7 @@ import Link from 'next/link';
 import SiteHeader from '@/components/site-header';
 import SiteFooter from '@/components/site-footer';
 import { Order } from '@/lib/hooks/use-orders';
-import { formatPrice } from '@/lib/price';
+import PriceDisplay from '@/components/PriceDisplay';
 
 export default function OrderTrackingPage() {
   const params = useParams();
@@ -290,7 +290,7 @@ export default function OrderTrackingPage() {
                             {item.product?.title || "Produit"}
                           </span>
                           <span className="text-xs text-on-surface-variant whitespace-nowrap">
-                            Prix unitaire: {formatPrice(item.priceAtPurchase)}
+                            Prix unitaire: <PriceDisplay price={item.priceAtPurchase} />
                           </span>
                           {order.status === "DELIVERED" &&
                             item.product?.slug && (
@@ -327,7 +327,7 @@ export default function OrderTrackingPage() {
                         Sous-total
                       </span>
                       <span className="font-medium text-on-surface">
-                        {formatPrice(order.totalPrice)}
+                        <PriceDisplay price={order.totalPrice} />
                       </span>
                     </div>
                     <div className="border-t border-outline-variant/10 pt-sm flex justify-between items-center">
@@ -335,7 +335,7 @@ export default function OrderTrackingPage() {
                         Total payé
                       </span>
                       <span className="text-xl font-bold text-primary">
-                        {formatPrice(order.totalPrice)}
+                        <PriceDisplay price={order.totalPrice} />
                       </span>
                     </div>
                   </div>

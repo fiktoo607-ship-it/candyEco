@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useProducts } from '@/lib/hooks/use-products';
 import { useDashboardStore } from '@/lib/dashboard-store';
-import { formatPrice } from '@/lib/price';
+import PriceDisplay from '@/components/PriceDisplay';
 
 export default function ProductsSection() {
   const { data: products = [], isLoading, error: productsError } = useProducts(true);
@@ -17,6 +17,7 @@ export default function ProductsSection() {
     setCurrentPage,
     openEdit,
     openDelete,
+    openCreate,
   } = useDashboardStore();
 
   const itemsPerPage = 5;
@@ -137,9 +138,20 @@ export default function ProductsSection() {
               </button>
             )}
           </div>
-          <div className="text-sm text-on-surface-variant font-medium flex-shrink-0 mt-sm lg:mt-0 lg:text-right border-t border-outline-variant/10 pt-sm lg:border-t-0 lg:pt-0">
-            Total des produits :{" "}
-            <span className="text-primary font-bold">{totalItems}</span>
+          {/* Action buttons and Product Count */}
+          <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end gap-md flex-shrink-0 mt-sm lg:mt-0 border-t border-outline-variant/10 pt-md lg:border-t-0 lg:pt-0">
+            <button
+              onClick={() => openCreate('gâteau')}
+              className="inline-flex items-center justify-center gap-xs rounded-xl bg-primary px-md py-sm text-sm font-semibold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint hover:scale-[1.02] h-[46px]"
+            >
+              <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              <span>Ajouter un produit</span>
+            </button>
+            <div className="text-sm text-on-surface-variant font-semibold text-right">
+              Total des produits : <span className="text-primary font-bold">{totalItems}</span>
+            </div>
           </div>
         </div>
 
@@ -229,7 +241,7 @@ export default function ProductsSection() {
                       </div>
                       {/* Price Tag */}
                       <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md px-sm py-[2px] rounded-lg">
-                        <span className="text-xs font-bold text-white">{formatPrice(product.price)}</span>
+                        <span className="text-xs font-bold text-white"><PriceDisplay price={product.price} /></span>
                       </div>
                     </div>
 
@@ -326,7 +338,7 @@ export default function ProductsSection() {
                         </span>
                       </td>
                       <td className="p-md font-bold text-primary whitespace-nowrap">
-                        {formatPrice(product.price)}
+                        <PriceDisplay price={product.price} />
                       </td>
                       <td className="p-md">
                         <span

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Order } from '@/lib/hooks/use-orders';
-import { formatPrice } from '@/lib/price';
+import PriceDisplay from '@/components/PriceDisplay';
 
 export function formatFrenchDate(dateInput: Date | string): string {
   const date = new Date(dateInput);
@@ -52,7 +52,7 @@ export function OrdersFilters({
 }: OrdersFiltersProps) {
   return (
     <div className="flex flex-col gap-md border-b border-outline-variant/30 p-md lg:flex-row lg:items-center lg:justify-between bg-surface-container-lowest/50">
-      <div className="flex flex-col gap-sm lg:flex-row lg:items-center w-full lg:w-auto flex-1">
+      <div className="flex flex-col gap-sm lg:flex-row lg:items-center w-full lg:w-auto flex-1 flex-wrap">
         {/* Search Bar */}
         <label className="relative w-full lg:w-80 flex-shrink-0">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
@@ -71,7 +71,7 @@ export function OrdersFilters({
         </label>
 
         {/* Filter Controls Row */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-sm w-full lg:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-sm w-full lg:w-auto flex-wrap">
           {/* Status Dropdown */}
           <div className="relative flex-1 sm:flex-initial">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
@@ -181,33 +181,13 @@ export function OrdersTable({
   onStatusChangeClick,
   onToastMessage,
 }: OrdersTableProps) {
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [expandedOrderIds, setExpandedOrderIds] = useState<string[]>([]);
-
-  // Reset selected ids on page or orders change
-  React.useEffect(() => {
-    setSelectedIds([]);
-  }, [orderCurrentPage, orders]);
 
   const toggleExpandOrder = (orderId: string) => {
     if (expandedOrderIds.includes(orderId)) {
       setExpandedOrderIds(expandedOrderIds.filter(id => id !== orderId));
     } else {
       setExpandedOrderIds([...expandedOrderIds, orderId]);
-    }
-  };
-
-  const handleBulkStatusUpdate = async (status: string) => {
-    if (selectedIds.length === 0) return;
-    try {
-      await Promise.all(
-        selectedIds.map(id => updateStatusMutation.mutateAsync({ id, status }))
-      );
-      setSelectedIds([]);
-      onToastMessage("Les statuts des commandes ont été mis à jour avec succès.", "success");
-    } catch (err: any) {
-      console.error("Bulk update failed:", err);
-      onToastMessage(err.message || "Une erreur est survenue lors de la mise à jour groupée.", "error");
     }
   };
 
@@ -248,53 +228,7 @@ export function OrdersTable({
 
   return (
     <>
-      {/* Bulk Action Bar */}
-      {selectedIds.length > 0 && (
-        <div className="flex items-center justify-between bg-primary/5 border border-primary/20 p-sm px-md rounded-xl m-md animate-fade-in gap-md flex-wrap">
-          <div className="flex items-center gap-xs">
-            <span className="material-symbols-outlined text-primary text-xl">library_add_check</span>
-            <span className="text-sm font-semibold text-primary">
-              {selectedIds.length} commande(s) sélectionnée(s)
-            </span>
-          </div>
-          <div className="flex items-center gap-xs flex-wrap">
-            <button
-              onClick={() => handleBulkStatusUpdate('ACCEPTED')}
-              disabled={updateStatusMutation.isPending}
-              className="rounded-xl bg-emerald-600 px-md py-xs text-xs font-bold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center gap-xs shadow-soft"
-            >
-              <span className="material-symbols-outlined text-sm">thumb_up</span>
-              Accepter
-            </button>
-            <button
-              onClick={() => handleBulkStatusUpdate('DELIVERED')}
-              disabled={updateStatusMutation.isPending}
-              className="rounded-xl bg-blue-600 px-md py-xs text-xs font-bold text-white hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-xs shadow-soft"
-            >
-              <span className="material-symbols-outlined text-sm">local_shipping</span>
-              Livrer
-            </button>
-            <button
-              onClick={() => {
-                if (window.confirm("Voulez-vous vraiment annuler ces commandes ?")) {
-                  handleBulkStatusUpdate('CANCELLED');
-                }
-              }}
-              disabled={updateStatusMutation.isPending}
-              className="rounded-xl bg-rose-600 px-md py-xs text-xs font-bold text-white hover:bg-rose-700 transition-colors disabled:opacity-50 flex items-center gap-xs shadow-soft"
-            >
-              <span className="material-symbols-outlined text-sm">cancel</span>
-              Annuler
-            </button>
-            <button
-              onClick={() => setSelectedIds([])}
-              className="text-xs font-semibold text-on-surface-variant hover:text-on-surface hover:underline transition-colors px-xs"
-            >
-              Annuler la sélection
-            </button>
-          </div>
-        </div>
-      )}
+
 
       {/* Mobile/Tablet Card Grid Layout (< 1024px) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-md p-md lg:hidden bg-surface/20">
@@ -314,18 +248,6 @@ export function OrdersTable({
                 {/* Card Header */}
                 <div className="flex items-center justify-between gap-sm border-b border-outline-variant/10 pb-sm">
                   <div className="flex items-center gap-xs">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(order.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedIds([...selectedIds, order.id]);
-                        } else {
-                          setSelectedIds(selectedIds.filter(id => id !== order.id));
-                        }
-                      }}
-                      className="rounded border-outline-variant text-primary focus:ring-primary cursor-pointer w-4 h-4"
-                    />
                     <span className="font-mono text-xs font-semibold text-on-surface-variant bg-surface-container-high px-sm py-[2px] rounded-lg">
                       {order.reference || `#${order.id.substring(0, 8).toUpperCase()}`}
                     </span>
@@ -380,7 +302,7 @@ export function OrdersTable({
               <div className="space-y-sm pt-sm border-t border-outline-variant/10 mt-auto">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-on-surface-variant">Prix Total</span>
-                  <span className="text-base font-bold text-primary">{formatPrice(order.totalPrice)}</span>
+                  <span className="text-base font-bold text-primary"><PriceDisplay price={order.totalPrice} /></span>
                 </div>
 
                 <div className="flex items-center justify-end gap-sm w-full">
@@ -395,7 +317,7 @@ export function OrdersTable({
                     <div className="relative flex-1 sm:flex-initial">
                       <select
                         value={order.status}
-                        disabled={updateStatusMutation.isPending}
+                        disabled={updateStatusMutation.isPending || order.status === 'DELIVERED' || order.status === 'CANCELLED'}
                         onChange={(e) => {
                           onStatusChangeClick(
                             order.id,
@@ -414,10 +336,25 @@ export function OrdersTable({
                             : 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900'
                         }`}
                       >
-                        <option value="PENDING">En attente</option>
-                        <option value="ACCEPTED">Acceptée</option>
-                        <option value="DELIVERED">Livrée</option>
-                        <option value="CANCELLED">Annulée</option>
+                        {order.status === 'PENDING' && (
+                          <>
+                            <option value="PENDING">En attente</option>
+                            <option value="ACCEPTED">Acceptée</option>
+                            <option value="CANCELLED">Annulée</option>
+                          </>
+                        )}
+                        {order.status === 'ACCEPTED' && (
+                          <>
+                            <option value="ACCEPTED">Acceptée</option>
+                            <option value="DELIVERED">Livrée</option>
+                          </>
+                        )}
+                        {order.status === 'DELIVERED' && (
+                          <option value="DELIVERED">Livrée</option>
+                        )}
+                        {order.status === 'CANCELLED' && (
+                          <option value="CANCELLED">Annulée</option>
+                        )}
                       </select>
                       <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none select-none text-base">
                         arrow_drop_down
@@ -441,23 +378,10 @@ export function OrdersTable({
 
       {/* Desktop Grid Layout (>= 1024px) */}
       <div className="overflow-x-auto lg:block hidden">
-        <table className="min-w-[1000px] w-full border-collapse text-left">
+        <table className="min-w-[950px] w-full border-collapse text-left">
           <thead>
             <tr className="border-b border-outline-variant/30 bg-surface-container-low text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
-              <th className="p-md w-12">
-                <input
-                  type="checkbox"
-                  checked={orders.length > 0 && selectedIds.length === orders.length}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedIds(orders.map(o => o.id));
-                    } else {
-                      setSelectedIds([]);
-                    }
-                  }}
-                  className="rounded border-outline-variant text-primary focus:ring-primary cursor-pointer w-4 h-4"
-                />
-              </th>
+
               <th className="p-md">ID Commande</th>
               <th className="p-md">Détails Client</th>
               <th className="p-md">Articles Commandés</th>
@@ -469,31 +393,18 @@ export function OrdersTable({
           <tbody className="divide-y divide-outline-variant/20">
             {orders.map((order) => (
               <tr key={order.id} className="group transition-colors hover:bg-surface/50">
-                <td className="p-md w-12">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.includes(order.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedIds([...selectedIds, order.id]);
-                      } else {
-                        setSelectedIds(selectedIds.filter(id => id !== order.id));
-                      }
-                    }}
-                    className="rounded border-outline-variant text-primary focus:ring-primary cursor-pointer w-4 h-4"
-                  />
-                </td>
+
                 <td className="p-md font-mono text-xs text-on-surface-variant">
                   {order.reference || `#${order.id.substring(0, 8).toUpperCase()}`}
                 </td>
                 <td className="p-md">
-                  <div className="flex items-center gap-xs">
-                    <span className="material-symbols-outlined text-primary text-lg">person</span>
-                    <span className="font-semibold text-on-surface">{order.customerName}</span>
+                  <div className="flex items-center gap-xs max-w-[150px]" title={order.customerName ?? undefined}>
+                    <span className="material-symbols-outlined text-primary text-lg flex-shrink-0">person</span>
+                    <span className="font-semibold text-on-surface truncate">{order.customerName}</span>
                   </div>
                 </td>
                 <td className="p-md">
-                  <div className="flex flex-col gap-xs text-xs text-on-surface max-w-[250px]">
+                  <div className="flex flex-col gap-xs text-xs text-on-surface max-w-[200px]">
                     {order.items.map((item) => (
                       <div key={item.id} className="flex justify-between gap-md border-b border-outline-variant/10 pb-[2px] last:border-0 last:pb-0">
                         <span className="line-clamp-1 font-medium flex-1 min-w-0">{item.product?.title || 'Produit Inconnu'}</span>
@@ -502,8 +413,8 @@ export function OrdersTable({
                     ))}
                   </div>
                 </td>
-                <td className="p-md font-bold text-primary">{formatPrice(order.totalPrice)}</td>
-                <td className="p-md text-xs text-on-surface-variant">
+                <td className="p-md font-bold text-primary whitespace-nowrap"><PriceDisplay price={order.totalPrice} /></td>
+                <td className="p-md text-xs text-on-surface-variant whitespace-nowrap">
                   {formatFrenchDate(order.createdAt)}
                 </td>
                 <td className="p-md text-right">
@@ -516,7 +427,7 @@ export function OrdersTable({
                     <div className="relative">
                       <select
                         value={order.status}
-                        disabled={updateStatusMutation.isPending}
+                        disabled={updateStatusMutation.isPending || order.status === 'DELIVERED' || order.status === 'CANCELLED'}
                         onChange={(e) => {
                           onStatusChangeClick(
                             order.id,
@@ -535,49 +446,30 @@ export function OrdersTable({
                             : 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900'
                         }`}
                       >
-                        <option value="PENDING">En attente</option>
-                        <option value="ACCEPTED">Acceptée</option>
-                        <option value="DELIVERED">Livrée</option>
-                        <option value="CANCELLED">Annulée</option>
+                        {order.status === 'PENDING' && (
+                          <>
+                            <option value="PENDING">En attente</option>
+                            <option value="ACCEPTED">Acceptée</option>
+                            <option value="CANCELLED">Annulée</option>
+                          </>
+                        )}
+                        {order.status === 'ACCEPTED' && (
+                          <>
+                            <option value="ACCEPTED">Acceptée</option>
+                            <option value="DELIVERED">Livrée</option>
+                          </>
+                        )}
+                        {order.status === 'DELIVERED' && (
+                          <option value="DELIVERED">Livrée</option>
+                        )}
+                        {order.status === 'CANCELLED' && (
+                          <option value="CANCELLED">Annulée</option>
+                        )}
                       </select>
                       <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none select-none text-base">
                         arrow_drop_down
                       </span>
                     </div>
-                    {order.status === 'PENDING' && (
-                      <button
-                        onClick={() => {
-                          onStatusChangeClick(
-                            order.id,
-                            'ACCEPTED',
-                            order.status,
-                            order.reference || `#${order.id.substring(0, 8).toUpperCase()}`
-                          );
-                        }}
-                        disabled={updateStatusMutation.isPending}
-                        className="rounded-xl bg-emerald-600 px-sm py-xs text-xs font-bold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 shadow-soft h-[34px] flex items-center gap-xs"
-                      >
-                        <span className="material-symbols-outlined text-sm">thumb_up</span>
-                        Accepter
-                      </button>
-                    )}
-                    {order.status === 'ACCEPTED' && (
-                      <button
-                        onClick={() => {
-                          onStatusChangeClick(
-                            order.id,
-                            'DELIVERED',
-                            order.status,
-                            order.reference || `#${order.id.substring(0, 8).toUpperCase()}`
-                          );
-                        }}
-                        disabled={updateStatusMutation.isPending}
-                        className="rounded-xl bg-blue-600 px-sm py-xs text-xs font-bold text-white hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-soft h-[34px] flex items-center gap-xs"
-                      >
-                        <span className="material-symbols-outlined text-sm">local_shipping</span>
-                        Livrer
-                      </button>
-                    )}
                     <button
                       onClick={() => onViewDetails(order)}
                       className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors h-[34px] flex items-center gap-xs"
@@ -806,7 +698,7 @@ export function OrderDetailsModal({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-sm pt-sm border-t border-outline-variant/20">
             <div>
               <span className="text-[10px] text-on-surface-variant font-bold block uppercase tracking-wider">Prix Total</span>
-              <span className="text-base md:text-lg font-bold text-primary">{formatPrice(order.totalPrice)}</span>
+              <span className="text-base md:text-lg font-bold text-primary"><PriceDisplay price={order.totalPrice} /></span>
             </div>
             <div>
               <span className="text-[10px] text-on-surface-variant font-bold block uppercase tracking-wider">Date de commande</span>
