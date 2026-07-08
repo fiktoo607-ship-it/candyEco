@@ -43,10 +43,16 @@ export default function TabVisibilityNotifier() {
 
     // 3. Monitor tab visibility changes
     const handleVisibilityChange = () => {
+      console.log('Tab visibility changed to:', document.visibilityState);
       if (document.visibilityState === 'hidden') {
+        console.log('Tab is now hidden. Attempting to trigger notifications and audio alert...');
+        console.log('Current Notification permission state:', 'Notification' in window ? Notification.permission : 'Not supported');
+
         // Play the audio alert playing /notification.mp3
         const audio = new Audio('/notification.mp3');
-        audio.play().catch((err) => {
+        audio.play().then(() => {
+          console.log('Audio alert played successfully.');
+        }).catch((err) => {
           // Explicitly handle and suppress DOMException errors caused by modern browser 'first-interaction' restrictions
           if (err instanceof DOMException && err.name === 'NotAllowedError') {
             console.log('Audio playback prevented by browser autoplay policy (first-interaction restriction).');
@@ -58,6 +64,7 @@ export default function TabVisibilityNotifier() {
         // Trigger a brand new browser desktop notification if permission is granted
         if ('Notification' in window && Notification.permission === 'granted') {
           try {
+            console.log('Triggering new desktop Notification...');
             new Notification('Revenez vite ! 🍰', {
               body: 'Ne manquez pas vos gourmandises préférées sur Délices d\'Eva !',
               icon: '/logo.jpeg',
@@ -66,6 +73,8 @@ export default function TabVisibilityNotifier() {
           } catch (err) {
             console.error('Failed to trigger desktop notification:', err);
           }
+        } else {
+          console.warn('Notification was not triggered because permission is not granted or API is unsupported.');
         }
       }
     };
@@ -74,6 +83,8 @@ export default function TabVisibilityNotifier() {
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
     };
   }, []);
 
