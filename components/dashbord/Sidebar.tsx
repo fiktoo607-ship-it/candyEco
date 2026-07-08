@@ -89,12 +89,118 @@ export default function Sidebar() {
               )}
             </Link>
             
+            {/* Inline navbar for 1024px - 1300px */}
+            <div className="hidden lg:flex desktop:hidden items-center gap-xs mx-md">
+              <nav className="flex items-center gap-xs">
+                <button
+                  onClick={() => setActiveTab("products")}
+                  className={`group flex items-center gap-0 hover:gap-xs px-2 py-2 rounded-xl text-left transition-all duration-300 font-semibold overflow-hidden max-w-[40px] hover:max-w-[200px] h-[40px] ${
+                    activeTab === "products"
+                      ? "bg-primary-container/10 text-primary"
+                      : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+                  }`}
+                  title="Gérer produits"
+                >
+                  <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">bakery_dining</span>
+                  <span className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                    Gérer produits
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("orders")}
+                  className={`group flex items-center gap-0 hover:gap-xs px-2 py-2 rounded-xl text-left transition-all duration-300 font-semibold overflow-hidden max-w-[40px] hover:max-w-[200px] h-[40px] ${
+                    activeTab === "orders"
+                      ? "bg-primary-container/10 text-primary"
+                      : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+                  }`}
+                  title="Commandes"
+                >
+                  <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">shopping_bag</span>
+                  <span className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                    Commandes
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("cms")}
+                  className={`group flex items-center gap-0 hover:gap-xs px-2 py-2 rounded-xl text-left transition-all duration-300 font-semibold overflow-hidden max-w-[40px] hover:max-w-[200px] h-[40px] ${
+                    activeTab === "cms"
+                      ? "bg-primary-container/10 text-primary"
+                      : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+                  }`}
+                  title="Gestion contenu"
+                >
+                  <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">auto_stories</span>
+                  <span className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                    Gestion contenu
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("qna")}
+                  className={`group flex items-center gap-0 hover:gap-xs px-2 py-2 rounded-xl text-left transition-all duration-300 font-semibold overflow-hidden max-w-[40px] hover:max-w-[200px] h-[40px] ${
+                    activeTab === "qna"
+                      ? "bg-primary-container/10 text-primary"
+                      : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+                  }`}
+                  title="Questions/Réponses"
+                >
+                  <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">quiz</span>
+                  <span className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                    Questions/Réponses
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("users")}
+                  className={`group flex items-center gap-0 hover:gap-xs px-2 py-2 rounded-xl text-left transition-all duration-300 font-semibold overflow-hidden max-w-[40px] hover:max-w-[200px] h-[40px] ${
+                    activeTab === "users"
+                      ? "bg-primary-container/10 text-primary"
+                      : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+                  }`}
+                  title="Utilisateurs"
+                >
+                  <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">group</span>
+                  <span className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                    Utilisateurs
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("delivery-methods")}
+                  className={`group flex items-center gap-0 hover:gap-xs px-2 py-2 rounded-xl text-left transition-all duration-300 font-semibold overflow-hidden max-w-[40px] hover:max-w-[200px] h-[40px] ${
+                    activeTab === "delivery-methods"
+                      ? "bg-primary-container/10 text-primary"
+                      : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+                  }`}
+                  title="Méthodes livraison"
+                >
+                  <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">local_shipping</span>
+                  <span className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                    Méthodes livraison
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => signOut({ callbackUrl: '/home' })}
+                  className="group flex items-center gap-0 hover:gap-xs px-2 py-2 rounded-xl text-left transition-all duration-300 font-semibold overflow-hidden max-w-[40px] hover:max-w-[200px] h-[40px] text-on-surface-variant hover:text-error hover:bg-surface-container-low"
+                  title="Déconnexion"
+                >
+                  <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">logout</span>
+                  <span className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                    Déconnexion
+                  </span>
+                </button>
+              </nav>
+            </div>
+
             {/* Mobile Actions (Notification Bell next to Hamburger) */}
             <div className="flex items-center gap-sm desktop:hidden">
               <NotificationBell />
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-surface-container-low text-on-surface focus:outline-none"
+                className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-surface-container-low text-on-surface focus:outline-none lg:hidden"
                 aria-label="Toggle navigation menu"
               >
                 <span className="material-symbols-outlined text-2xl select-none">
@@ -105,7 +211,7 @@ export default function Sidebar() {
           </div>
 
           {/* Navigation container - hidden on mobile unless open */}
-          <div className={`${isOpen ? 'flex animate-fade-in' : 'hidden'} desktop:flex flex-col flex-1 pb-md desktop:pb-0`}>
+          <div className={`${isOpen ? 'flex animate-fade-in' : 'hidden'} lg:hidden desktop:flex flex-col flex-1 pb-md desktop:pb-0`}>
             <nav className={`flex flex-col gap-2 ${activeCollapsed ? 'px-2' : 'px-4'}`}>
               <button
                 onClick={() => { setActiveTab("products"); setIsOpen(false); }}

@@ -99,6 +99,18 @@ export default function PopularProductsSection({ products }: PopularProductsSect
     }
   }, [isTransitioning]);
 
+  // Safety check to prevent slider from running out of bounds (e.g. background tabs)
+  useEffect(() => {
+    if (N <= currentItemsPerView) return;
+    if (currentSlide > N + currentItemsPerView) {
+      setIsTransitioning(false);
+      setCurrentSlide(currentItemsPerView);
+    } else if (currentSlide < currentItemsPerView - 1) {
+      setIsTransitioning(false);
+      setCurrentSlide(N + currentItemsPerView - 1);
+    }
+  }, [currentSlide, N, currentItemsPerView]);
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if (N <= currentItemsPerView) return;
     setDragStartX(e.clientX);
