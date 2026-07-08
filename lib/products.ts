@@ -12,7 +12,62 @@ export function filterProductsByTitle(products: Product[], query: string): Produ
   if (!query) return products;
   const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) return products;
-  return products.filter((product) =>
-    product.title.toLowerCase().includes(normalizedQuery)
-  );
+
+  // Split query into individual words
+  const queryWords = normalizedQuery.split(/\s+/).filter(Boolean);
+  if (queryWords.length === 0) return products;
+
+  // Dictionary for translating common English search terms to French equivalents
+  const englishToFrenchMap: { [key: string]: string[] } = {
+    'traditional': ['tradition', 'traditionnel', 'traditionnelle'],
+    'french': ['français', 'francaise', 'française', 'france'],
+    'cake': ['gâteau', 'gateau'],
+    'oil': ['huile'],
+    'olive': ['olive'],
+    'bread': ['pain', 'baguette'],
+    'baguette': ['baguette'],
+    'sweet': ['sucré', 'sucre', 'doux'],
+    'salty': ['salé', 'sale'],
+    'organic': ['bio'],
+  };
+
+  return products.filter((product) => {
+    const title = product.title.toLowerCase();
+    const category = product.category.toLowerCase();
+    const description = product.description?.toLowerCase() || '';
+    const tags = product.tags?.map(t => t.toLowerCase()) || [];
+
+    // All query words must match in some way (either directly or via English-to-French mappings)
+    return queryWords.every((word) => {
+      // 1. Direct match on title, category, description, or tags
+      if (
+        title.includes(word) ||
+        category.includes(word) ||
+        description.includes(word) ||
+        tags.some(t => t.includes(word))
+      ) {
+        return true;
+      }
+
+      // 2. Check English-to-French translations
+      for (const [eng, freWords] of Object.entries(englishToFrenchMap)) {
+        // If the query word matches or is a prefix/substring of the English term (e.g., "traditiona", "traditional")
+        if (eng.includes(word) || word.includes(eng)) {
+          if (
+            freWords.some(
+              (fre) =>
+                title.includes(fre) ||
+                category.includes(fre) ||
+                description.includes(fre) ||
+                tags.some(t => t.includes(fre))
+            )
+          ) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    });
+  });
 }

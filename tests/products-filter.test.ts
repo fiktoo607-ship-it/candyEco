@@ -85,4 +85,24 @@ describe('filterProductsByTitle helper', () => {
     const results = filterProductsByTitle(mockProducts, 'tarte');
     expect(results).toHaveLength(0);
   });
+
+  it('should map English terms to French equivalents (e.g. traditional -> traditionnel)', () => {
+    const results = filterProductsByTitle(mockProducts, 'traditional');
+    // Pain au Chocolat and Croissant Nature have category 'aliments traditionnel'
+    expect(results).toHaveLength(2);
+    expect(results.map(p => p.id)).toContain('2');
+    expect(results.map(p => p.id)).toContain('3');
+  });
+
+  it('should map English cake to French gâteau', () => {
+    const results = filterProductsByTitle(mockProducts, 'cake');
+    expect(results).toHaveLength(1);
+    expect(results[0].id).toBe('1');
+  });
+
+  it('should handle partial words and prefixes of English terms (e.g. traditiona -> traditional -> tradition)', () => {
+    const results = filterProductsByTitle(mockProducts, '  traditiona  ');
+    expect(results).toHaveLength(2);
+    expect(results.map(p => p.id)).toContain('2');
+  });
 });
