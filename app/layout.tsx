@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Outfit, Fredoka } from 'next/font/google';
 import './globals.css';
 import Providers from '@/components/providers';
+import TabVisibilityNotifier from '@/components/TabVisibilityNotifier';
 import { THEME_CONFIG } from '@/lib/theme';
 
 const outfit = Outfit({
@@ -28,7 +29,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <TabVisibilityNotifier />
+          {children}
+        </Providers>
       </body>
     </html>
   );

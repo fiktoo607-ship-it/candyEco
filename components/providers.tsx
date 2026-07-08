@@ -3,7 +3,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { SessionProvider } from 'next-auth/react';
-import TabVisibilityNotifier from './TabVisibilityNotifier';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -95,7 +94,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
-        <TabVisibilityNotifier />
         {children}
       </QueryClientProvider>
     </SessionProvider>

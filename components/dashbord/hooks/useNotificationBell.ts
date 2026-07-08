@@ -44,63 +44,6 @@ export function useNotificationBell() {
     }
   };
 
-  // Request Notification permission and register Service Worker on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission().catch((err) => {
-          console.warn('Failed to request notification permission:', err);
-        });
-      }
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js')
-          .then((reg) => {
-            console.log('Notification Service Worker registered:', reg.scope);
-          })
-          .catch((err) => {
-            console.error('Notification Service Worker registration failed:', err);
-          });
-      }
-    }
-  }, []);
-
-  // System notification helper via Service Worker to support background execution
-  const triggerSystemNotification = (clientName: string, amount: string) => {
-    if (
-      typeof window !== 'undefined' &&
-      'Notification' in window &&
-      Notification.permission === 'granted'
-    ) {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready
-          .then((registration) => {
-            registration.showNotification('Nouvelle commande !', {
-              body: `${clientName} vient de passer une commande de ${amount}.`,
-              icon: '/logo.jpeg',
-              tag: 'new-order',
-              renotify: true,
-            } as any);
-          })
-          .catch((err) => {
-            console.error('Failed to trigger background notification via service worker:', err);
-          });
-      } else {
-        // Fallback for browsers that don't support service workers
-        try {
-          const notif = new Notification('Nouvelle commande !', {
-            body: `${clientName} vient de passer une commande de ${amount}.`,
-            icon: '/logo.jpeg',
-          });
-          notif.onclick = () => {
-            window.focus();
-          };
-        } catch (err) {
-          console.error('Failed to trigger standard notification fallback:', err);
-        }
-      }
-    }
-  };
-
   // Setup Server-Sent Events for real-time notification updates
   useEffect(() => {
     let eventSource: EventSource | null = null;
@@ -124,9 +67,6 @@ export function useNotificationBell() {
           const amount = typeof rawPrice === 'string'
             ? rawPrice.includes('€') ? rawPrice : `${rawPrice} €`
             : '0.00 €';
-
-          // Trigger native system notification (background popup)
-          triggerSystemNotification(clientName, amount);
 
           setToast({
             id: newNotif.id,

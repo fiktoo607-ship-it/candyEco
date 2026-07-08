@@ -258,25 +258,19 @@
   - `tailwind.config.ts`:
     - Extended standard screen breakpoints to include a custom `desktop: '1300px'` screen breakpoint for robust compiles.
 
-### 24. Standard Web Notifications Integration
-- **Description**: Implemented native browser system alerts to show desktop popups when new orders arrive, even when the tab is inactive or minimized.
-- **Components**:
-  - `components/dashbord/hooks/useNotificationBell.ts`:
-    - Added standard browser `Notification` permission request and registered a background service worker (`/sw.js`) on hook initialization.
-    - Updated `triggerSystemNotification` to use the Service Worker's `showNotification` API (`navigator.serviceWorker.ready`). This ensures notifications trigger successfully on background/minimized/inactive tabs where standard tab JS is throttled or restricted.
-    - Integrated system alerts directly inside the Server-Sent Events (SSE) `onmessage` event listener to launch background popup alerts when new orders are placed.
-    - Kept audio alerts synchronized by playing the Web Audio API double chime synthesizer next to the native notification toast.
-  - `public/sw.js` [NEW]:
-    - Created a standard background service worker to handle incoming push notifications and click events (focusing/opening the dashboard page).
+### 24. Standard Web Notifications Removal
+- **Description**: Completely removed old native browser OS-level desktop notifications for new orders, relying instead on standard in-app chimes, floating toasts, and the dropdown menu.
+- **Affected Files**:
+  - `components/dashbord/hooks/useNotificationBell.ts`: Removed service worker registration and native desktop notification triggers.
+  - `public/sw.js` [DELETED]: Removed standard background service worker.
 
 ### 25. Tab Visibility Notification System
 - **Description**: Triggers a browser desktop alert and plays a chime audio file when the user is away from the website (tab switches to background or window is minimized).
 - **Core Logic**:
-  - `lib/tab-visibility.ts` [NEW]: Uses Page Visibility API (`document.visibilityState === 'hidden'`) and Notification API to display custom message and plays `/notification.mp3` with HTML5 Audio.
-  - `components/TabVisibilityNotifier.tsx` [NEW]: Client component wrapper to initialize the notifier on page load.
-  - `components/providers.tsx`: Mounts the `<TabVisibilityNotifier />` component to apply the event listener globally.
-  - `public/notification.mp3` [NEW]: Generated silent/chime audio asset.
-  - `tests/tab-visibility.test.ts` [NEW]: Full test coverage ensuring handler registration, audio playback, and notification permissions.
+  - `components/TabVisibilityNotifier.tsx` [NEW]: Recreated from scratch as a Next.js client component. Force-unregisters any active ghost service workers, requests browser notification permissions on mount, monitors page visibility changes, plays `/notification.mp3` catching autoplay rejections, and displays standard desktop notifications.
+  - `app/layout.tsx` [MODIFY]: Mounts `<TabVisibilityNotifier />` component globally to apply the event listener.
+  - `components/providers.tsx` [MODIFY]: Removed old TabVisibilityNotifier import and mounting.
+  - `tests/tab-visibility.test.tsx` [NEW]: Full test coverage using Vitest jsdom, ensuring Service Worker unregistration, permission requests, visibility-triggered notifications, audio playback, and autoplay policy graceful rejection.
 
 ### 26. Dashboard Overlay Layer Prioritization
 - **Description**: Reordered visual layering (z-index hierarchy) on the administrative dashboard to avoid overlaps and ensure popup modal and notification visibility.
