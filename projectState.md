@@ -269,11 +269,36 @@
   - `public/sw.js` [NEW]:
     - Created a standard background service worker to handle incoming push notifications and click events (focusing/opening the dashboard page).
 
+### 25. Tab Visibility Notification System
+- **Description**: Triggers a browser desktop alert and plays a chime audio file when the user is away from the website (tab switches to background or window is minimized).
+- **Core Logic**:
+  - `lib/tab-visibility.ts` [NEW]: Uses Page Visibility API (`document.visibilityState === 'hidden'`) and Notification API to display custom message and plays `/notification.mp3` with HTML5 Audio.
+  - `components/TabVisibilityNotifier.tsx` [NEW]: Client component wrapper to initialize the notifier on page load.
+  - `components/providers.tsx`: Mounts the `<TabVisibilityNotifier />` component to apply the event listener globally.
+  - `public/notification.mp3` [NEW]: Generated silent/chime audio asset.
+  - `tests/tab-visibility.test.ts` [NEW]: Full test coverage ensuring handler registration, audio playback, and notification permissions.
+
+### 26. Dashboard Overlay Layer Prioritization
+- **Description**: Reordered visual layering (z-index hierarchy) on the administrative dashboard to avoid overlaps and ensure popup modal and notification visibility.
+- **Priority Layers**:
+  - **Notification Dropdowns & Toasts (z-[90])**: Placed at the highest layer so notification dropdowns and toast alerts display above everything else.
+  - **Notification Bell Backdrop (z-[85])**: Backdrop container layer to dismiss the dropdown.
+  - **Confirmation & Delete Modals (z-[80])**: `OrderStatusConfirmModal`, `DeleteModal`, and `DashboardDeleteModal` stack above standard editing popups but below notifications.
+  - **Update & Create Modals (z-[70])**: `ProductModal`, `OrderDetailsModal`, `QnaModal`, and `CarouselSlideModal` stack above the sidebar and dashboard page headers.
+  - **Sidebar & Core Navigation (z-30 / z-[35])**: Sidebar content and collapse toggles are set to remain below modals.
+  - **Sticky Header (z-20)**: Placed below modals but above sticky sub-headers (`z-10`) for smooth scroll stacking.
+
+### 27. Translation Crash Mitigation
+- **Description**: Add monkeypatches to prevent third-party translation tools (like Google Translate built-in to Google Chrome) from crashing React when modifying DOM elements on dynamic changes (e.g., submitting orders or saving CMS settings).
+- **Patch Area**:
+  - `components/providers.tsx`: Overrides native `Node.prototype.removeChild` and `Node.prototype.insertBefore` inside a client-side `useEffect` callback, intercepting and safely swallowing `NotFoundError` DOM errors caused by Google Translate replacement tags.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 134 tests pass successfully under `vitest` (`npx vitest run`).
+  - All 140 tests pass successfully under `vitest` (`npx vitest run`).
+
 
 
 

@@ -723,7 +723,7 @@ export function SlideModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50 p-sm md:p-md backdrop-blur-sm">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-sm md:p-md backdrop-blur-sm">
       <div className="w-full max-w-xl rounded-2xl border border-outline-variant bg-surface-container-lowest shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-fade-in text-left">
         {/* Fixed Header */}
         <div className="flex items-center justify-between border-b border-outline-variant/30 p-md flex-shrink-0">

@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { SessionProvider } from 'next-auth/react';
+import TabVisibilityNotifier from './TabVisibilityNotifier';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -18,6 +19,35 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
+    // Monkeypatch DOM operations to prevent Google Translate from crashing React
+    if (typeof window !== 'undefined') {
+      const nd = Node.prototype as any;
+      
+      const originalRemoveChild = nd.removeChild;
+      nd.removeChild = function (child: any) {
+        try {
+          return originalRemoveChild.call(this, child);
+        } catch (error) {
+          if (error instanceof Error && error.name === 'NotFoundError') {
+            return child;
+          }
+          throw error;
+        }
+      };
+
+      const originalInsertBefore = nd.insertBefore;
+      nd.insertBefore = function (newNode: any, referenceNode: any) {
+        try {
+          return originalInsertBefore.call(this, newNode, referenceNode);
+        } catch (error) {
+          if (error instanceof Error && error.name === 'NotFoundError') {
+            return newNode;
+          }
+          throw error;
+        }
+      };
+    }
+
     const preventIconTranslation = (root: ParentNode = document) => {
       const icons = root.querySelectorAll('.material-symbols-outlined');
       icons.forEach((icon) => {
@@ -65,6 +95,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
+        <TabVisibilityNotifier />
         {children}
       </QueryClientProvider>
     </SessionProvider>

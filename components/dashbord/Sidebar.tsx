@@ -47,7 +47,7 @@ export default function Sidebar() {
         {/* Collapse Toggle Button (Desktop Only): Centered on dividing line and stays fixed on scroll */}
         <button
           onClick={toggleCollapsed}
-          className="hidden desktop:flex absolute top-6 -right-4 h-8 w-8 items-center justify-center rounded-full border border-outline-variant/35 bg-surface hover:bg-surface-container-low text-on-surface-variant focus:outline-none shadow-sm z-50 transition-all cursor-pointer hover:scale-105 active:scale-95"
+          className="hidden desktop:flex absolute top-6 -right-4 h-8 w-8 items-center justify-center rounded-full border border-outline-variant/35 bg-surface hover:bg-surface-container-low text-on-surface-variant focus:outline-none shadow-sm z-[35] transition-all cursor-pointer hover:scale-105 active:scale-95"
           aria-label={activeCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <span className="material-symbols-outlined text-lg select-none">

@@ -218,7 +218,7 @@ export function QnaModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center p-sm md:p-md bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-sm md:p-md bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-lg rounded-2xl bg-surface-container-lowest flex flex-col max-h-[90vh] overflow-hidden shadow-soft border border-outline-variant/10 animate-in fade-in zoom-in-95 duration-200 text-left">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-outline-variant/30 p-md bg-surface-container-low flex-shrink-0">

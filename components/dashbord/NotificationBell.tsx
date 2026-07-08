@@ -39,14 +39,14 @@ export default function NotificationBell() {
       {/* Backdrop to close dropdown on click outside */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] desktop:bg-transparent desktop:backdrop-blur-none"
+          className="fixed inset-0 z-[85] bg-black/40 backdrop-blur-[2px] desktop:bg-transparent desktop:backdrop-blur-none"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-sm desktop:absolute desktop:top-auto desktop:left-auto desktop:right-0 desktop:translate-x-0 desktop:translate-y-0 desktop:mt-sm desktop:w-96 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft z-[80] transition-all duration-200 origin-center desktop:origin-top-right">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-sm desktop:absolute desktop:top-auto desktop:left-auto desktop:right-0 desktop:translate-x-0 desktop:translate-y-0 desktop:mt-sm desktop:w-96 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft z-[90] transition-all duration-200 origin-center desktop:origin-top-right">
           <div className="flex items-center justify-between border-b border-outline-variant/30 pb-sm mb-sm">
             <h3 className="font-display text-lg font-bold text-on-surface">
               Notifications
@@ -127,7 +127,7 @@ export default function NotificationBell() {
 
       {/* Floating Real-time Toast Alert */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex max-w-sm rounded-2xl border border-primary/20 bg-surface-container-lowest/90 backdrop-blur-md p-md shadow-soft animate-in slide-in-from-bottom duration-300">
+        <div className="fixed bottom-6 right-6 z-[90] flex max-w-sm rounded-2xl border border-primary/20 bg-surface-container-lowest/90 backdrop-blur-md p-md shadow-soft animate-in slide-in-from-bottom duration-300">
           <div className="flex gap-sm">
             <span className="material-symbols-outlined rounded-full bg-primary/10 p-sm text-primary text-2xl shrink-0 self-center">
               campaign
