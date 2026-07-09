@@ -287,11 +287,24 @@
 - **Patch Area**:
   - `components/providers.tsx`: Overrides native `Node.prototype.removeChild` and `Node.prototype.insertBefore` inside a client-side `useEffect` callback, intercepting and safely swallowing `NotFoundError` DOM errors caused by Google Translate replacement tags.
 
+### 28. Stale Session Order Creation Safeguard
+- **Description**: Prevents database foreign key constraint violations (`Order_userId_fkey`) when placing orders using a stale browser session (where the user ID stored in NextAuth JWT no longer exists in the database, e.g., after database wipe/seed).
+- **Core Logic**:
+  - `app/api/orders/route.ts`: Prior to transaction processing in the POST handler, queries the `User` table for the session's `userId`. If the user record is not found in the database, `userId` is set to `null` to gracefully fall back to a guest checkout.
+  - `tests/api/orders.test.ts`: Added automated unit test verifying that a stale session user ID successfully triggers the `null` fallback.
+  - `tests/api/trust.test.ts`: Updated session linkage test to mock the database user validation check successfully.
+
+### 29. Header Hamburger Breakpoint Update
+- **Description**: Configures the site header navigation bar to show the hamburger menu for all viewports smaller than 1024px (`lg`), providing a cleaner tablet layout.
+- **Affected Files**:
+  - `components/site-header.tsx`: Updated visibility helper classes from `md:` (768px) to `lg:` (1024px) on desktop navigation (hide/show blocks) and mobile action triggers.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 140 tests pass successfully under `vitest` (`npx vitest run`).
+  - All 141 tests pass successfully under `vitest` (`npx vitest run`).
+
 
 
 

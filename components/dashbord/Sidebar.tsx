@@ -58,21 +58,21 @@ export default function Sidebar() {
         {/* Sidebar Inner content scroll container */}
         <div className="flex w-full h-full flex-col border-b border-outline-variant/30 bg-surface-container-lowest shadow-soft desktop:border-b-0 desktop:border-r border-outline-variant/30 overflow-y-auto overflow-x-hidden">
           <div className={`flex items-center justify-between ${activeCollapsed ? 'p-md desktop:px-0 desktop:py-6 desktop:justify-center' : 'p-md desktop:p-lg desktop:justify-between'} relative`}>
-            <Link href="/home" className="hover:opacity-85 transition-opacity">
+            <Link href="/home" className="hover:opacity-85 transition-opacity flex items-center justify-center">
               {activeCollapsed ? (
                 <>
                   <Image
-                    src="/logo.jpeg"
+                    src="/logo-closed.png"
                     alt="Logo"
-                    width={32}
-                    height={32}
-                    className="hidden desktop:block h-8 w-8 rounded-full object-cover"
+                    width={44}
+                    height={44}
+                    className="hidden desktop:block h-11 w-11 object-contain"
                   />
                   <Image
                     src="/logo-title.png"
                     alt="Délices d'Eva Logo"
-                    width={198}
-                    height={40}
+                    width={280}
+                    height={56}
                     className="desktop:hidden h-10 w-auto object-contain"
                     priority
                   />
@@ -81,9 +81,9 @@ export default function Sidebar() {
                 <Image
                   src="/logo-title.png"
                   alt="Délices d'Eva Logo"
-                  width={160}
-                  height={32}
-                  className="h-8 w-auto object-contain"
+                  width={280}
+                  height={56}
+                  className="h-10 desktop:h-14 w-auto object-contain"
                   priority
                 />
               )}

@@ -13,6 +13,7 @@ vi.mock('@/lib/prisma', () => {
   const mockPrisma = {
     user: {
       findMany: vi.fn(),
+      findUnique: vi.fn(),
     },
     order: {
       create: vi.fn(),
@@ -56,6 +57,8 @@ describe('User Trust System API Tests', () => {
       vi.mocked(getServerSession).mockResolvedValue({
         user: { id: 'user-123', email: 'user@example.com', role: 'user' },
       } as any);
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'user-123' } as any);
 
       // Mock products in cart
       vi.mocked(prisma.product.findMany).mockResolvedValue([

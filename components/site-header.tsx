@@ -75,20 +75,20 @@ export default function SiteHeader() {
         </div>
       )}
       <header className="sticky top-0 z-50 border-b border-outline-variant/30 bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex h-20 max-w-container-max items-center justify-between px-4 md:px-gutter">
+      <div className="mx-auto flex h-20 max-w-container-max items-center justify-between px-4 lg:px-gutter">
         <Link href="/home" className="flex items-center">
           <Image
             src="/logo-title.png"
             alt={THEME_CONFIG.brand.logoText}
             width={280}
             height={56}
-            className="h-10 w-auto object-contain md:h-14 transition-all duration-300 hover:scale-[1.03]"
+            className="h-10 w-auto object-contain lg:h-14 transition-all duration-300 hover:scale-[1.03]"
             priority
           />
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden items-center gap-md md:flex">
+        <div className="hidden items-center gap-md lg:flex">
           <nav className="flex items-center gap-md">
             {navigationLinks.map((link) => {
               const active = pathname === link.href;
@@ -170,7 +170,7 @@ export default function SiteHeader() {
         </div>
 
         {/* Mobile Actions */}
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-2 lg:hidden">
           <Link href="/cart" className="relative flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-2 text-primary">
             <ShoppingCartIcon className="h-6 w-6" />
             {mounted && totalItemsCount > 0 && (
@@ -194,7 +194,7 @@ export default function SiteHeader() {
       </div>
 
       {mobileMenuOpen ? (
-        <div className="border-t border-outline-variant/20 bg-surface-container-lowest px-gutter py-md md:hidden">
+        <div className="border-t border-outline-variant/20 bg-surface-container-lowest px-gutter py-md lg:hidden">
           <nav className="flex flex-col gap-sm">
             {navigationLinks.map((link) => {
               const active = pathname === link.href;

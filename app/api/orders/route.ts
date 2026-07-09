@@ -86,7 +86,17 @@ export async function POST(request: NextRequest) {
     const totalPrice = `$${totalAmount.toFixed(2)}`;
 
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id || null;
+    let userId = session?.user?.id || null;
+
+    if (userId) {
+      const userExists = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+      if (!userExists) {
+        userId = null;
+      }
+    }
 
     // 3. Atomically write Order, OrderItems, and PointsTransaction
     let attempts = 0;

@@ -31,6 +31,11 @@ vi.mock('@/lib/prisma', () => {
       update: vi.fn(),
       delete: vi.fn(),
     },
+    user: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+    },
     order: {
       count: vi.fn(),
       findMany: vi.fn(),
@@ -433,6 +438,47 @@ describe('Orders API', () => {
 
       const data = await response.json();
       expect(data).toEqual({ error: 'Transaction lock timeout' });
+    });
+
+    it('should fall back to guest checkout (userId = null) when user session has a stale user ID that does not exist in the database', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({
+        user: { id: 'stale-user-id', name: 'John Doe' }
+      } as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(null);
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
+      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(null);
+
+      const expectedOrder = {
+        id: 'order-uuid-123',
+        reference: 'ORD-20260709-001',
+        sessionId: validPayload.sessionId,
+        status: 'PENDING',
+        totalPrice: '$20.00',
+        totalAmount: 20.00,
+        customerName: validPayload.customerName,
+        customerPhone: validPayload.customerPhone,
+        customerEmail: validPayload.customerEmail,
+        shippingAddress: validPayload.shippingAddress,
+      };
+
+      vi.mocked(prisma.order.create).mockResolvedValueOnce(expectedOrder as any);
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validPayload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(201);
+
+      expect(prisma.order.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            userId: null
+          })
+        })
+      );
     });
   });
 

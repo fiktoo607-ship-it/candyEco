@@ -56,28 +56,28 @@ export default function CartPage() {
         </header>
 
         {isSuccess ? (
-          <div className="mx-auto max-w-md rounded-2xl border border-emerald-100 bg-emerald-50/50 p-xl text-center shadow-soft">
+          <div className="mx-auto max-w-md rounded-2xl border border-emerald-100 bg-emerald-50/50 p-md sm:p-lg text-center shadow-soft">
             <span className="material-symbols-outlined text-5xl text-emerald-600 mb-sm">
               check_circle
             </span>
             <h2 className="text-2xl font-bold text-on-surface">
               {dictionary.cart.success.title}
             </h2>
-            <p className="mt-md text-on-surface-variant leading-relaxed">
+            <p className="mt-md text-on-surface-variant leading-relaxed text-sm sm:text-base">
               {dictionary.cart.success.description}
             </p>
             <div className="mt-lg flex flex-col sm:flex-row justify-center gap-sm">
               {createdOrderId && (
                 <Link
                   href={`/orders/${createdOrderId}`}
-                  className="rounded-xl bg-primary px-xl py-sm font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint"
+                  className="flex items-center justify-center rounded-xl bg-primary px-md py-sm text-sm sm:text-base font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint w-full sm:w-auto"
                 >
                   Suivre ma commande
                 </Link>
               )}
               <Link
                 href="/our-product"
-                className="rounded-xl border border-outline-variant bg-surface-container-low px-xl py-sm font-bold text-on-surface hover:bg-surface-container-high transition-transform active:scale-95"
+                className="flex items-center justify-center rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-sm sm:text-base font-bold text-on-surface hover:bg-surface-container-high transition-transform active:scale-95 w-full sm:w-auto"
               >
                 {dictionary.cart.success.backButton}
               </Link>

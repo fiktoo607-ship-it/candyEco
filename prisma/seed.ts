@@ -285,12 +285,13 @@ async function main() {
 
   // 1. Seed Users
   const customerPassword = await bcrypt.hash('password123', 10);
-  const adminPassword = await bcrypt.hash('admin123', 10);
+  const adminPassword = await bcrypt.hash('pass012', 10);
 
   const customerUser = await prisma.user.create({
     data: {
       name: 'Jean Dupont',
       email: 'customer@candyecon.com',
+      phone: '+33612345678',
       password: customerPassword,
       role: 'user',
       emailVerified: new Date()
@@ -301,6 +302,7 @@ async function main() {
     data: {
       name: 'Admin Eva',
       email: 'admin@candyecon.com',
+      phone: '0589898989',
       password: adminPassword,
       role: 'admin',
       emailVerified: new Date()
