@@ -59,7 +59,7 @@
       "title": "Produits Populaires"
     },
     "story": {
-      "title": "<img src=x onerror=\"console.log('XSS_TEST_SLOGAN')\">Test Auto Save Slogan",
+      "title": "Notre Engagement",
       "description": "Nous cuisons avec la rigueur de l'artisanat : fermentation lente, ingrédients d'exception et cuisson précise. Le résultat ? Des créations authentiques au goût incomparable.",
       "imageAlt": "Pain Artisanal"
     }

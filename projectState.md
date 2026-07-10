@@ -293,34 +293,17 @@
   - `app/api/orders/route.ts`: Prior to transaction processing in the POST handler, queries the `User` table for the session's `userId`. If the user record is not found in the database, `userId` is set to `null` to gracefully fall back to a guest checkout.
   - `tests/api/orders.test.ts`: Added automated unit test verifying that a stale session user ID successfully triggers the `null` fallback.
   - `tests/api/trust.test.ts`: Updated session linkage test to mock the database user validation check successfully.
+
 ### 29. Header Hamburger Breakpoint Update
 - **Description**: Configures the site header navigation bar to show the hamburger menu for all viewports smaller than 1024px (`lg`), providing a cleaner tablet layout.
 - **Affected Files**:
   - `components/site-header.tsx`: Updated visibility helper classes from `md:` (768px) to `lg:` (1024px) on desktop navigation (hide/show blocks) and mobile action triggers.
 
-### 30. Web Push Notifications
-- **Description**: Integrated full Web Push Notifications system using VAPID keys and standard web-push libraries. Features device subscription management (multiple devices per user), automatic cleaning of expired tokens, specific iOS user guidelines, and custom Cache-Control service worker headers.
-- **Affected Files**:
-  - `prisma/schema.prisma` [MODIFY]: Added `PushSubscription` model and user relationship.
-  - `lib/webpush.ts` [NEW]: Configures `web-push` library with VAPID keys on the server.
-  - `lib/push-notifications.ts` [NEW]: `sendPushNotification` server-only notification dispatcher with Promise.allSettled and auto-cleanup.
-  - `app/api/push-subscriptions/route.ts` [NEW]: POST and DELETE route handlers for subscription sync.
-  - `app/api/notifications/test-push/route.ts` [NEW]: Development admin testing endpoint.
-  - `public/sw.js` [NEW]: Service Worker handling `push` and `notificationclick` events.
-  - `public/manifest.json` [NEW]: PWA manifest with icon specifications.
-  - `app/layout.tsx` [MODIFY]: Linked `manifest.json` in metadata.
-  - `next.config.mjs` [MODIFY]: Configured custom Cache-Control and Service-Worker-Allowed headers for `sw.js`.
-  - `components/PushNotificationManager.tsx` [NEW]: Client component managing subscription toggling and providing iOS installation guides.
-  - `components/TabVisibilityNotifier.tsx` [MODIFY]: Preserved new `sw.js` from being force-unregistered on load.
-  - `app/orders/page.tsx` & `app/dashboard/page.tsx` [MODIFY]: Integrated subscription toggle UI.
-  - `tests/api/push-subscriptions.test.ts` [NEW]: Form verification, authorization, and dispatch testing.
-  - `.env.example` [NEW]: Added web push configuration variables.
-
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 153 tests pass successfully under `vitest` (`npx vitest run`).
+  - All 141 tests pass successfully under `vitest` (`npx vitest run`).
 
 
 

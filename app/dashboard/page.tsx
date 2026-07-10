@@ -1,21 +1,19 @@
 "use client";
 
-import Sidebar from '@/components/dashbord/Sidebar';
-import ProductsSection from '@/components/dashbord/ProductsSection';
-import OrdersSection from '@/components/dashbord/OrdersSection';
-import CmsSection from '@/components/dashbord/CmsSection';
-import QnaSection from '@/components/dashbord/QnaSection';
-import UsersSection from '@/components/dashbord/UsersSection';
-import DeliverySection from '@/components/dashbord/DeliverySection';
-import ProductModal from '@/components/dashbord/ProductModal';
-import DeleteModal from '@/components/dashbord/DeleteModal';
-import NotificationBell from '@/components/dashbord/NotificationBell';
-import PushNotificationManager from '@/components/PushNotificationManager';
-import { useDashboardStore } from '@/lib/dashboard-store';
-import { useEffect } from 'react';
+import Sidebar from "@/components/dashbord/Sidebar";
+import ProductsSection from "@/components/dashbord/ProductsSection";
+import OrdersSection from "@/components/dashbord/OrdersSection";
+import CmsSection from "@/components/dashbord/CmsSection";
+import QnaSection from "@/components/dashbord/QnaSection";
+import UsersSection from "@/components/dashbord/UsersSection";
+import DeliverySection from "@/components/dashbord/DeliverySection";
+import ProductModal from "@/components/dashbord/ProductModal";
+import DeleteModal from "@/components/dashbord/DeleteModal";
+import NotificationBell from "@/components/dashbord/NotificationBell";
+import { useDashboardStore } from "@/lib/dashboard-store";
+import { useEffect } from "react";
 
-
-const CATEGORIES = ['gâteau', 'aliments traditionnel'];
+const CATEGORIES = ["gâteau", "aliments traditionnel"];
 
 export default function DashboardPage() {
   const { activeTab, openCreate, toast, setToast } = useDashboardStore();
@@ -28,7 +26,6 @@ export default function DashboardPage() {
       return () => clearTimeout(timer);
     }
   }, [toast, setToast]);
-
 
   return (
     <main
@@ -44,17 +41,17 @@ export default function DashboardPage() {
         <header className="desktop:sticky desktop:top-0 z-20 flex h-auto min-h-[5rem] py-md desktop:py-0 desktop:h-20 items-center justify-between border-b border-outline-variant/30 bg-surface/90 backdrop-blur-md px-gutter shadow-soft flex-wrap gap-md">
           {/* min-w-0 + flex-1 allow the title to shrink when the header is narrow */}
           <h1 className="min-w-0 flex-1 font-display text-xl desktop:text-3xl font-bold text-on-surface truncate pr-sm">
-            {activeTab === 'products'
-              ? 'Gérer les produits'
-              : activeTab === 'orders'
-              ? 'Gestion des commandes'
-              : activeTab === 'cms'
-              ? 'Configuration du site (CMS)'
-              : activeTab === 'qna'
-              ? 'Questions & Réponses'
-              : activeTab === 'users'
-              ? 'Gestion des utilisateurs'
-              : 'Méthodes de livraison'}
+            {activeTab === "products"
+              ? "Gérer les produits"
+              : activeTab === "orders"
+                ? "Gestion des commandes"
+                : activeTab === "cms"
+                  ? "Configuration du site (CMS)"
+                  : activeTab === "qna"
+                    ? "Questions & Réponses"
+                    : activeTab === "users"
+                      ? "Gestion des utilisateurs"
+                      : "Méthodes de livraison"}
           </h1>
           {/* flex-shrink-0 ensures the action buttons area is never compressed */}
           <div className="flex items-center gap-md flex-shrink-0">
@@ -64,26 +61,27 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        <div className="w-full flex-1 p-gutter space-y-md">
-          <div className="flex justify-start">
-            <PushNotificationManager />
-          </div>
-          {activeTab === 'products' ? (
+        <div className="w-full flex-1 p-gutter">
+          {activeTab === "products" ? (
             <ProductsSection />
-          ) : activeTab === 'orders' ? (
+          ) : activeTab === "orders" ? (
             <OrdersSection />
-          ) : activeTab === 'cms' ? (
+          ) : activeTab === "cms" ? (
             <CmsSection />
-          ) : activeTab === 'qna' ? (
+          ) : activeTab === "qna" ? (
             <QnaSection />
-          ) : activeTab === 'users' ? (
+          ) : activeTab === "users" ? (
             <UsersSection />
-          ) : activeTab === 'delivery-methods' ? (
+          ) : activeTab === "delivery-methods" ? (
             <DeliverySection />
           ) : (
             <div className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-xl text-center shadow-soft">
-              <span className="material-symbols-outlined text-4xl text-on-surface-variant/40 mb-sm">tab_unselected</span>
-              <p className="text-on-surface-variant font-medium">Onglet non trouvé</p>
+              <span className="material-symbols-outlined text-4xl text-on-surface-variant/40 mb-sm">
+                tab_unselected
+              </span>
+              <p className="text-on-surface-variant font-medium">
+                Onglet non trouvé
+              </p>
             </div>
           )}
         </div>
@@ -99,13 +97,13 @@ export default function DashboardPage() {
       {toast && (
         <div
           className={`fixed bottom-6 right-6 z-[90] rounded-xl px-md py-sm text-white shadow-lg flex items-center gap-sm animate-fade-in border ${
-            toast.type === 'success'
-              ? 'bg-emerald-600 border-emerald-500/30'
-              : 'bg-error border-error-container/20'
+            toast.type === "success"
+              ? "bg-emerald-600 border-emerald-500/30"
+              : "bg-error border-error-container/20"
           }`}
         >
           <span className="material-symbols-outlined text-xl select-none">
-            {toast.type === 'success' ? 'check_circle' : 'error'}
+            {toast.type === "success" ? "check_circle" : "error"}
           </span>
           <span className="font-semibold text-sm">{toast.message}</span>
           <button
@@ -113,7 +111,9 @@ export default function DashboardPage() {
             className="ml-xs hover:opacity-80 transition-opacity p-0.5 rounded-full hover:bg-white/10"
             aria-label="Fermer"
           >
-            <span className="material-symbols-outlined text-base block select-none">close</span>
+            <span className="material-symbols-outlined text-base block select-none">
+              close
+            </span>
           </button>
         </div>
       )}
