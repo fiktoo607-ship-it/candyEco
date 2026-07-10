@@ -75,7 +75,7 @@ export default function HomeProductSection({
           <div className="space-y-md">
             <div className="border-b border-outline-variant/30 pb-sm">
               <h2 className="font-display text-3xl font-bold text-on-surface">
-                Résultats de recherche pour &ldquo;{searchQuery}&rdquo;
+                Résultats de recherche pour &ldquo;<span className="notranslate" translate="no">{searchQuery}</span>&rdquo;
               </h2>
               <p className="text-sm text-on-surface-variant mt-xs">
                 {filteredProducts.length} {filteredProducts.length === 1 ? 'produit trouvé' : 'produits trouvés'}
