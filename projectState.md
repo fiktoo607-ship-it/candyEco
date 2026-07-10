@@ -299,11 +299,22 @@
 - **Affected Files**:
   - `components/site-header.tsx`: Updated visibility helper classes from `md:` (768px) to `lg:` (1024px) on desktop navigation (hide/show blocks) and mobile action triggers.
 
+### 30. Progressive Web App (PWA) Conversion
+- **Description**: Enabled offline fallback capabilities, update notifications, progressive install banners, and standard-compliant metadata for the site.
+- **Manifest**: Created dynamic manifest route `app/manifest.ts` using Next.js MetadataRoute.Manifest, pulling name and description from the central theme, and setting display mode to `standalone` and orientation to `portrait`.
+- **Metadata**: Extended `app/layout.tsx` metadata with PWA capability flags and touch icons.
+- **Service Worker**: Custom Service Worker at `public/sw.js` that implements versioned caching, cache-first for static assets, network-first with `/offline` fallback for navigation, and network-first for product API endpoints. Completely bypasses caching for admin dashboard, mutations, and non-GET requests.
+- **Registration**: Created client component `components/PwaRegister.tsx` to register `sw.js` in production and show non-intrusive French update toast when a new sw version is available (hidden on `/cart` page).
+- **Install Button**: Created `components/PwaInstallButton.tsx` to handle captures of `beforeinstallprompt` event and render a clean, standard install button next to the Cart icon in `components/site-header.tsx`.
+- **Offline page**: Created custom accessible French offline fallback page at `/offline` with a retry button redirecting to `/home`.
+- **Offline Guard**: Updated `components/cart/CheckoutForm.tsx` to track online status, block submissions when offline, and disable the order buttons to prevent data synchronization issues.
+- **Testing**: Added focused Vitest coverage in `tests/pwa.test.tsx` to mock service worker registration and verify installer behavior.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npm run typecheck`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 141 tests pass successfully under `vitest` (`npx vitest run`).
+  - All 149 tests pass successfully under `vitest` (`npx vitest run`).
 
 
 

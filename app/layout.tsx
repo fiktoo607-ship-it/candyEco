@@ -1,8 +1,9 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Outfit, Fredoka } from 'next/font/google';
 import './globals.css';
 import Providers from '@/components/providers';
 import TabVisibilityNotifier from '@/components/TabVisibilityNotifier';
+import PwaRegister from '@/components/PwaRegister';
 import { THEME_CONFIG } from '@/lib/theme';
 
 const outfit = Outfit({
@@ -20,6 +21,28 @@ const fredoka = Fredoka({
 export const metadata: Metadata = {
   title: THEME_CONFIG.brand.name,
   description: THEME_CONFIG.brand.description,
+  applicationName: THEME_CONFIG.brand.name,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: THEME_CONFIG.brand.name,
+  },
+  icons: {
+    icon: [
+      { url: '/logo.jpeg', sizes: '192x192', type: 'image/jpeg' },
+    ],
+    apple: [
+      { url: '/logo.jpeg', sizes: '180x180', type: 'image/jpeg' },
+    ],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: THEME_CONFIG.colors.primary,
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -31,6 +54,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <Providers>
           <TabVisibilityNotifier />
+          <PwaRegister />
           {children}
         </Providers>
       </body>

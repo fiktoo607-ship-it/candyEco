@@ -37,6 +37,23 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
   const [phoneError, setPhoneError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [formError, setFormError] = useState('');
+  const [isOffline, setIsOffline] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsOffline(!navigator.onLine);
+
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     if (session?.user) {
@@ -75,6 +92,10 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
+    if (isOffline) {
+      setFormError("Vous êtes hors ligne. Veuillez vous connecter à Internet pour passer commande.");
+      return;
+    }
     if (!storeEnabled) {
       setFormError("La boutique est fermée pour le moment. Prise de commande impossible.");
       return;
@@ -260,7 +281,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
 
         {!storeEnabled && (
           <div className="rounded-xl bg-amber-50 border border-amber-200 p-sm text-amber-800 text-sm flex items-start gap-xs mt-md">
-            <span className="material-symbols-outlined text-base flex-shrink-0 mt-[2px]">warning</span>
+            <span className="material-symbols-outlined text-base flex-shrink-0 mt-[2px] notranslate" translate="no">warning</span>
             <div>
               <p className="font-bold">Boutique temporairement fermée</p>
               <p className="text-xs mt-[2px]">{storeMessage}</p>
@@ -268,15 +289,25 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
           </div>
         )}
 
+        {isOffline && (
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-sm text-amber-800 text-sm flex items-start gap-xs mt-md">
+            <span className="material-symbols-outlined text-base flex-shrink-0 mt-[2px] notranslate" translate="no">wifi_off</span>
+            <div>
+              <p className="font-bold">Vous êtes hors ligne</p>
+              <p className="text-xs mt-[2px]">La validation de commande est désactivée sans connexion Internet.</p>
+            </div>
+          </div>
+        )}
+
         <button
           type="submit"
-          disabled={!storeEnabled || submitOrderMutation.isPending}
+          disabled={!storeEnabled || isOffline || submitOrderMutation.isPending}
           className="w-full rounded-xl bg-primary py-md mt-md text-base font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-xs"
         >
           {submitOrderMutation.isPending && (
             <span className="material-symbols-outlined text-base animate-spin">sync</span>
           )}
-          {!storeEnabled ? "Commandes désactivées" : dictionary.cart.form.submitButton}
+          {!storeEnabled ? "Commandes désactivées" : isOffline ? "Hors ligne" : dictionary.cart.form.submitButton}
         </button>
       </form>
     </div>

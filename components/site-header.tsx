@@ -11,6 +11,7 @@ import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
 import { useSession, signOut } from 'next-auth/react';
 import { useConfig } from '@/lib/hooks/use-config';
+import PwaInstallButton from './PwaInstallButton';
 
 const navigationLinks = [
   { href: '/home', label: dictionary.navigation.home },
@@ -104,6 +105,7 @@ export default function SiteHeader() {
               );
             })}
           </nav>
+          {mounted && <PwaInstallButton />}
           <Link href="/cart" className="relative flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-3 text-primary hover:bg-surface-container-low transition-colors ml-sm">
             <ShoppingCartIcon className="h-6 w-6" />
             {mounted && totalItemsCount > 0 && (
@@ -171,6 +173,7 @@ export default function SiteHeader() {
 
         {/* Mobile Actions */}
         <div className="flex items-center gap-2 lg:hidden">
+          {mounted && <PwaInstallButton />}
           <Link href="/cart" className="relative flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-2 text-primary">
             <ShoppingCartIcon className="h-6 w-6" />
             {mounted && totalItemsCount > 0 && (

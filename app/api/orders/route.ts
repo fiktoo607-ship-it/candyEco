@@ -196,7 +196,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newOrder, { status: 201 });
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : 'Failed to submit order';
+    let errMsg = error instanceof Error ? error.message : 'Failed to submit order';
+    if (errMsg.includes("Can't reach database server") || errMsg.includes("prisma") || errMsg.includes("pooled.db.prisma.io")) {
+      errMsg = "Impossible de contacter le serveur de base de données. Veuillez vérifier votre connexion Internet.";
+    }
     console.error('[Orders API] Error creating order:', error);
     return NextResponse.json({ error: errMsg }, { status: 500 });
   }
