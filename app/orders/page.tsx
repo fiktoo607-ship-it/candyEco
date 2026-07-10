@@ -9,6 +9,7 @@ import SiteHeader from '@/components/site-header';
 import SiteFooter from '@/components/site-footer';
 import { Order } from '@/lib/hooks/use-orders';
 import PriceDisplay from '@/components/PriceDisplay';
+import PushNotificationManager from '@/components/PushNotificationManager';
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
   PENDING:   { label: 'En attente',  color: 'text-amber-700',   bg: 'bg-amber-100/80' },
@@ -86,6 +87,11 @@ export default function OrdersPage() {
             {session?.user?.name && `Bonjour, ${session.user.name} \u2014 `}
             Retrouvez l&apos;historique et le statut de toutes vos commandes.
           </p>
+        </div>
+
+        {/* Push Notification Manager */}
+        <div className="mb-lg flex justify-start">
+          <PushNotificationManager />
         </div>
 
         {/* Content */}

@@ -10,6 +10,7 @@ import DeliverySection from '@/components/dashbord/DeliverySection';
 import ProductModal from '@/components/dashbord/ProductModal';
 import DeleteModal from '@/components/dashbord/DeleteModal';
 import NotificationBell from '@/components/dashbord/NotificationBell';
+import PushNotificationManager from '@/components/PushNotificationManager';
 import { useDashboardStore } from '@/lib/dashboard-store';
 import { useEffect } from 'react';
 
@@ -63,7 +64,10 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        <div className="w-full flex-1 p-gutter">
+        <div className="w-full flex-1 p-gutter space-y-md">
+          <div className="flex justify-start">
+            <PushNotificationManager />
+          </div>
           {activeTab === 'products' ? (
             <ProductsSection />
           ) : activeTab === 'orders' ? (
