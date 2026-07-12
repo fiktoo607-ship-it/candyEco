@@ -207,6 +207,11 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '5');
@@ -220,6 +225,7 @@ export async function GET(request: NextRequest) {
     // Build filters dynamically
     interface QueryCondition {
       status?: string;
+      userId?: string;
       OR?: Array<{
         customerName?: { contains: string; mode: 'insensitive' };
         customerPhone?: { contains: string; mode: 'insensitive' };
@@ -231,6 +237,11 @@ export async function GET(request: NextRequest) {
     }
 
     const where: QueryCondition = {};
+
+    const isAdmin = session.user.role === 'admin';
+    if (!isAdmin) {
+      where.userId = session.user.id;
+    }
 
     if (status) {
       where.status = status.toUpperCase();

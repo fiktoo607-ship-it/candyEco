@@ -33,6 +33,8 @@ export default function ProductDetails({ product }: { product: ProductData }) {
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const [canRate, setCanRate] = useState(false);
   const [loadingCanRate, setLoadingCanRate] = useState(true);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [pendingRating, setPendingRating] = useState(0);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -60,7 +62,23 @@ export default function ProductDetails({ product }: { product: ProductData }) {
     checkCanRate();
   }, [product.id]);
 
-  const handleRate = async (value: number) => {
+  const handleRateClick = (value: number) => {
+    setPendingRating(value);
+    setShowRatingModal(true);
+  };
+
+  const handleCancelRating = () => {
+    setPendingRating(0);
+    setShowRatingModal(false);
+  };
+
+  const handleConfirmRating = async () => {
+    if (pendingRating === 0) return;
+    setShowRatingModal(false);
+    await submitRating(pendingRating);
+  };
+
+  const submitRating = async (value: number) => {
     setIsSubmittingRating(true);
     try {
       const res = await fetch(`/api/products/${product.id}`, {
@@ -175,14 +193,17 @@ export default function ProductDetails({ product }: { product: ProductData }) {
                   <button
                     key={star}
                     type="button"
-                    onClick={() => handleRate(star)}
+                    onClick={() => handleRateClick(star)}
                     onMouseEnter={() => setHoverRating(star)}
                     onMouseLeave={() => setHoverRating(0)}
                     disabled={isSubmittingRating}
                     className="text-amber-500 hover:scale-110 transition-transform focus:outline-none disabled:opacity-50"
                   >
-                    <span className="material-symbols-outlined text-2xl select-none">
-                      {star <= (hoverRating || 0) ? 'star' : 'star_outline'}
+                    <span
+                      className="material-symbols-outlined text-2xl select-none"
+                      style={star <= (hoverRating || 0) ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                    >
+                      star
                     </span>
                   </button>
                 ))}
@@ -235,6 +256,51 @@ export default function ProductDetails({ product }: { product: ProductData }) {
           </button>
         </div>
       </div>
+
+      {/* Rating Confirmation Modal */}
+      {showRatingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm scale-95 transform rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft transition-all duration-200">
+            <div className="flex flex-col items-center text-center">
+              <span className="material-symbols-outlined text-4xl text-primary mb-sm">rate_review</span>
+              <h3 className="font-display text-xl font-bold text-on-surface">Confirmer l'évaluation</h3>
+              <p className="mt-xs text-xs text-on-surface-variant max-w-xs">
+                Souhaitez-vous attribuer une note de {pendingRating} étoile{pendingRating > 1 ? 's' : ''} à ce produit ?
+              </p>
+              
+              <div className="flex gap-xs my-md bg-surface-container-low px-md py-sm rounded-xl border border-outline-variant/10">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span key={star} className="text-amber-500 select-none">
+                    <span
+                      className="material-symbols-outlined text-2xl"
+                      style={star <= pendingRating ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                    >
+                      star
+                    </span>
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex gap-sm w-full mt-sm">
+                <button
+                  type="button"
+                  onClick={handleCancelRating}
+                  className="flex-1 rounded-xl border border-outline-variant bg-surface-container-low py-sm text-sm font-semibold text-on-surface hover:bg-surface-variant/30 active:scale-95 transition-all"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmRating}
+                  className="flex-1 rounded-xl bg-primary py-sm text-sm font-bold text-white shadow-soft hover:bg-surface-tint active:scale-95 transition-all"
+                >
+                  Confirmer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   );
 }

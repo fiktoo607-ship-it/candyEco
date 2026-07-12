@@ -483,6 +483,12 @@ describe('Orders API', () => {
   });
 
   describe('GET /api/orders', () => {
+    beforeEach(() => {
+      vi.mocked(getServerSession).mockResolvedValue({
+        user: { id: 'admin-id', role: 'admin' },
+      } as any);
+    });
+
     const mockOrders = [
       {
         id: 'order-1',
@@ -606,6 +612,35 @@ describe('Orders API', () => {
       expect(response.status).toBe(500);
       const data = await response.json();
       expect(data).toEqual({ error: 'Connection timed out' });
+    });
+
+    it('should filter orders by userId when logged-in user is not an admin', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({
+        user: { id: 'user-123', role: 'user' },
+      } as any);
+
+      vi.mocked(prisma.order.count).mockResolvedValueOnce(2);
+      vi.mocked(prisma.order.findMany).mockResolvedValueOnce(mockOrders as any);
+
+      const req = new NextRequest('http://localhost/api/orders');
+      const response = await getOrders(req);
+
+      expect(response.status).toBe(200);
+      expect(prisma.order.count).toHaveBeenCalledWith({ where: { userId: 'user-123' } });
+      expect(prisma.order.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { userId: 'user-123' } })
+      );
+    });
+
+    it('should return 401 when no session is active', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(null);
+
+      const req = new NextRequest('http://localhost/api/orders');
+      const response = await getOrders(req);
+
+      expect(response.status).toBe(401);
+      const data = await response.json();
+      expect(data).toEqual({ error: 'Unauthorized' });
     });
   });
 
