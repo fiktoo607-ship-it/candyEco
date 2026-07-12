@@ -55,7 +55,9 @@
 - **APIs & Database**:
   - `prisma/schema.prisma`: Added `rating Float @default(0.0)` and `ratingCount Int @default(0)` fields to `Product`.
   - `app/api/products/route.ts` & `app/api/products/[id]/route.ts`: Added conditional rating and ratingCount omission unless `dashboard=true` query parameter is set.
-  - `app/api/products/[id]/route.ts`: Implemented `POST` handler for user rating submissions, calculating running average.
+  - `app/api/products/[id]/route.ts`: Implemented `POST` handler for user rating submissions, calculating running average. Fixed syntax error at the end of the file.
+  - `app/api/products/[id]/can-rate/route.ts` & `app/api/products/[id]/route.ts`: Expanded rating eligibility rules. Customers who checked out as guest can now rate products after logging in by matching order's phone or email against their profile. Supports both `DELIVERED` and `COMPLETED` order statuses.
+
 
 ### 6. Homepage New Products Section
 - **Description**: Displays the newest products on the homepage directly below the Hero Carousel, using a single-card infinite looping slider layout.

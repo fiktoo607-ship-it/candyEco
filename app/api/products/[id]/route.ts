@@ -174,11 +174,20 @@ export async function POST(
       return NextResponse.json({ error: 'Vous devez vous connecter pour évaluer un produit.' }, { status: 401 });
     }
 
-    // Verification: Order containing the product must be DELIVERED
+    // Verification: Order containing the product must be DELIVERED or COMPLETED
+    const user = session.user as any;
+    const conditions: any[] = [{ userId: user.id }];
+    if (user.phone) {
+      conditions.push({ customerPhone: user.phone });
+    }
+    if (user.email) {
+      conditions.push({ customerEmail: user.email });
+    }
+
     const deliveredOrder = await prisma.order.findFirst({
       where: {
-        userId: session.user.id,
-        status: 'DELIVERED',
+        OR: conditions,
+        status: { in: ['DELIVERED', 'COMPLETED'] },
         items: {
           some: {
             productId: id

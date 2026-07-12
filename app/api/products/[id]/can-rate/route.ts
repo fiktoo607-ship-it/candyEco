@@ -15,10 +15,19 @@ export async function GET(
       return NextResponse.json({ canRate: false, reason: 'unauthenticated' });
     }
 
+    const user = session.user as any;
+    const conditions: any[] = [{ userId: user.id }];
+    if (user.phone) {
+      conditions.push({ customerPhone: user.phone });
+    }
+    if (user.email) {
+      conditions.push({ customerEmail: user.email });
+    }
+
     const deliveredOrder = await prisma.order.findFirst({
       where: {
-        userId: session.user.id,
-        status: 'DELIVERED',
+        OR: conditions,
+        status: { in: ['DELIVERED', 'COMPLETED'] },
         items: {
           some: {
             productId: id

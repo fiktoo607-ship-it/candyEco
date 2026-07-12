@@ -4,6 +4,7 @@ import { GET as getProduct, PUT as updateProduct, DELETE as deleteProduct, POST 
 import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 import { deleteImage } from '@/lib/cloudinary';
+import { getServerSession } from 'next-auth';
 
 // Mock Cloudinary
 vi.mock('@/lib/cloudinary', () => ({
@@ -606,6 +607,41 @@ describe('Products API', () => {
 
       const data = await response.json();
       expect(data.error).toBe('Product not found');
+    });
+
+    it('should query order with correct user profile OR conditions (including phone and email)', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({
+        user: { id: 'user-id-123', email: 'test@example.com', role: 'user', phone: '+123456789' },
+      } as any);
+
+      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce({ id: 'order-1' } as any);
+      vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(mockProduct);
+      vi.mocked(prisma.product.update).mockResolvedValueOnce({ ...mockProduct, rating: 4.5, ratingCount: 1 });
+
+      const req = new NextRequest(`http://localhost/api/products/${mockProduct.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: 5 }),
+      });
+
+      const response = await submitRating(req, { params: Promise.resolve({ id: mockProduct.id }) });
+      expect(response.status).toBe(200);
+
+      expect(prisma.order.findFirst).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { userId: 'user-id-123' },
+            { customerPhone: '+123456789' },
+            { customerEmail: 'test@example.com' }
+          ],
+          status: { in: ['DELIVERED', 'COMPLETED'] },
+          items: {
+            some: {
+              productId: mockProduct.id
+            }
+          }
+        }
+      });
     });
   });
 
