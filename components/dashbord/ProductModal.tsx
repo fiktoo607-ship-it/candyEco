@@ -33,14 +33,10 @@ export default function ProductModal() {
     setLimitBay,
     state,
     setState,
-    publishedAt,
-    setPublishedAt,
     category,
     setCategory,
     visibility,
     setVisibility,
-    rating,
-    setRating,
     tags,
     newTagInput,
     setNewTagInput,
@@ -100,22 +96,18 @@ export default function ProductModal() {
             onFileUpload={handleFileUpload}
           />
 
-          {/* Limit Buy, State, Published At */}
+          {/* Limit Buy, State */}
           <ProductDetailsInfo
             limitBay={limitBay}
             setLimitBay={setLimitBay}
             state={state}
             setState={setState}
-            publishedAt={publishedAt}
-            setPublishedAt={setPublishedAt}
           />
 
-          {/* Visibility score and Rating */}
+          {/* Visibility score */}
           <ProductMetrics
             visibility={visibility}
             setVisibility={setVisibility}
-            rating={rating}
-            setRating={setRating}
           />
 
           {/* Tags Editor */}

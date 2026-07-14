@@ -240,8 +240,6 @@ interface ProductDetailsInfoProps {
   setLimitBay: (v: string) => void;
   state: string;
   setState: (v: 'exist' | 'outofStock' | 'commingSoun') => void;
-  publishedAt: string;
-  setPublishedAt: (v: string) => void;
 }
 
 export function ProductDetailsInfo({
@@ -249,11 +247,9 @@ export function ProductDetailsInfo({
   setLimitBay,
   state,
   setState,
-  publishedAt,
-  setPublishedAt,
 }: ProductDetailsInfoProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-sm">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
       <div className="flex flex-col gap-xs">
         <label className="text-sm font-bold text-on-surface-variant">
           Limite d'achat
@@ -285,17 +281,6 @@ export function ProductDetailsInfo({
           </span>
         </div>
       </div>
-      <div className="flex flex-col gap-xs">
-        <label className="text-sm font-bold text-on-surface-variant">
-          Date de publication
-        </label>
-        <input
-          type="date"
-          value={publishedAt}
-          onChange={(e) => setPublishedAt(e.target.value)}
-          className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 h-[46px]"
-        />
-      </div>
     </div>
   );
 }
@@ -307,46 +292,24 @@ export function ProductDetailsInfo({
 interface ProductMetricsProps {
   visibility: string;
   setVisibility: (v: string) => void;
-  rating: string;
-  setRating: (v: string) => void;
 }
 
 export function ProductMetrics({
   visibility,
   setVisibility,
-  rating,
-  setRating,
 }: ProductMetricsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
-      <div className="flex flex-col gap-xs">
-        <label className="text-sm font-bold text-on-surface-variant">
-          Score de visibilité
-        </label>
-        <input
-          type="number"
-          placeholder="Ex: 10"
-          value={visibility}
-          onChange={(e) => setVisibility(e.target.value)}
-          className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-        />
-      </div>
-      <div className="flex flex-col gap-xs">
-        <label className="text-sm font-bold text-on-surface-variant">
-          Note (Rating) *
-        </label>
-        <input
-          type="number"
-          step="0.1"
-          min="0"
-          max="5"
-          required
-          placeholder="Ex: 4.5"
-          value={rating}
-          onChange={(e) => setRating(e.target.value)}
-          className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-        />
-      </div>
+    <div className="flex flex-col gap-xs">
+      <label className="text-sm font-bold text-on-surface-variant">
+        Score de visibilité
+      </label>
+      <input
+        type="number"
+        placeholder="Ex: 10"
+        value={visibility}
+        onChange={(e) => setVisibility(e.target.value)}
+        className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+      />
     </div>
   );
 }

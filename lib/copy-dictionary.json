@@ -177,8 +177,7 @@
     "carousel_products": [
       "chakhchoukha-traditionnelle",
       "wild-fig-jam",
-      "organic-lavender-honey",
-      "artisanal-couscous-whole"
+      "sea-salt-chocolate-chips"
     ],
     "homepage_story_title": "Fait Main, sans Raccourci",
     "homepage_story_description": "Nous cuisons avec la rigueur de l'artisanat : fermentation lente, ingrédients d'exception et cuisson précise. Le résultat ? Des créations authentiques au goût incomparable.",
@@ -195,7 +194,7 @@
     "contact_social_instagram_user": "lesdelices.d.eva",
     "contact_social_tiktok": "https://www.tiktok.com/@les.delices.d.eva?_r=1&_t=ZS-96y0UWvpi3o",
     "contact_social_tiktok_user": "les.delices.d.eva",
-    "carousel_max_slides": 7,
+    "carousel_max_slides": 6,
     "new_products_limit": 4,
     "store_enabled": true,
     "store_message": "Le magasin est temporairement fermé."

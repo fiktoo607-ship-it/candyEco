@@ -154,15 +154,6 @@ export function CarouselManagerSection({
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          disabled={isLimitReached}
-          onClick={() => handleOpenSlideModal()}
-          className="w-full sm:w-auto rounded-full bg-primary px-md py-xs text-sm font-semibold text-white shadow-soft hover:bg-surface-tint flex items-center justify-center gap-xs disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all"
-        >
-          <span className="material-symbols-outlined text-base">add</span>
-          Ajouter une image
-        </button>
       </div>
 
       {isLimitReached && (
@@ -311,17 +302,28 @@ export function CarouselManagerSection({
 
       {/* Subsection B: Custom Uploaded Slides list */}
       <div className="space-y-sm border-t border-outline-variant/10 pt-md">
-        <div>
-          <h3 className="font-semibold text-base text-on-surface flex items-center gap-xs">
-            <span className="material-symbols-outlined text-lg text-primary">add_a_photo</span>
-            2. Téléverser de nouvelles images
-          </h3>
-          <p className="text-xs text-on-surface-variant mt-[2px]">
-            Gérez des diapositives d'images sur-mesure (promotions, nouveautés, fêtes).
-            <span className="font-bold text-primary ml-xs">
-              ({slides.length} image(s))
-            </span>
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm">
+          <div>
+            <h3 className="font-semibold text-base text-on-surface flex items-center gap-xs">
+              <span className="material-symbols-outlined text-lg text-primary">add_a_photo</span>
+              2. Téléverser de nouvelles images
+            </h3>
+            <p className="text-xs text-on-surface-variant mt-[2px]">
+              Gérez des diapositives d'images sur-mesure (promotions, nouveautés, fêtes).
+              <span className="font-bold text-primary ml-xs">
+                ({slides.length} image(s))
+              </span>
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={isLimitReached}
+            onClick={() => handleOpenSlideModal()}
+            className="w-full sm:w-auto rounded-full bg-primary px-md py-xs text-sm font-semibold text-white shadow-soft hover:bg-surface-tint flex items-center justify-center gap-xs disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all"
+          >
+            <span className="material-symbols-outlined text-base">add</span>
+            Ajouter une image
+          </button>
         </div>
 
         {slides.length === 0 ? (
@@ -331,7 +333,7 @@ export function CarouselManagerSection({
             </span>
             <p className="font-semibold text-sm text-on-surface">Aucune image personnalisée</p>
             <p className="text-xs text-on-surface-variant max-w-xs mt-[2px]">
-              Utilisez le bouton "Ajouter une image" ci-dessus pour importer une nouvelle diapositive.
+              Utilisez le bouton "Ajouter une image" pour importer une nouvelle diapositive.
             </p>
           </div>
         ) : (
