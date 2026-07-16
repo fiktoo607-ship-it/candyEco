@@ -112,7 +112,7 @@ export function OrdersFilters({
               <option value="createdAt">Trier par Date (Récentes)</option>
               <option value="status">Trier par Statut</option>
               <option value="orderCount">Trier par Volume Commandes</option>
-              <option value="trustScore">Trier par Score Trust</option>
+              <option value="trustScore">Trier par Points de Confiance</option>
             </select>
             <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
               arrow_drop_down
@@ -652,9 +652,9 @@ export function OrderDetailsModal({
                 <div className="flex items-start gap-xs border-t border-outline-variant/10 pt-sm sm:col-span-2">
                   <span className="material-symbols-outlined text-primary text-xl mt-[2px]">verified_user</span>
                   <div>
-                    <span className="text-[10px] text-on-surface-variant font-bold block uppercase tracking-wider">Score de Confiance</span>
+                    <span className="text-[10px] text-on-surface-variant font-bold block uppercase tracking-wider">Points de Confiance</span>
                     <span className="inline-flex items-center gap-xs rounded-full bg-emerald-500/10 px-sm py-[2px] text-xs font-bold text-emerald-600 mt-[2px]">
-                      {(order as any).customerTrustScore} / 100
+                      {(order as any).customerTrustScore} point{(order as any).customerTrustScore !== 1 ? 's' : ''}
                     </span>
                   </div>
                 </div>

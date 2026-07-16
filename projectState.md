@@ -307,16 +307,27 @@
 - **Metadata**: Extended `app/layout.tsx` metadata with PWA capability flags and touch icons.
 - **Service Worker**: Custom Service Worker at `public/sw.js` that implements versioned caching, cache-first for static assets, network-first with `/offline` fallback for navigation, and network-first for product API endpoints. Completely bypasses caching for admin dashboard, mutations, and non-GET requests.
 - **Registration**: Created client component `components/PwaRegister.tsx` to register `sw.js` in production and show non-intrusive French update toast when a new sw version is available (hidden on `/cart` page).
-- **Install Button**: Created `components/PwaInstallButton.tsx` to handle captures of `beforeinstallprompt` event and render a clean, standard install button next to the Cart icon in `components/site-header.tsx`.
+- **Install Button**: Created `components/PwaInstallButton.tsx` to handle captures of `beforeinstallprompt` event and render a clean, standard install banner next to the Cart icon in `components/site-header.tsx`.
 - **Offline page**: Created custom accessible French offline fallback page at `/offline` with a retry button redirecting to `/home`.
 - **Offline Guard**: Updated `components/cart/CheckoutForm.tsx` to track online status, block submissions when offline, and disable the order buttons to prevent data synchronization issues.
 - **Testing**: Added focused Vitest coverage in `tests/pwa.test.tsx` to mock service worker registration and verify installer behavior.
 
+### 31. Trust Score to Points Conversion
+- **Description**: Converted the "Score de Confiance" (Trust Score) system to a points-based system instead of simple completed order counts or currency formatting. Each point represents £1 spent on completed orders (status `DELIVERED` or `COMPLETED`), which is computed from the floored sum of their `totalAmount`.
+- **Core Logic**:
+  - `app/api/users/route.ts`: Queries the sum of `totalAmount` of all completed orders for each user and floors it to compute their trust score points.
+  - `app/api/orders/route.ts`: Grouped completed orders by `userId` and `customerPhone`, summing their `totalAmount` to compute and floor their trust score points.
+- **Dashboard UI**:
+  - `components/dashbord/helpers/UsersSectionHelpers.tsx`: Updated sorting option label, table headers, and badges to display points with proper singular/plural labeling (`X point` vs `X points`).
+  - `components/dashbord/helpers/OrdersSectionHelpers.tsx`: Updated sorting option label and customer details view to display `Points de Confiance` as points instead of a score out of 100.
+- **Testing**:
+  - `tests/api/trust.test.ts`: Updated tests with `totalAmount` mocked on orders and asserted the floored sum of completed order amounts are correctly returned as points.
+
 ## Verification & Build Status
-- **Type Checking**: Passed (`npm run typecheck`).
+- **Type Checking**: Passed (`npx tsc --noEmit`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 149 tests pass successfully under `vitest` (`npx vitest run`).
+  - All 152 tests pass successfully under `vitest` (`npx vitest run`).
 
 
 

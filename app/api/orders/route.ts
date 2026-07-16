@@ -258,27 +258,27 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Fetch completed order counts grouped by customerPhone
+    // Fetch completed order amounts grouped by customerPhone
     const completedOrdersByPhone = await prisma.order.groupBy({
       by: ['customerPhone'],
       where: {
         status: { in: ['DELIVERED', 'COMPLETED'] },
         customerPhone: { not: null },
       },
-      _count: {
-        id: true,
+      _sum: {
+        totalAmount: true,
       },
     });
 
-    // Also fetch completed order counts grouped by userId
+    // Also fetch completed order amounts grouped by userId
     const completedOrdersByUser = await prisma.order.groupBy({
       by: ['userId'],
       where: {
         status: { in: ['DELIVERED', 'COMPLETED'] },
         userId: { not: null },
       },
-      _count: {
-        id: true,
+      _sum: {
+        totalAmount: true,
       },
     });
 
@@ -304,8 +304,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const phoneCountMap = new Map(completedOrdersByPhone.map(g => [g.customerPhone!, g._count.id]));
-    const userCountMap = new Map(completedOrdersByUser.map(g => [g.userId!, g._count.id]));
+    const phoneCountMap = new Map(completedOrdersByPhone.map(g => [g.customerPhone!, Math.floor(g._sum.totalAmount || 0)]));
+    const userCountMap = new Map(completedOrdersByUser.map(g => [g.userId!, Math.floor(g._sum.totalAmount || 0)]));
     const phoneTotalCountMap = new Map(totalOrdersByPhone.map(g => [g.customerPhone!, g._count.id]));
     const userTotalCountMap = new Map(totalOrdersByUser.map(g => [g.userId!, g._count.id]));
 

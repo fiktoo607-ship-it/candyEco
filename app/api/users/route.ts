@@ -20,17 +20,20 @@ export async function GET(request: NextRequest) {
           select: {
             createdAt: true,
             status: true,
+            totalAmount: true,
           },
         },
       },
     });
 
     const mappedUsers = dbUsers.map((user) => {
-      const completedOrderCount = user.orders.filter(
+      const completedOrders = user.orders.filter(
         (order) => order.status === 'DELIVERED' || order.status === 'COMPLETED'
-      ).length;
+      );
+      const completedOrderCount = completedOrders.length;
 
-      const trustScore = completedOrderCount;
+      const totalAmountSpent = completedOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+      const trustScore = Math.floor(totalAmountSpent);
 
       let latestActivity = user.createdAt || new Date(0);
       user.orders.forEach((order) => {

@@ -139,8 +139,8 @@ describe('User Trust System API Tests', () => {
         emailVerified: null,
         createdAt: new Date('2026-01-01T10:00:00.000Z'),
         orders: [
-          { createdAt: new Date('2026-01-02T10:00:00.000Z'), status: 'DELIVERED' },
-          { createdAt: new Date('2026-01-03T10:00:00.000Z'), status: 'PENDING' },
+          { createdAt: new Date('2026-01-02T10:00:00.000Z'), status: 'DELIVERED', totalAmount: 40.0 },
+          { createdAt: new Date('2026-01-03T10:00:00.000Z'), status: 'PENDING', totalAmount: 15.0 },
         ],
       },
       {
@@ -151,8 +151,8 @@ describe('User Trust System API Tests', () => {
         emailVerified: null,
         createdAt: new Date('2026-01-01T11:00:00.000Z'),
         orders: [
-          { createdAt: new Date('2026-01-04T10:00:00.000Z'), status: 'DELIVERED' },
-          { createdAt: new Date('2026-01-05T10:00:00.000Z'), status: 'COMPLETED' },
+          { createdAt: new Date('2026-01-04T10:00:00.000Z'), status: 'DELIVERED', totalAmount: 30.5 },
+          { createdAt: new Date('2026-01-05T10:00:00.000Z'), status: 'COMPLETED', totalAmount: 20.0 },
         ],
       },
     ];
@@ -182,13 +182,13 @@ describe('User Trust System API Tests', () => {
       // User One has 1 completed order (DELIVERED), latest activity on 2026-01-03 (PENDING order)
       const u1 = users.find((u: any) => u.id === 'u1');
       expect(u1.completedOrderCount).toBe(1);
-      expect(u1.trustScore).toBe(1);
+      expect(u1.trustScore).toBe(40);
       expect(u1.latestActivity).toBe(new Date('2026-01-03T10:00:00.000Z').toISOString());
 
       // User Two has 2 completed orders (DELIVERED + COMPLETED), latest activity on 2026-01-05
       const u2 = users.find((u: any) => u.id === 'u2');
       expect(u2.completedOrderCount).toBe(2);
-      expect(u2.trustScore).toBe(2);
+      expect(u2.trustScore).toBe(50);
       expect(u2.latestActivity).toBe(new Date('2026-01-05T10:00:00.000Z').toISOString());
     });
 

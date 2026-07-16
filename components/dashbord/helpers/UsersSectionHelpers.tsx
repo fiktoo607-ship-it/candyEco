@@ -82,7 +82,7 @@ export function UsersFilters({
               onChange={(e) => setSortBy(e.target.value)}
               className="w-full sm:w-64 rounded-xl border border-outline-variant bg-surface-container-low pl-9 pr-8 py-sm text-base text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer h-[46px] appearance-none"
             >
-              <option value="trustScore">Confiance (Commandes complétées)</option>
+              <option value="trustScore">Points de Confiance</option>
               <option value="latestActivity">Dernière activité</option>
               <option value="email">Adresse E-mail</option>
             </select>
@@ -203,10 +203,10 @@ export function UsersTable({
                       <span className="text-sm font-bold text-on-surface">{user.completedOrderCount}</span>
                     </div>
                     <div className="text-center">
-                      <span className="text-[10px] text-on-surface-variant block uppercase font-bold tracking-wider">Confiance</span>
+                      <span className="text-[10px] text-on-surface-variant block uppercase font-bold tracking-wider">Points</span>
                       <span className="inline-flex items-center gap-[2px] text-xs font-bold text-emerald-600 mt-[2px]">
                         <span className="material-symbols-outlined text-xs select-none">verified_user</span>
-                        {user.trustScore}
+                        {user.trustScore} point{user.trustScore !== 1 ? 's' : ''}
                       </span>
                     </div>
                   </div>
@@ -246,7 +246,7 @@ export function UsersTable({
               <th className="p-md">E-mail / Téléphone</th>
               <th className="p-md">Rôle</th>
               <th className="p-md">Commandes</th>
-              <th className="p-md">Score Trust</th>
+              <th className="p-md">Points de Confiance</th>
               <th className="p-md">Dernière Activité</th>
               <th className="p-md text-right">Actions</th>
             </tr>
@@ -290,7 +290,7 @@ export function UsersTable({
                   <td className="p-md">
                     <span className="inline-flex items-center gap-xs rounded-full bg-emerald-500/10 px-sm py-xs text-xs font-bold text-emerald-600 border border-emerald-500/20">
                       <span className="material-symbols-outlined text-xs select-none">verified_user</span>
-                      {user.trustScore}
+                      {user.trustScore} point{user.trustScore !== 1 ? 's' : ''}
                     </span>
                   </td>
                   <td className="p-md text-on-surface-variant text-xs font-medium whitespace-nowrap">
