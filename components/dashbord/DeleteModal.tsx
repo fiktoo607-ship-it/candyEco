@@ -1,5 +1,6 @@
 import { useDashboardStore } from '@/lib/dashboard-store';
 import { useDeleteProduct } from '@/lib/hooks/use-products';
+import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
 
 export default function DeleteModal() {
   const {
@@ -11,6 +12,8 @@ export default function DeleteModal() {
 
   const deleteMutation = useDeleteProduct();
   const isSubmitting = deleteMutation.isPending;
+
+  useLockBodyScroll(isDeleteOpen);
 
   if (!isDeleteOpen) return null;
 

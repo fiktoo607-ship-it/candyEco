@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
 
 interface DashboardDeleteModalProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ export default function DashboardDeleteModal({
   message = "Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est permanente et ne peut pas être annulée.",
   isSubmitting = false
 }: DashboardDeleteModalProps) {
+  useLockBodyScroll(isOpen);
+
   if (!isOpen) return null;
 
   return (

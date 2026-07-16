@@ -1,5 +1,6 @@
 import React from 'react';
 import { Faq } from '../hooks/useQnaSection';
+import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
 
 // ============================================================================
 // 1. QnaFilters
@@ -215,6 +216,8 @@ export function QnaModal({
   setAnswerText,
   onSave,
 }: QnaModalProps) {
+  useLockBodyScroll(isOpen);
+
   if (!isOpen) return null;
 
   return (

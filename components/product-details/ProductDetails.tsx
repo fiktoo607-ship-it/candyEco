@@ -8,6 +8,7 @@ import { useSession } from 'next-auth/react';
 import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
 import PriceDisplay from '@/components/PriceDisplay';
+import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
 
 interface ProductData {
   id: string;
@@ -35,6 +36,8 @@ export default function ProductDetails({ product }: { product: ProductData }) {
   const [loadingCanRate, setLoadingCanRate] = useState(true);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [pendingRating, setPendingRating] = useState(0);
+
+  useLockBodyScroll(showRatingModal);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

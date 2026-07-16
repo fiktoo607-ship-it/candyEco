@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useProductModal } from './hooks/useProductModal';
+import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
 import {
   ProductBasicInfo,
   ProductImageUpload,
@@ -48,6 +49,8 @@ export default function ProductModal() {
     handleFileUpload,
     handleSubmit,
   } = useProductModal();
+
+  useLockBodyScroll(isModalOpen);
 
   if (!isModalOpen) return null;
 

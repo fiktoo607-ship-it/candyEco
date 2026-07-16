@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Order } from '@/lib/hooks/use-orders';
 import PriceDisplay from '@/components/PriceDisplay';
+import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
 
 export function formatFrenchDate(dateInput: Date | string): string {
   const date = new Date(dateInput);
@@ -577,6 +578,8 @@ export function OrderDetailsModal({
   onUpdateOrderLocal,
   onStatusChangeClick,
 }: OrderDetailsModalProps) {
+  useLockBodyScroll(!!order);
+
   if (!order) return null;
 
   return (
@@ -798,6 +801,8 @@ export function OrderStatusConfirmModal({
   currentStatus,
   newStatus,
 }: OrderStatusConfirmModalProps) {
+  useLockBodyScroll(isOpen);
+
   if (!isOpen) return null;
 
   const statusLabel = (status: string) => {

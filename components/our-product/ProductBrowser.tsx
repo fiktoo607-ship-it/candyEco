@@ -7,6 +7,7 @@ import SearchBar from '@/components/SearchBar';
 import { useBakeryStore } from '@/lib/store';
 import dictionary from '@/lib/copy-dictionary.json';
 import { Product } from '@/lib/hooks/use-products';
+import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
 
 const filters = [
   { value: 'all', label: dictionary.productBrowser.filters.all },
@@ -63,6 +64,8 @@ export default function ProductBrowser() {
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
+  useLockBodyScroll(isFilterModalOpen);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 

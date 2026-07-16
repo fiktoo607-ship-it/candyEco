@@ -339,6 +339,9 @@
   - `public/logo.jpeg`: Overwrote default logo asset with the new custom brand icon for standalone app installs.
 - **Carousel UI Refinements**:
   - `components/home/NewProductsSection.tsx`, `components/home/PopularProductsSection.tsx`, `components/home/FeaturedProducts.tsx`: Updated slide indicator dots to make the active dot longer (w-8 pill-shape) than the inactive ones (w-3) to create a premium, dynamic feel.
+- **Body Scroll Locking for Modals**:
+  - `lib/hooks/use-lock-body-scroll.ts`: Created a new custom hook to toggle `overflow: hidden` on the page body when a modal is active.
+  - Integrated this hook in all application modal components: `DeleteModal`, `ProductModal`, `DashboardDeleteModal`, `QnaModal`, `OrderDetailsModal`, `OrderStatusConfirmModal`, mobile filters modal in `ProductBrowser`, and rating modal in `ProductDetails`. Prevents scroll and background shifting when popups are shown.
 
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
