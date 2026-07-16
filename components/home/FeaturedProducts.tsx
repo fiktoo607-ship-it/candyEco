@@ -255,10 +255,10 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
                   setCurrentSlide(currentItemsPerView + index);
                   startAutoCycle();
                 }}
-                className={`h-3 w-3 rounded-full transition-all duration-300 ease-out ${
+                className={`h-3 rounded-full transition-all duration-300 ease-out ${
                   isActive
-                    ? "bg-[#2a1082] scale-110 shadow-sm shadow-[#2a1082]/30"
-                    : "bg-neutral-300 hover:bg-neutral-400 hover:scale-105"
+                    ? "w-8 bg-[#2a1082] shadow-sm shadow-[#2a1082]/30"
+                    : "w-3 bg-neutral-300 hover:bg-neutral-400 hover:scale-105"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />

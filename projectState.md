@@ -335,6 +335,10 @@
   - `components/dashbord/helpers/UsersSectionHelpers.tsx`: Replaced "Rôle" table column with "Statut" and implemented a custom status badge renderer using specific icons and premium tag colors (Gold for VIP, Indigo for Fidèle, Emerald for Vérifié, Slate for Non vérifié).
 - **Testing**:
   - `tests/api/trust.test.ts`: Added tests verifying admin role exclusion and correct evaluation of all 4 status tiers.
+- **PWA Asset Updates**:
+  - `public/logo.jpeg`: Overwrote default logo asset with the new custom brand icon for standalone app installs.
+- **Carousel UI Refinements**:
+  - `components/home/NewProductsSection.tsx`, `components/home/PopularProductsSection.tsx`, `components/home/FeaturedProducts.tsx`: Updated slide indicator dots to make the active dot longer (w-8 pill-shape) than the inactive ones (w-3) to create a premium, dynamic feel.
 
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
