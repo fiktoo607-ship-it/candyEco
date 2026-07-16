@@ -10,6 +10,7 @@ export interface User {
   completedOrderCount: number;
   trustScore: number;
   latestActivity: string;
+  status: string;
 }
 
 export function formatFrenchDate(dateInput: Date | string): string {
@@ -28,6 +29,40 @@ export function formatFrenchDate(dateInput: Date | string): string {
   const minutes = String(date.getMinutes()).padStart(2, '0');
   
   return `${day} ${month} ${year}, ${hours}:${minutes}`;
+}
+
+export function getStatusBadge(status: string, isDesktop = false) {
+  const paddingClass = isDesktop ? 'px-sm py-xs text-xs' : 'px-sm py-[2px] text-[10px]';
+  switch (status) {
+    case 'VIP':
+      return (
+        <span className={`inline-flex items-center gap-xs rounded-full bg-amber-500/10 ${paddingClass} font-bold text-amber-600 border border-amber-500/20`}>
+          <span className="material-symbols-outlined text-xs select-none">stars</span>
+          VIP
+        </span>
+      );
+    case 'Fidèle':
+      return (
+        <span className={`inline-flex items-center gap-xs rounded-full bg-indigo-500/10 ${paddingClass} font-bold text-indigo-600 border border-indigo-500/20`}>
+          <span className="material-symbols-outlined text-xs select-none">favorite</span>
+          Fidèle
+        </span>
+      );
+    case 'Vérifié':
+      return (
+        <span className={`inline-flex items-center gap-xs rounded-full bg-emerald-500/10 ${paddingClass} font-bold text-emerald-600 border border-emerald-500/20`}>
+          <span className="material-symbols-outlined text-xs select-none">verified_user</span>
+          Vérifié
+        </span>
+      );
+    default:
+      return (
+        <span className={`inline-flex items-center gap-xs rounded-full bg-slate-500/10 ${paddingClass} font-semibold text-slate-600 border border-slate-500/20`}>
+          <span className="material-symbols-outlined text-xs select-none">pending</span>
+          Non vérifié
+        </span>
+      );
+  }
 }
 
 // ============================================================================
@@ -109,7 +144,7 @@ export function UsersFilters({
       </div>
 
       <div className="text-sm text-on-surface-variant font-medium flex-shrink-0 mt-sm lg:mt-0 lg:text-right border-t border-outline-variant/10 pt-sm lg:border-t-0 lg:pt-0">
-        Total : <span className="text-primary font-bold">{totalUsers}</span> utilisateur(s)
+        Total : <span className="text-primary font-bold">{totalUsers}</span> client(s)
       </div>
     </div>
   );
@@ -142,7 +177,7 @@ export function UsersTable({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-md p-md lg:hidden bg-surface/20">
         {filteredUsers.length === 0 ? (
           <div className="col-span-full py-xl text-center text-on-surface-variant font-medium">
-            Aucun utilisateur trouvé.
+            Aucun client trouvé.
           </div>
         ) : (
           filteredUsers.map((user) => {
@@ -168,17 +203,7 @@ export function UsersTable({
                       </div>
                     </div>
                     <div>
-                      {user.role === 'admin' ? (
-                        <span className="inline-flex items-center gap-xs rounded-full bg-primary/10 px-sm py-[2px] text-[10px] font-bold text-primary border border-primary/20">
-                          <span className="material-symbols-outlined text-xs select-none">shield</span>
-                          Admin
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-xs rounded-full bg-surface-container-high px-sm py-[2px] text-[10px] font-semibold text-on-surface-variant border border-outline-variant/30">
-                          <span className="material-symbols-outlined text-xs select-none">person</span>
-                          Client
-                        </span>
-                      )}
+                      {getStatusBadge(user.status)}
                     </div>
                   </div>
 
@@ -223,7 +248,7 @@ export function UsersTable({
                       <button
                         onClick={() => onDeleteUser(user.id)}
                         className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-sm py-[8px] text-xs font-bold text-error hover:bg-rose-500/10 transition-colors flex items-center gap-xs"
-                        title="Supprimer l'utilisateur"
+                        title="Supprimer le client"
                       >
                         <span className="material-symbols-outlined text-sm">delete</span>
                         Supprimer
@@ -244,7 +269,7 @@ export function UsersTable({
             <tr className="border-b border-outline-variant/30 bg-surface-container-low text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
               <th className="p-md">Nom</th>
               <th className="p-md">E-mail / Téléphone</th>
-              <th className="p-md">Rôle</th>
+              <th className="p-md">Statut</th>
               <th className="p-md">Commandes</th>
               <th className="p-md">Points de Confiance</th>
               <th className="p-md">Dernière Activité</th>
@@ -255,7 +280,7 @@ export function UsersTable({
             {filteredUsers.length === 0 ? (
               <tr>
                 <td colSpan={7} className="p-md text-center text-on-surface-variant">
-                  Aucun utilisateur trouvé.
+                  Aucun client trouvé.
                 </td>
               </tr>
             ) : (
@@ -272,17 +297,7 @@ export function UsersTable({
                     </div>
                   </td>
                   <td className="p-md">
-                    {user.role === 'admin' ? (
-                      <span className="inline-flex items-center gap-xs rounded-full bg-primary/10 px-sm py-xs text-xs font-bold text-primary border border-primary/20">
-                        <span className="material-symbols-outlined text-xs select-none">shield</span>
-                        Administrateur
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-xs rounded-full bg-surface-container-high px-sm py-xs text-xs font-semibold text-on-surface-variant border border-outline-variant/30">
-                        <span className="material-symbols-outlined text-xs select-none">person</span>
-                        Utilisateur
-                      </span>
-                    )}
+                    {getStatusBadge(user.status, true)}
                   </td>
                   <td className="p-md font-bold text-on-surface-variant">
                     {user.completedOrderCount}
@@ -305,7 +320,7 @@ export function UsersTable({
                       <button
                         onClick={() => onDeleteUser(user.id)}
                         className="inline-flex items-center justify-center h-8 w-8 rounded-xl border border-rose-500/20 text-on-surface-variant hover:text-error hover:bg-rose-500/5 transition-colors"
-                        title="Supprimer l'utilisateur"
+                        title="Supprimer le client"
                       >
                         <span className="material-symbols-outlined text-lg select-none">delete</span>
                       </button>

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import NotificationBell from './NotificationBell';
+import dictionary from '@/lib/copy-dictionary.json';
 
 export default function Sidebar() {
   const { activeTab, setActiveTab } = useDashboardStore();
@@ -159,11 +160,11 @@ export default function Sidebar() {
                       ? "bg-primary-container/10 text-primary"
                       : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
                   }`}
-                  title="Utilisateurs"
+                  title={dictionary.dashboard.navigation.clients}
                 >
                   <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">group</span>
-                  <span className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
-                    Utilisateurs
+                  <span suppressHydrationWarning className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                    {dictionary.dashboard.navigation.clients}
                   </span>
                 </button>
 
@@ -272,10 +273,10 @@ export default function Sidebar() {
                     ? "bg-primary-container/10 text-primary"
                     : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
                 }`}
-                title={activeCollapsed ? "Utilisateurs" : undefined}
+                title={activeCollapsed ? dictionary.dashboard.navigation.clients : undefined}
               >
                 <span className="material-symbols-outlined text-xl select-none">group</span>
-                {!activeCollapsed && <span className="whitespace-nowrap">Utilisateurs</span>}
+                {!activeCollapsed && <span suppressHydrationWarning className="whitespace-nowrap">{dictionary.dashboard.navigation.clients}</span>}
               </button>
 
               <button

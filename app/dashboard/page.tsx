@@ -50,7 +50,7 @@ export default function DashboardPage() {
                   : activeTab === "qna"
                     ? "Questions & Réponses"
                     : activeTab === "users"
-                      ? "Gestion des utilisateurs"
+                      ? "Gestion des clients"
                       : "Méthodes de livraison"}
           </h1>
           {/* flex-shrink-0 ensures the action buttons area is never compressed */}

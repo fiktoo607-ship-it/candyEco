@@ -23,7 +23,7 @@ export function useUsersSection() {
       setLoading(true);
       const res = await fetch(`/api/users?sortBy=${activeSortBy}&sortOrder=${activeSortOrder}`);
       if (!res.ok) {
-        throw new Error('Impossible de charger les utilisateurs.');
+        throw new Error('Impossible de charger les clients.');
       }
       const data = await res.json();
       setUsers(data);
@@ -52,7 +52,7 @@ export function useUsersSection() {
       }
 
       setUsers((prev) => prev.filter((user) => user.id !== id));
-      showToast("Utilisateur supprimé avec succès !", "success");
+      showToast("Client supprimé avec succès !", "success");
       setConfirmDeleteId(null);
       setDeleteLoading(false);
     } catch (err) {

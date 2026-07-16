@@ -323,17 +323,24 @@
 - **Testing**:
   - `tests/api/trust.test.ts`: Updated tests with `totalAmount` mocked on orders and asserted the floored sum of completed order amounts are correctly returned as points.
 
+### 32. Clients Section & Dynamic Status
+- **Description**: Replaced the general admin dashboard "Utilisateurs" section with a dedicated "Clients" (Customers) section. Filters out administrative roles from the list and calculates client statuses dynamically based on point milestones and order history.
+- **Routing & Navigation**:
+  - `components/dashbord/Sidebar.tsx` & `lib/copy-dictionary.json`: Renamed sidebar tab and tooltips from "Utilisateurs" to "Clients" and synchronized them with the centralized copy dictionary. Applied `suppressHydrationWarning` to the label text spans to avoid Next.js hydration mismatch errors.
+  - `app/dashboard/page.tsx`: Updated main view header to "Gestion des clients".
+- **Backend & API Route**:
+  - `app/api/users/route.ts`: Added `where` constraint to exclude `role` matching `'admin'` or `'ADMIN'`. Computes client status based on priority logic: "VIP" ($\ge 500$ points), "Fidèle" ($\ge 100$ points), "Vérifié" (has at least one `DELIVERED` order), and "Non vérifié" (default).
+- **Dashboard UI**:
+  - `components/dashbord/UsersSection.tsx` & `components/dashbord/hooks/useUsersSection.ts`: Updated loader, delete modals, and toast message texts to use French "client" terms.
+  - `components/dashbord/helpers/UsersSectionHelpers.tsx`: Replaced "Rôle" table column with "Statut" and implemented a custom status badge renderer using specific icons and premium tag colors (Gold for VIP, Indigo for Fidèle, Emerald for Vérifié, Slate for Non vérifié).
+- **Testing**:
+  - `tests/api/trust.test.ts`: Added tests verifying admin role exclusion and correct evaluation of all 4 status tiers.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 152 tests pass successfully under `vitest` (`npx vitest run`).
-
-
-
-
-
-
+  - All 153 tests pass successfully under `vitest` (`npx vitest run`).
 
 
 

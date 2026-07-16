@@ -15,6 +15,11 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') || 'asc';
 
     const dbUsers = await prisma.user.findMany({
+      where: {
+        role: {
+          notIn: ['admin', 'ADMIN'],
+        },
+      },
       include: {
         orders: {
           select: {
@@ -42,6 +47,17 @@ export async function GET(request: NextRequest) {
         }
       });
 
+      // Determine client status
+      let status = 'Non vérifié';
+      const hasDeliveredOrder = user.orders.some((order) => order.status === 'DELIVERED');
+      if (trustScore >= 500) {
+        status = 'VIP';
+      } else if (trustScore >= 100) {
+        status = 'Fidèle';
+      } else if (hasDeliveredOrder) {
+        status = 'Vérifié';
+      }
+
       return {
         id: user.id,
         name: user.name,
@@ -52,6 +68,7 @@ export async function GET(request: NextRequest) {
         createdAt: user.createdAt,
         completedOrderCount,
         trustScore,
+        status,
         latestActivity: latestActivity.toISOString(),
       };
     });

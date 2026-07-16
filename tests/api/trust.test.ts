@@ -223,5 +223,74 @@ describe('User Trust System API Tests', () => {
       expect(users[0].id).toBe('u1'); // Older latest activity (Jan 3 vs Jan 5)
       expect(users[1].id).toBe('u2');
     });
+
+    it('should filter out administrators and calculate client status correctly', async () => {
+      vi.mocked(getServerSession).mockResolvedValue({
+        user: { id: 'admin-id', role: 'admin' },
+      } as any);
+
+      const statusMockUsers = [
+        {
+          id: 'u_vip',
+          name: 'VIP User',
+          email: 'vip@example.com',
+          role: 'user',
+          orders: [{ createdAt: new Date('2026-01-02T10:00:00.000Z'), status: 'DELIVERED', totalAmount: 550.0 }],
+        },
+        {
+          id: 'u_fidele',
+          name: 'Fidele User',
+          email: 'fidele@example.com',
+          role: 'user',
+          orders: [{ createdAt: new Date('2026-01-02T10:00:00.000Z'), status: 'DELIVERED', totalAmount: 120.0 }],
+        },
+        {
+          id: 'u_verifie',
+          name: 'Verifie User',
+          email: 'verifie@example.com',
+          role: 'user',
+          orders: [{ createdAt: new Date('2026-01-02T10:00:00.000Z'), status: 'DELIVERED', totalAmount: 50.0 }],
+        },
+        {
+          id: 'u_non_verifie',
+          name: 'Non Verifie User',
+          email: 'nonverifie@example.com',
+          role: 'user',
+          orders: [{ createdAt: new Date('2026-01-02T10:00:00.000Z'), status: 'PENDING', totalAmount: 30.0 }],
+        },
+      ];
+
+      vi.mocked(prisma.user.findMany).mockResolvedValue(statusMockUsers as any);
+
+      const req = new NextRequest('http://localhost/api/users');
+      const response = await getUsers(req);
+      expect(response.status).toBe(200);
+
+      const users = await response.json();
+      expect(users).toHaveLength(4);
+
+      const vip = users.find((u: any) => u.id === 'u_vip');
+      expect(vip.status).toBe('VIP');
+
+      const fidele = users.find((u: any) => u.id === 'u_fidele');
+      expect(fidele.status).toBe('Fidèle');
+
+      const verifie = users.find((u: any) => u.id === 'u_verifie');
+      expect(verifie.status).toBe('Vérifié');
+
+      const nonVerifie = users.find((u: any) => u.id === 'u_non_verifie');
+      expect(nonVerifie.status).toBe('Non vérifié');
+
+      // Assert database query filtered out admin roles
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            role: expect.objectContaining({
+              notIn: ['admin', 'ADMIN']
+            })
+          })
+        })
+      );
+    });
   });
 });

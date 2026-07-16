@@ -5,6 +5,11 @@
     "about": "Notre Histoire",
     "contact": "Contact"
   },
+  "dashboard": {
+    "navigation": {
+      "clients": "Clients"
+    }
+  },
   "productCard": {
     "addToCart": "Ajouter au panier",
     "unavailable": "Indisponible",

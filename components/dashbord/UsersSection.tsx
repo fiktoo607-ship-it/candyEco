@@ -32,7 +32,7 @@ export default function UsersSection() {
       <div className="flex h-64 items-center justify-center">
         <div className="flex flex-col items-center gap-md">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          <p className="text-sm font-semibold animate-pulse">Chargement des utilisateurs...</p>
+          <p className="text-sm font-semibold animate-pulse">Chargement des clients...</p>
         </div>
       </div>
     );
@@ -87,8 +87,8 @@ export default function UsersSection() {
           }
         }}
         isSubmitting={deleteLoading}
-        title="Supprimer l'utilisateur"
-        message="Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est permanente et ne peut pas être annulée."
+        title="Supprimer le client"
+        message="Êtes-vous sûr de vouloir supprimer ce client ? Cette action est permanente et ne peut pas être annulée."
       />
     </div>
   );
