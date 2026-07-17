@@ -521,6 +521,25 @@ describe('Products API', () => {
       expect(prisma.product.update).toHaveBeenCalled();
     });
 
+    it('should NOT trigger deleteImage on Cloudinary if imageUrl changes but database transaction fails', async () => {
+      vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(mockProduct);
+      vi.mocked(prisma.product.update).mockRejectedValueOnce(new Error('Update database failed'));
+
+      const updateData = {
+        imageUrl: 'https://res.cloudinary.com/dummy/image/upload/v12345/products/new-mock.jpg',
+      };
+
+      const req = new NextRequest(`http://localhost/api/products/${mockProduct.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData),
+      });
+
+      const response = await updateProduct(req, { params: Promise.resolve({ id: mockProduct.id }) });
+      expect(response.status).toBe(500);
+      expect(deleteImage).not.toHaveBeenCalled();
+    });
+
     it('should return 500 when product update fails in the database', async () => {
       vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(mockProduct);
       vi.mocked(prisma.product.update).mockRejectedValueOnce(new Error('Update database timeout'));
@@ -676,6 +695,19 @@ describe('Products API', () => {
       expect(prisma.product.delete).toHaveBeenCalledWith({
         where: { id: mockProduct.id },
       });
+    });
+
+    it('should NOT trigger deleteImage on Cloudinary if database deletion transaction fails', async () => {
+      vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(mockProduct);
+      vi.mocked(prisma.product.delete).mockRejectedValueOnce(new Error('Delete database failed'));
+
+      const req = new NextRequest(`http://localhost/api/products/${mockProduct.id}`, {
+        method: 'DELETE',
+      });
+
+      const response = await deleteProduct(req, { params: Promise.resolve({ id: mockProduct.id }) });
+      expect(response.status).toBe(500);
+      expect(deleteImage).not.toHaveBeenCalled();
     });
 
     it('should return 500 when product deletion fails', async () => {

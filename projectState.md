@@ -415,11 +415,20 @@
 - **Testing**:
   - `tests/product-modal.test.tsx` [NEW]: Focused JSDOM unit tests verifying create/edit initialization, slug auto-generation, and tags manipulation locally.
 
+### 41. Asset Deletion Integrity & Race Condition Resolution
+- **Description**: Resolved asset deletion race conditions in the product PUT and DELETE endpoints to protect against orphaned references and broken image URLs in the database.
+- **Core Logic**:
+  - `app/api/products/[id]/route.ts`: Placed Prisma update and delete database queries inside explicit Prisma transaction blocks (`prisma.$transaction`).
+  - Deferred the Cloudinary `deleteImage` calls until *after* the database transactions commit successfully.
+  - If a database operation fails (e.g., database timeout or foreign key constraint violation), the endpoint returns a 500 error response without invoking the Cloudinary asset cleanup, keeping the local image URLs and assets completely in sync.
+- **Testing**:
+  - `tests/api/products.test.ts`: Added automated unit/integration tests confirming that a failing database query does not delete assets from Cloudinary.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 165 tests pass successfully under `vitest` (`npx vitest run`) across 21 test files.
+  - All 167 tests pass successfully under `vitest` (`npx vitest run`) across 21 test files.
 
 
 
