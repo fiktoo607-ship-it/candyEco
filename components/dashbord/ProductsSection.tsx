@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useProducts } from '@/lib/hooks/use-products';
 import { useDashboardStore } from '@/lib/dashboard-store';
 import PriceDisplay from '@/components/PriceDisplay';
+import { ProductStateBadge } from './helpers/ProductModalHelpers';
+
 
 export default function ProductsSection() {
   const { data: products = [], isLoading, error: productsError } = useProducts(true);
@@ -223,21 +225,7 @@ export default function ProductsSection() {
                       />
                       {/* State Badge */}
                       <div className="absolute top-2 left-2">
-                        <span
-                          className={`rounded-full px-sm py-[2px] text-[10px] font-bold uppercase border ${
-                            product.state === "exist"
-                              ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
-                              : product.state === "outofStock"
-                                ? "bg-rose-500/15 border-rose-500/30 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400"
-                                : "bg-amber-500/15 border-amber-500/30 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
-                          }`}
-                        >
-                          {product.state === "exist"
-                            ? "Disponible"
-                            : product.state === "outofStock"
-                              ? "Indisponible"
-                              : "Bientôt"}
-                        </span>
+                        <ProductStateBadge state={product.state} />
                       </div>
                       {/* Price Tag */}
                       <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md px-sm py-[2px] rounded-lg">
@@ -341,21 +329,7 @@ export default function ProductsSection() {
                         <PriceDisplay price={product.price} />
                       </td>
                       <td className="p-md">
-                        <span
-                          className={`rounded-full px-sm py-[2px] text-xs font-semibold ${
-                            product.state === "exist"
-                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400"
-                              : product.state === "outofStock"
-                                ? "bg-rose-100 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400"
-                                : "bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400"
-                          }`}
-                        >
-                          {product.state === "exist"
-                            ? "Disponible"
-                            : product.state === "outofStock"
-                              ? "Indisponible"
-                              : "Bientôt"}
-                        </span>
+                        <ProductStateBadge state={product.state} />
                       </td>
                       <td className="p-md font-semibold text-on-surface-variant">
                         {product.visibility ?? 0}

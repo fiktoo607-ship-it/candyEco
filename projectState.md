@@ -375,9 +375,50 @@
 - **Testing**:
   - `tests/print-order.test.tsx` [NEW]: Unit tests for receipt printing layout, window.print triggering, and state cleanup.
 
+### 38. Unused Code & Dependency Cleanup
+- **Description**: Removed the unused component `PushNotificationManager.tsx` (previously part of the Web Push notification system) and purged the obsolete packages `firebase`, `web-push`, and `@types/web-push` from `package.json` and `package-lock.json` to optimize bundle sizing and keep the codebase minimal.
+- **Removed Files**:
+  - `components/PushNotificationManager.tsx` [DELETE]
+- **Modified Files**:
+  - `package.json` [MODIFY]
+  - `package-lock.json` [MODIFY]
+
+### 39. Dashboard Optimization Pass (Products & Orders)
+- **Description**: Refactored the dashboard's product and order management code to remove redundancies, centralize core business formatting logic, and improve maintainability.
+- **Deduplication & Optimizations**:
+  - **Date Formatting**: Extracted `formatFrenchDate` from duplicate local declarations in `OrdersSectionHelpers.tsx` and `UsersSectionHelpers.tsx` into a new centralized utility `lib/date.ts`. Updated `OrderPrintReceipt.tsx` to consume the utility.
+  - **Slug Generation**: Created a reusable `generateSlug` helper in `lib/products.ts` and integrated it across title changes and manual generation triggers in `ProductModalHelpers.tsx`.
+  - **Product State Badges**: Created a single `ProductStateBadge` component in `ProductModalHelpers.tsx` and removed identical inline styling logic in `ProductsSection.tsx` mobile card grid and desktop table views.
+  - **Order Status Configs**: Centralized order status translation strings and Tailwind color configurations into `ORDER_STATUS_CONFIG` inside `OrdersSectionHelpers.tsx`, reducing visual noise in status dropdowns and detail views.
+  - **Image Default Cleanup**: Swapped out the default Unsplash image placeholder in `dashboard-store.ts` for an empty string (`""`) to represent a cleaner initial product creation state.
+- **New Files**:
+  - `lib/date.ts` [NEW]
+- **Modified Files**:
+  - `lib/products.ts` [MODIFY]
+  - `lib/dashboard-store.ts` [MODIFY]
+  - `components/dashbord/helpers/ProductModalHelpers.tsx` [MODIFY]
+  - `components/dashbord/ProductsSection.tsx` [MODIFY]
+  - `components/dashbord/helpers/OrdersSectionHelpers.tsx` [MODIFY]
+  - `components/dashbord/helpers/UsersSectionHelpers.tsx` [MODIFY]
+  - `components/dashbord/helpers/OrderPrintReceipt.tsx` [MODIFY]
+
+### 40. Localized Product Modal Form State
+- **Description**: Refactored the product modal form state to move all transient form inputs (`title`, `slug`, `price`, `category`, `description`, `story`, `limitBay`, etc.) from the global Zustand store `useDashboardStore` into local React state. This prevents global dashboard components from re-rendering on every keystroke, resulting in a completely fluid typing experience. The Zustand store is now strictly kept for modal orchestration.
+- **Deduplication & Optimizations**:
+  - **Local React State**: Form state, tag lists, and uploaded images are managed locally inside `useProductModal.ts`.
+  - **Refs-Based Initialization**: Implemented `prevIsOpen` and `prevEditingId` refs to initialize form states exactly once when the modal is opened or when changing products, preventing infinite rendering loops and background refetch overwrites.
+  - **Autogeneration of Slugs**: Slugs are generated dynamically from local titles, keeping the UI interactive.
+- **Affected Files**:
+  - `lib/dashboard-store.ts` [MODIFY]
+  - `components/dashbord/hooks/useProductModal.ts` [MODIFY]
+- **Testing**:
+  - `tests/product-modal.test.tsx` [NEW]: Focused JSDOM unit tests verifying create/edit initialization, slug auto-generation, and tags manipulation locally.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 161 tests pass successfully under `vitest` (`npx vitest run`) across 20 test files.
+  - All 165 tests pass successfully under `vitest` (`npx vitest run`) across 21 test files.
+
+
 

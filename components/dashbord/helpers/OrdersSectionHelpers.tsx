@@ -2,24 +2,38 @@ import React, { useState } from 'react';
 import { Order } from '@/lib/hooks/use-orders';
 import PriceDisplay from '@/components/PriceDisplay';
 import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
+import { formatFrenchDate } from '@/lib/date';
 
-export function formatFrenchDate(dateInput: Date | string): string {
-  const date = new Date(dateInput);
-  if (isNaN(date.getTime())) return '';
-  
-  const day = date.getDate();
-  const months = [
-    'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
-    'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'
-  ];
-  const month = months[date.getMonth()];
-  const year = date.getFullYear();
-  
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  
-  return `${day} ${month} ${year}, ${hours}:${minutes}`;
-}
+export const ORDER_STATUS_CONFIG: Record<
+  'PENDING' | 'ACCEPTED' | 'DELIVERED' | 'CANCELLED',
+  { label: string; bg: string; selectClass: string; badgeClass: string }
+> = {
+  PENDING: {
+    label: 'En attente',
+    bg: 'bg-amber-500/10 border-amber-500/30 text-amber-800',
+    selectClass: 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900',
+    badgeClass: 'bg-amber-100 text-amber-800',
+  },
+  ACCEPTED: {
+    label: 'Acceptée',
+    bg: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800',
+    selectClass: 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900',
+    badgeClass: 'bg-emerald-100 text-emerald-800',
+  },
+  DELIVERED: {
+    label: 'Livrée',
+    bg: 'bg-blue-500/10 border-blue-500/30 text-blue-800',
+    selectClass: 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900',
+    badgeClass: 'bg-blue-100 text-blue-800',
+  },
+  CANCELLED: {
+    label: 'Annulée',
+    bg: 'bg-rose-500/10 border-rose-500/30 text-rose-800',
+    selectClass: 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900',
+    badgeClass: 'bg-rose-100 text-rose-800',
+  },
+};
+
 
 // ============================================================================
 // 1. OrdersFilters
@@ -236,12 +250,7 @@ export function OrdersTable({
       {/* Mobile/Tablet Card Grid Layout (< 1024px) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-md p-md lg:hidden bg-surface/20">
         {orders.map((order) => {
-          const statusConfig = {
-            PENDING: { bg: 'bg-amber-500/10 border-amber-500/30 text-amber-800', label: 'En attente' },
-            ACCEPTED: { bg: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800', label: 'Acceptée' },
-            DELIVERED: { bg: 'bg-blue-500/10 border-blue-500/30 text-blue-800', label: 'Livrée' },
-            CANCELLED: { bg: 'bg-rose-500/10 border-rose-500/30 text-rose-800', label: 'Annulée' },
-          }[order.status as 'PENDING' | 'ACCEPTED' | 'DELIVERED' | 'CANCELLED'] || { bg: 'bg-surface-variant', label: order.status };
+          const statusConfig = ORDER_STATUS_CONFIG[order.status as keyof typeof ORDER_STATUS_CONFIG] || { bg: 'bg-surface-variant', label: order.status };
 
           const isExpanded = expandedOrderIds.includes(order.id);
 
@@ -330,13 +339,7 @@ export function OrdersTable({
                           );
                         }}
                         className={`w-full rounded-xl border px-sm pr-7 py-xs text-xs font-bold outline-none cursor-pointer focus:border-primary disabled:opacity-50 appearance-none h-[34px] ${
-                          order.status === 'PENDING'
-                            ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900'
-                            : order.status === 'ACCEPTED'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
-                            : order.status === 'DELIVERED'
-                            ? 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900'
-                            : 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900'
+                          ORDER_STATUS_CONFIG[order.status as keyof typeof ORDER_STATUS_CONFIG]?.selectClass || 'bg-surface border-outline'
                         }`}
                       >
                         {order.status === 'PENDING' && (
@@ -452,13 +455,7 @@ export function OrdersTable({
                           );
                         }}
                         className={`rounded-xl border px-sm pr-7 py-xs text-xs font-bold outline-none cursor-pointer focus:border-primary disabled:opacity-50 appearance-none h-[34px] ${
-                          order.status === 'PENDING'
-                            ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900'
-                            : order.status === 'ACCEPTED'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
-                            : order.status === 'DELIVERED'
-                            ? 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900'
-                            : 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900'
+                          ORDER_STATUS_CONFIG[order.status as keyof typeof ORDER_STATUS_CONFIG]?.selectClass || 'bg-surface border-outline'
                         }`}
                       >
                         {order.status === 'PENDING' && (
@@ -735,15 +732,9 @@ export function OrderDetailsModal({
             <div>
               <span className="text-[10px] text-on-surface-variant font-bold block uppercase tracking-wider">Statut</span>
               <span className={`inline-block mt-xs rounded-full px-sm py-[2px] text-xs font-bold uppercase ${
-                order.status === 'PENDING'
-                  ? 'bg-amber-100 text-amber-800'
-                  : order.status === 'ACCEPTED'
-                  ? 'bg-emerald-100 text-emerald-800'
-                  : order.status === 'DELIVERED'
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-rose-100 text-rose-800'
+                ORDER_STATUS_CONFIG[order.status as keyof typeof ORDER_STATUS_CONFIG]?.badgeClass || 'bg-neutral-100 text-neutral-800'
               }`}>
-                {order.status === 'PENDING' ? 'En attente' : order.status === 'ACCEPTED' ? 'Acceptée' : order.status === 'DELIVERED' ? 'Livrée' : 'Annulée'}
+                {ORDER_STATUS_CONFIG[order.status as keyof typeof ORDER_STATUS_CONFIG]?.label || order.status}
               </span>
             </div>
           </div>
@@ -831,13 +822,7 @@ export function OrderStatusConfirmModal({
   if (!isOpen) return null;
 
   const statusLabel = (status: string) => {
-    switch (status) {
-      case 'PENDING': return 'En attente';
-      case 'ACCEPTED': return 'Acceptée';
-      case 'DELIVERED': return 'Livrée';
-      case 'CANCELLED': return 'Annulée';
-      default: return status;
-    }
+    return ORDER_STATUS_CONFIG[status as keyof typeof ORDER_STATUS_CONFIG]?.label || status;
   };
 
   return (

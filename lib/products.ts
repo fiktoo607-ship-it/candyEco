@@ -71,3 +71,15 @@ export function filterProductsByTitle(products: Product[], query: string): Produ
     });
   });
 }
+
+/**
+ * Generates a URL-friendly slug from a text string, supporting Arabic/French characters.
+ */
+export function generateSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-ء-ي]/g, '');
+}
+

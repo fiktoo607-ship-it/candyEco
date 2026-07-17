@@ -1,11 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDashboardStore } from '@/lib/dashboard-store';
-import { useCreateProduct, useUpdateProduct, useUploadImage } from '@/lib/hooks/use-products';
+import { useCreateProduct, useUpdateProduct, useUploadImage, useProducts } from '@/lib/hooks/use-products';
 import { convertToWebP } from '@/lib/image-utils';
+
+const EMPTY_PRODUCTS: any[] = [];
 
 export function useProductModal() {
   const store = useDashboardStore();
+  
+  // Localized React states for form fields
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [price, setPrice] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [description, setDescription] = useState("");
+  const [story, setStory] = useState("");
+  const [limitBay, setLimitBay] = useState("");
+  const [state, setState] = useState<'exist' | 'outofStock' | 'commingSoun'>("exist");
+  const [publishedAt, setPublishedAt] = useState("");
+  const [category, setCategory] = useState("");
+  const [visibility, setVisibility] = useState("0");
+  const [rating, setRating] = useState("0.0");
+  const [tags, setTags] = useState<string[]>([]);
   const [newTagInput, setNewTagInput] = useState("");
+
+  const { data: products = EMPTY_PRODUCTS } = useProducts(true);
 
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
@@ -14,16 +34,74 @@ export function useProductModal() {
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const isUploading = uploadMutation.isPending;
 
+  // Refs to track previous modal state and prevent infinite loops / overwrite on background refetches
+  const prevIsOpen = React.useRef(false);
+  const prevEditingId = React.useRef<string | null>(null);
+
+  // Initialize or reset form state when the modal opens or the product being edited changes
+  useEffect(() => {
+    const opened = store.isModalOpen && !prevIsOpen.current;
+    const idChanged = store.editingId !== prevEditingId.current;
+
+    if (store.isModalOpen && (opened || idChanged)) {
+      if (store.modalMode === 'edit' && store.editingId) {
+        const p = products.find((prod) => prod.id === store.editingId);
+        if (p) {
+          setTitle(p.title);
+          setSlug(p.slug);
+          setPrice(p.price);
+          setImageUrl(p.imageUrl);
+          setUploadError(null);
+          setDescription(p.description);
+          setStory(p.story);
+          setLimitBay(p.limitBay !== null ? String(p.limitBay) : '');
+          setState(p.state as 'exist' | 'outofStock' | 'commingSoun');
+          setPublishedAt(p.publishedAt ? new Date(p.publishedAt).toISOString().substring(0, 10) : '');
+          setCategory(p.category);
+          setVisibility(String(p.visibility ?? 0));
+          setRating(String(p.rating ?? 0.0));
+          setTags(p.tags || []);
+          
+          prevIsOpen.current = store.isModalOpen;
+          prevEditingId.current = store.editingId;
+        }
+      } else if (store.modalMode === 'create') {
+        setTitle('');
+        setSlug('');
+        setPrice('');
+        setImageUrl('');
+        setUploadError(null);
+        setDescription('');
+        setStory('');
+        setLimitBay('');
+        setState('exist');
+        setPublishedAt(new Date().toISOString().substring(0, 10));
+        setCategory(store.defaultCategory || 'gâteau');
+        setVisibility('0');
+        setRating('0.0');
+        setTags([]);
+        
+        prevIsOpen.current = store.isModalOpen;
+        prevEditingId.current = store.editingId;
+      }
+    }
+
+    if (!store.isModalOpen) {
+      prevIsOpen.current = false;
+      prevEditingId.current = null;
+    }
+  }, [store.isModalOpen, store.modalMode, store.editingId, products, store.defaultCategory]);
+
   const handleAddTag = () => {
     const trimmed = newTagInput.trim();
-    if (trimmed && !store.tags.includes(trimmed)) {
-      store.setTags([...store.tags, trimmed]);
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags([...tags, trimmed]);
       setNewTagInput("");
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    store.setTags(store.tags.filter((t) => t !== tagToRemove));
+    setTags(tags.filter((t) => t !== tagToRemove));
   };
 
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -37,7 +115,7 @@ export function useProductModal() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    store.setUploadError(null);
+    setUploadError(null);
 
     try {
       // Convert image to WebP format before uploading
@@ -51,7 +129,7 @@ export function useProductModal() {
       const webpFile = new File([webpBlob], webpFileName, { type: "image/webp" });
 
       if (webpFile.size > 10 * 1024 * 1024) {
-        store.setUploadError("La taille de l'image doit être inférieure à 10 Mo");
+        setUploadError("La taille de l'image doit être inférieure à 10 Mo");
         return;
       }
 
@@ -59,11 +137,11 @@ export function useProductModal() {
       formData.append("file", webpFile);
 
       const data = await uploadMutation.mutateAsync(formData);
-      store.setImageUrl(data.url);
+      setImageUrl(data.url);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Échec du chargement de l'image";
       console.error(msg);
-      store.setUploadError(msg);
+      setUploadError(msg);
     }
   };
 
@@ -73,25 +151,25 @@ export function useProductModal() {
       store.showToast("Veuillez attendre la fin du chargement de l'image.", "error");
       return;
     }
-    if (!store.title || !store.slug || !store.price || !store.imageUrl || !store.description || !store.story) {
+    if (!title || !slug || !price || !imageUrl || !description || !story) {
       store.showToast("Veuillez remplir tous les champs obligatoires.", "error");
       return;
     }
 
     const payload = {
-      title: store.title,
-      slug: store.slug,
-      price: store.price,
-      imageUrl: store.imageUrl,
-      description: store.description,
-      story: store.story,
-      category: store.category,
-      limitBay: store.limitBay.trim() === '' ? null : Number(store.limitBay),
-      state: store.state,
-      visibility: store.visibility.trim() === '' ? 0 : Number(store.visibility),
-      rating: store.rating.trim() === '' ? 0.0 : Number(store.rating),
-      tags: store.tags,
-      publishedAt: store.publishedAt ? new Date(store.publishedAt).toISOString() : null,
+      title,
+      slug,
+      price,
+      imageUrl,
+      description,
+      story,
+      category,
+      limitBay: limitBay.trim() === '' ? null : Number(limitBay),
+      state,
+      visibility: visibility.trim() === '' ? 0 : Number(visibility),
+      rating: rating.trim() === '' ? 0.0 : Number(rating),
+      tags,
+      publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
     };
 
     try {
@@ -116,32 +194,32 @@ export function useProductModal() {
     isModalOpen: store.isModalOpen,
     setIsModalOpen: store.setIsModalOpen,
     modalMode: store.modalMode,
-    title: store.title,
-    setTitle: store.setTitle,
-    slug: store.slug,
-    setSlug: store.setSlug,
-    price: store.price,
-    setPrice: store.setPrice,
-    imageUrl: store.imageUrl,
-    setImageUrl: store.setImageUrl,
-    uploadError: store.uploadError,
-    description: store.description,
-    setDescription: store.setDescription,
-    story: store.story,
-    setStory: store.setStory,
-    limitBay: store.limitBay,
-    setLimitBay: store.setLimitBay,
-    state: store.state,
-    setState: store.setState,
-    publishedAt: store.publishedAt,
-    setPublishedAt: store.setPublishedAt,
-    category: store.category,
-    setCategory: store.setCategory,
-    visibility: store.visibility,
-    setVisibility: store.setVisibility,
-    rating: store.rating,
-    setRating: store.setRating,
-    tags: store.tags,
+    title,
+    setTitle,
+    slug,
+    setSlug,
+    price,
+    setPrice,
+    imageUrl,
+    setImageUrl,
+    uploadError,
+    description,
+    setDescription,
+    story,
+    setStory,
+    limitBay,
+    setLimitBay,
+    state,
+    setState,
+    publishedAt,
+    setPublishedAt,
+    category,
+    setCategory,
+    visibility,
+    setVisibility,
+    rating,
+    setRating,
+    tags,
     newTagInput,
     setNewTagInput,
     isSubmitting,

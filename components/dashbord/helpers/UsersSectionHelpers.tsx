@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatFrenchDate } from '@/lib/date';
 
 export interface User {
   id: string;
@@ -13,23 +14,6 @@ export interface User {
   status: string;
 }
 
-export function formatFrenchDate(dateInput: Date | string): string {
-  const date = new Date(dateInput);
-  if (isNaN(date.getTime()) || date.getTime() === 0) return '—';
-  
-  const day = date.getDate();
-  const months = [
-    'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
-    'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'
-  ];
-  const month = months[date.getMonth()];
-  const year = date.getFullYear();
-  
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  
-  return `${day} ${month} ${year}, ${hours}:${minutes}`;
-}
 
 export function getStatusBadge(status: string, isDesktop = false) {
   const paddingClass = isDesktop ? 'px-sm py-xs text-xs' : 'px-sm py-[2px] text-[10px]';

@@ -3,7 +3,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { Order } from '@/lib/hooks/use-orders';
-import { formatFrenchDate } from './OrdersSectionHelpers';
+import { formatFrenchDate } from '@/lib/date';
 import { formatPrice } from '@/lib/price';
 
 interface OrderPrintReceiptProps {

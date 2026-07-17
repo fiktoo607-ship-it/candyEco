@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import { generateSlug } from '@/lib/products';
 
 const CATEGORIES_MAPPING = [
   { value: 'gâteau', label: 'Gâteau' },
@@ -48,13 +49,7 @@ export function ProductBasicInfo({
             onChange={(e) => {
               setTitle(e.target.value);
               if (modalMode === "create") {
-                setSlug(
-                  e.target.value
-                    .toLowerCase()
-                    .trim()
-                    .replace(/\s+/g, "-")
-                    .replace(/[^a-z0-9-ء-ي]/g, ""),
-                );
+                setSlug(generateSlug(e.target.value));
               }
             }}
             className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
@@ -68,13 +63,7 @@ export function ProductBasicInfo({
             <button
               type="button"
               onClick={() => {
-                setSlug(
-                  title
-                    .toLowerCase()
-                    .trim()
-                    .replace(/\s+/g, "-")
-                    .replace(/[^a-z0-9-ء-ي]/g, "")
-                );
+                setSlug(generateSlug(title));
               }}
               className="text-xs font-bold text-primary hover:text-surface-tint flex items-center gap-[2px] transition-colors"
               title="Générer le slug à partir du titre"
@@ -89,7 +78,7 @@ export function ProductBasicInfo({
             placeholder="Ex: gateau-au-chocolat"
             value={slug}
             onChange={(e) =>
-              setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))
+              setSlug(generateSlug(e.target.value))
             }
             className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
@@ -430,3 +419,22 @@ export function ProductDescriptionStory({
     </>
   );
 }
+
+// ============================================================================
+// 7. ProductStateBadge
+// ============================================================================
+
+export function ProductStateBadge({ state }: { state: string }) {
+  const config = {
+    exist: { text: 'Disponible', style: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-500/30' },
+    outofStock: { text: 'Indisponible', style: 'bg-rose-100 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400 border-rose-500/30' },
+    commingSoun: { text: 'Bientôt', style: 'bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400 border-amber-500/30' },
+  }[state] || { text: state, style: 'bg-neutral-100 text-neutral-800 border-neutral-300' };
+
+  return (
+    <span className={`rounded-full px-sm py-[2px] text-xs font-semibold border ${config.style}`}>
+      {config.text}
+    </span>
+  );
+}
+
