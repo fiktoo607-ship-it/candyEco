@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useProducts } from '@/lib/hooks/use-products';
 import { useDashboardStore } from '@/lib/dashboard-store';
 import PriceDisplay from '@/components/PriceDisplay';
-import { ProductStateBadge } from './helpers/ProductModalHelpers';
+import { ProductStateBadge } from './products/ProductStateBadge';
 
 
 export default function ProductsSection() {

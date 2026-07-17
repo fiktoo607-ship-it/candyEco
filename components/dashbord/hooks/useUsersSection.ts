@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { User } from '../helpers/UsersSectionHelpers';
+import { User } from '../users/userHelpers';
 import { useDashboardStore } from '@/lib/dashboard-store';
 
 export function useUsersSection() {

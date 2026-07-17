@@ -3,14 +3,12 @@
 import React from 'react';
 import { useProductModal } from './hooks/useProductModal';
 import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
-import {
-  ProductBasicInfo,
-  ProductImageUpload,
-  ProductDetailsInfo,
-  ProductMetrics,
-  ProductTagsEditor,
-  ProductDescriptionStory
-} from './helpers/ProductModalHelpers';
+import { ProductBasicInfo } from './products/ProductBasicInfo';
+import { ProductImageUpload } from './products/ProductImageUpload';
+import { ProductDetailsInfo } from './products/ProductDetailsInfo';
+import { ProductMetrics } from './products/ProductMetrics';
+import { ProductTagsEditor } from './products/ProductTagsEditor';
+import { ProductDescriptionStory } from './products/ProductDescriptionStory';
 
 export default function ProductModal() {
   const {

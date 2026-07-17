@@ -226,14 +226,9 @@
 - **Components**:
   - `components/cart/CheckoutForm.tsx`: Removed the local fallback array for `DeliveryMethod`.
   - `components/home/HeroCarousel.tsx`: Removed the static fallback slides array, rendering nothing (`null`) if no slides are returned from the database.
-
-### 22. Dashboard UI/UX Enhancements
-- **Description**: Centralized currency symbol to Euro, added Google Material Symbols navigation icons with flex alignment in Sidebar, updated tab routing conditions with safe fallbacks, added category filter dropdown and reset filters button with custom skeleton loaders in ProductsSection, added checkboxes for bulk status updates, expandable order items, and page-size selector in OrdersSection, and added manually triggered slug generator from title, enabled vertical resizing on Description/Story textareas, and polished empty image upload preview UI in ProductModal.
-- **Components**:
-  - `components/dashbord/Sidebar.tsx`: Added Material Symbols icons to nav buttons, updating alignment via flex.
   - `components/dashbord/ProductsSection.tsx`: Added Category Filter dropdown, "Reset Filters" button, and responsive skeleton loaders.
-  - `components/dashbord/helpers/OrdersSectionHelpers.tsx`: Added checkboxes for bulk status updates (Accept, Deliver, Cancel), mobile card order items expandability, and a page-size selector.
-  - `components/dashbord/helpers/ProductModalHelpers.tsx`: Added manual slug regenerator button, enabled vertical resizing on Description/Story textareas, and improved empty image upload state UI.
+  - `components/dashbord/orders/`: Added checkboxes for bulk status updates (Accept, Deliver, Cancel), mobile card order items expandability, and a page-size selector.
+  - `components/dashbord/products/`: Added manual slug regenerator button, enabled vertical resizing on Description/Story textareas, and improved empty image upload state UI.
   - `lib/price.ts`: Centralized currency to Euro (`CURRENCY_SYMBOL = '€'`).
   - `tests/price.test.ts`: Added unit tests verifying Euro price formatting.
 
@@ -319,8 +314,8 @@
   - `app/api/users/route.ts`: Queries the sum of `totalAmount` of all completed orders for each user and floors it to compute their trust score points.
   - `app/api/orders/route.ts`: Grouped completed orders by `userId` and `customerPhone`, summing their `totalAmount` to compute and floor their trust score points.
 - **Dashboard UI**:
-  - `components/dashbord/helpers/UsersSectionHelpers.tsx`: Updated sorting option label, table headers, and badges to display points with proper singular/plural labeling (`X point` vs `X points`).
-  - `components/dashbord/helpers/OrdersSectionHelpers.tsx`: Updated sorting option label and customer details view to display `Points de Confiance` as points instead of a score out of 100.
+  - `components/dashbord/users/`: Updated sorting option label, table headers, and badges to display points with proper singular/plural labeling (`X point` vs `X points`).
+  - `components/dashbord/orders/`: Updated sorting option label and customer details view to display `Points de Confiance` as points instead of a score out of 100.
 - **Testing**:
   - `tests/api/trust.test.ts`: Updated tests with `totalAmount` mocked on orders and asserted the floored sum of completed order amounts are correctly returned as points.
 
@@ -353,12 +348,12 @@
 ### 34. Responsive Tag Editor Layout
 - **Description**: Stacks the "Ajouter" (Add) tag button under the input field on screens narrower than 415px in the dashboard product editing modal.
 - **Affected Files**:
-  - `components/dashbord/helpers/ProductModalHelpers.tsx`: Changed the tag input container class in `ProductTagsEditor` to `flex flex-col min-[415px]:flex-row gap-xs` to responsive-stack elements on small viewports.
+  - `components/dashbord/products/`: Changed the tag input container class in `ProductTagsEditor` to `flex flex-col min-[415px]:flex-row gap-xs` to responsive-stack elements on small viewports.
 
 ### 35. Simplified Client Card UI
 - **Description**: Simplified the user/client card layout in the dashboard mobile/tablet view by removing the avatar initials icon and allowing the user name and ID container to span the full available width.
 - **Affected Files**:
-  - `components/dashbord/helpers/UsersSectionHelpers.tsx`: Removed the initials avatar element, changed the name/ID parent container class to `flex-1`, and deleted the unused `initials` calculation logic.
+  - `components/dashbord/users/`: Removed the initials avatar element, changed the name/ID parent container class to `flex-1`, and deleted the unused `initials` calculation logic.
 
 ### 36. Delivery Methods Modal Layout & Responsive Table
 - **Description**: Re-engineered the "Méthodes de livraison" (Delivery Methods) dashboard tab to look and behave like the products section. Replaced the split-column layout with a full-width table and converted the creation/update form into a popup modal overlay.
@@ -371,7 +366,7 @@
 - **Description**: Enabled administrators to print accepted orders directly from the dashboard. Generates a standard 10x15 cm (A6) viewport printout/PDF formatted with zero margins and high contrast.
 - **Components**:
   - `components/dashbord/helpers/OrderPrintReceipt.tsx` [NEW]: Renders order details via a React Portal, applies print-specific media query styles, and invokes `window.print()` dynamically.
-  - `components/dashbord/helpers/OrdersSectionHelpers.tsx` [MODIFY]: Added Print buttons with printer icons in the mobile card and desktop table layouts for accepted orders.
+  - `components/dashbord/orders/` [MODIFY]: Added Print buttons with printer icons in the mobile card and desktop table layouts for accepted orders.
   - `components/dashbord/OrdersSection.tsx` [MODIFY]: Manages state for the active print order.
 - **Testing**:
   - `tests/print-order.test.tsx` [NEW]: Unit tests for receipt printing layout, window.print triggering, and state cleanup.
@@ -387,20 +382,20 @@
 ### 39. Dashboard Optimization Pass (Products & Orders)
 - **Description**: Refactored the dashboard's product and order management code to remove redundancies, centralize core business formatting logic, and improve maintainability.
 - **Deduplication & Optimizations**:
-  - **Date Formatting**: Extracted `formatFrenchDate` from duplicate local declarations in `OrdersSectionHelpers.tsx` and `UsersSectionHelpers.tsx` into a new centralized utility `lib/date.ts`. Updated `OrderPrintReceipt.tsx` to consume the utility.
-  - **Slug Generation**: Created a reusable `generateSlug` helper in `lib/products.ts` and integrated it across title changes and manual generation triggers in `ProductModalHelpers.tsx`.
-  - **Product State Badges**: Created a single `ProductStateBadge` component in `ProductModalHelpers.tsx` and removed identical inline styling logic in `ProductsSection.tsx` mobile card grid and desktop table views.
-  - **Order Status Configs**: Centralized order status translation strings and Tailwind color configurations into `ORDER_STATUS_CONFIG` inside `OrdersSectionHelpers.tsx`, reducing visual noise in status dropdowns and detail views.
+  - **Date Formatting**: Extracted `formatFrenchDate` from duplicate local declarations in `orders/` and `users/` into a new centralized utility `lib/date.ts`. Updated `OrderPrintReceipt.tsx` to consume the utility.
+  - **Slug Generation**: Created a reusable `generateSlug` helper in `lib/products.ts` and integrated it across title changes and manual generation triggers in `products/`.
+  - **Product State Badges**: Created a single `ProductStateBadge` component in `products/` and removed identical inline styling logic in `ProductsSection.tsx` mobile card grid and desktop table views.
+  - **Order Status Configs**: Centralized order status translation strings and Tailwind color configurations into `ORDER_STATUS_CONFIG` inside `orders/`, reducing visual noise in status dropdowns and detail views.
   - **Image Default Cleanup**: Swapped out the default Unsplash image placeholder in `dashboard-store.ts` for an empty string (`""`) to represent a cleaner initial product creation state.
 - **New Files**:
   - `lib/date.ts` [NEW]
 - **Modified Files**:
   - `lib/products.ts` [MODIFY]
   - `lib/dashboard-store.ts` [MODIFY]
-  - `components/dashbord/helpers/ProductModalHelpers.tsx` [MODIFY]
+  - `components/dashbord/products/` [MODIFY]
   - `components/dashbord/ProductsSection.tsx` [MODIFY]
-  - `components/dashbord/helpers/OrdersSectionHelpers.tsx` [MODIFY]
-  - `components/dashbord/helpers/UsersSectionHelpers.tsx` [MODIFY]
+  - `components/dashbord/orders/` [MODIFY]
+  - `components/dashbord/users/` [MODIFY]
   - `components/dashbord/helpers/OrderPrintReceipt.tsx` [MODIFY]
 
 ### 40. Localized Product Modal Form State
@@ -455,6 +450,54 @@
   - `app/api/orders/route.ts` [MODIFY]: Unified all sorting paths to use `prisma.$transaction`. Safe dynamic WHERE clauses are constructed using `Prisma.sql`. Computed customer trust score and order count are aggregated on the database side. BigInt return values are correctly converted to standard numbers before serialization.
 - **Testing**:
   - `tests/api/orders.test.ts` [MODIFY]: Updated mock client behavior and updated test assertions to use `$queryRaw` mocks and verify exact query parameters.
+
+### 46. Orders Dashboard Component Decomposition
+- **Description**: Decomposed the monolithic and complex `OrdersSectionHelpers.tsx` helper component into distinct single-responsibility modules: `OrdersFilters.tsx`, `OrdersTable.tsx`, `OrderDetailsModal.tsx`, and `OrderStatusConfirmModal.tsx`. Centralized common Tailwind classes and translations into `orderStatusConfig.ts`.
+- **Affected Files**:
+  - `components/dashbord/helpers/OrdersSectionHelpers.tsx` [DELETE]
+  - `components/dashbord/OrdersSection.tsx` [MODIFY]
+  - `components/dashbord/orders/orderStatusConfig.ts` [NEW]
+  - `components/dashbord/orders/OrdersFilters.tsx` [NEW]
+  - `components/dashbord/orders/OrdersTable.tsx` [NEW]
+  - `components/dashbord/orders/OrderDetailsModal.tsx` [NEW]
+  - `components/dashbord/orders/OrderStatusConfirmModal.tsx` [NEW]
+
+### 47. CMS Dashboard Component Decomposition
+- **Description**: Decomposed the monolithic and complex `CmsSectionHelpers.tsx` helper component into distinct single-responsibility modules: `ShopStatusSection.tsx`, `CarouselManagerSection.tsx`, `HomepageStorySection.tsx`, `AboutHistorySection.tsx`, `ContactSocialSection.tsx`, and `SlideModal.tsx`.
+- **Affected Files**:
+  - `components/dashbord/helpers/CmsSectionHelpers.tsx` [DELETE]
+  - `components/dashbord/CmsSection.tsx` [MODIFY]
+  - `components/dashbord/cms/ShopStatusSection.tsx` [NEW]
+  - `components/dashbord/cms/CarouselManagerSection.tsx` [NEW]
+  - `components/dashbord/cms/HomepageStorySection.tsx` [NEW]
+  - `components/dashbord/cms/AboutHistorySection.tsx` [NEW]
+  - `components/dashbord/cms/ContactSocialSection.tsx` [NEW]
+  - `components/dashbord/cms/SlideModal.tsx` [NEW]
+
+### 48. Product Dashboard Component Decomposition
+- **Description**: Decomposed the monolithic and complex `ProductModalHelpers.tsx` helper component into distinct single-responsibility modules: `ProductBasicInfo.tsx`, `ProductImageUpload.tsx`, `ProductDetailsInfo.tsx`, `ProductMetrics.tsx`, `ProductTagsEditor.tsx`, `ProductDescriptionStory.tsx`, and `ProductStateBadge.tsx`. Centralized categories configuration into `productCategories.ts`.
+- **Affected Files**:
+  - `components/dashbord/helpers/ProductModalHelpers.tsx` [DELETE]
+  - `components/dashbord/ProductModal.tsx` [MODIFY]
+  - `components/dashbord/ProductsSection.tsx` [MODIFY]
+  - `components/dashbord/products/productCategories.ts` [NEW]
+  - `components/dashbord/products/ProductBasicInfo.tsx` [NEW]
+  - `components/dashbord/products/ProductImageUpload.tsx` [NEW]
+  - `components/dashbord/products/ProductDetailsInfo.tsx` [NEW]
+  - `components/dashbord/products/ProductMetrics.tsx` [NEW]
+  - `components/dashbord/products/ProductTagsEditor.tsx` [NEW]
+  - `components/dashbord/products/ProductDescriptionStory.tsx` [NEW]
+  - `components/dashbord/products/ProductStateBadge.tsx` [NEW]
+
+### 49. Clients Dashboard Component Decomposition
+- **Description**: Decomposed the monolithic and complex `UsersSectionHelpers.tsx` helper component into distinct single-responsibility modules: `UsersFilters.tsx` and `UsersTable.tsx`. Extracted the type interfaces and status styling indicators to `userHelpers.tsx`.
+- **Affected Files**:
+  - `components/dashbord/helpers/UsersSectionHelpers.tsx` [DELETE]
+  - `components/dashbord/UsersSection.tsx` [MODIFY]
+  - `components/dashbord/hooks/useUsersSection.ts` [MODIFY]
+  - `components/dashbord/users/userHelpers.tsx` [NEW]
+  - `components/dashbord/users/UsersFilters.tsx` [NEW]
+  - `components/dashbord/users/UsersTable.tsx` [NEW]
 
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).

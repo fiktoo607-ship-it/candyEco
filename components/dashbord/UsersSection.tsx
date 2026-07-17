@@ -2,10 +2,8 @@
 
 import React from 'react';
 import { useUsersSection } from './hooks/useUsersSection';
-import {
-  UsersFilters,
-  UsersTable
-} from './helpers/UsersSectionHelpers';
+import { UsersFilters } from './users/UsersFilters';
+import { UsersTable } from './users/UsersTable';
 import DashboardDeleteModal from './helpers/DashboardDeleteModal';
 
 export default function UsersSection() {

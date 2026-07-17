@@ -2,12 +2,10 @@
 
 import React from 'react';
 import { useOrdersSection } from './hooks/useOrdersSection';
-import {
-  OrdersFilters,
-  OrdersTable,
-  OrderDetailsModal,
-  OrderStatusConfirmModal
-} from './helpers/OrdersSectionHelpers';
+import { OrdersFilters } from './orders/OrdersFilters';
+import { OrdersTable } from './orders/OrdersTable';
+import { OrderDetailsModal } from './orders/OrderDetailsModal';
+import { OrderStatusConfirmModal } from './orders/OrderStatusConfirmModal';
 import { useDashboardStore } from '@/lib/dashboard-store';
 import { OrderPrintReceipt } from './helpers/OrderPrintReceipt';
 import { Order } from '@/lib/hooks/use-orders';

@@ -2,14 +2,12 @@
 
 import React from 'react';
 import { useCmsSection } from './hooks/useCmsSection';
-import {
-  ShopStatusSection,
-  CarouselManagerSection,
-  HomepageStorySection,
-  AboutHistorySection,
-  ContactSocialSection,
-  SlideModal
-} from './helpers/CmsSectionHelpers';
+import { ShopStatusSection } from './cms/ShopStatusSection';
+import { CarouselManagerSection } from './cms/CarouselManagerSection';
+import { HomepageStorySection } from './cms/HomepageStorySection';
+import { AboutHistorySection } from './cms/AboutHistorySection';
+import { ContactSocialSection } from './cms/ContactSocialSection';
+import { SlideModal } from './cms/SlideModal';
 
 export default function CmsSection() {
   const {
