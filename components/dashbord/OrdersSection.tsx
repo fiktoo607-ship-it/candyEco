@@ -9,6 +9,7 @@ import { OrderStatusConfirmModal } from './orders/OrderStatusConfirmModal';
 import { useDashboardStore } from '@/lib/dashboard-store';
 import { OrderPrintReceipt } from './helpers/OrderPrintReceipt';
 import { Order } from '@/lib/hooks/use-orders';
+import { isValidStatusTransition } from '@/types/orderStatusConfig';
 
 
 export default function OrdersSection() {
@@ -68,6 +69,10 @@ export default function OrdersSection() {
   ) => {
     if (status === 'CANCELLED' && (currentStatus === 'ACCEPTED' || currentStatus === 'DELIVERED')) {
       showToast("Vous ne pouvez pas annuler une commande déjà acceptée ou livrée.", "error");
+      return;
+    }
+    if (!isValidStatusTransition(currentStatus, status)) {
+      showToast("Transition de statut invalide.", "error");
       return;
     }
     setStatusConfirmTarget({ id, status, currentStatus, reference, onConfirmExtra });

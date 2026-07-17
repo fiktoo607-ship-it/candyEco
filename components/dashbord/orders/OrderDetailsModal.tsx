@@ -3,7 +3,7 @@ import { Order } from '@/lib/hooks/use-orders';
 import PriceDisplay from '@/components/PriceDisplay';
 import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
 import { formatFrenchDate } from '@/lib/date';
-import { ORDER_STATUS_CONFIG } from './orderStatusConfig';
+import { ORDER_STATUS_CONFIG } from '@/types/orderStatusConfig';
 
 interface OrderDetailsModalProps {
   order: Order | null;

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Order } from '@/lib/hooks/use-orders';
 import PriceDisplay from '@/components/PriceDisplay';
 import { formatFrenchDate } from '@/lib/date';
-import { ORDER_STATUS_CONFIG } from './orderStatusConfig';
+import { ORDER_STATUS_CONFIG } from '@/types/orderStatusConfig';
 
 interface OrdersTableProps {
   orders: Order[];

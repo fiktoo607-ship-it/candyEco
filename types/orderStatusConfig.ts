@@ -27,3 +27,27 @@ export const ORDER_STATUS_CONFIG: Record<
     badgeClass: 'bg-rose-100 text-rose-800',
   },
 };
+
+export function isValidStatusTransition(current: string, target: string): boolean {
+  const cur = current.toUpperCase();
+  const tgt = target.toUpperCase();
+
+  if (cur === tgt) return true;
+
+  // Terminal states cannot transition to anything else
+  if (cur === 'CANCELLED' || cur === 'DELIVERED') {
+    return false;
+  }
+
+  // From ACCEPTED, we can only transition to DELIVERED
+  if (cur === 'ACCEPTED') {
+    return tgt === 'DELIVERED';
+  }
+
+  // From PENDING, we can transition to ACCEPTED, DELIVERED, or CANCELLED
+  if (cur === 'PENDING') {
+    return tgt === 'ACCEPTED' || tgt === 'DELIVERED' || tgt === 'CANCELLED';
+  }
+
+  return false;
+}

@@ -507,11 +507,36 @@
 - **Testing**:
   - `tests/orders-sync.test.tsx` [NEW]: Focused unit and integration tests verifying order status updates, React Query cache invalidation, and modal state synchronization/auto-closure.
 
+### 51. Shared Refactoring: Centralized Status Guards, Style Maps, and Pagination Hook
+- **Description**: Unified safety policies, centralized configuration maps, and generalized pagination logic across the dashboard.
+- **Safety Transitions & Styling Guards**:
+  - `types/orderStatusConfig.ts` [NEW]: Created a centralized types file defining the unified `ORDER_STATUS_CONFIG` style map (label, bg, selectClass, badgeClass) and a transition safety guard helper `isValidStatusTransition(current, target)`.
+  - Blocks invalid status transitions (e.g. reverting `CANCELLED` or `DELIVERED` to `PENDING`, or cancelling `ACCEPTED` or `DELIVERED` orders) at both the API level (`app/api/orders/[id]/route.ts`) and client UI level (`components/dashbord/OrdersSection.tsx`, `app/orders/[id]/page.tsx`, `app/orders/page.tsx`).
+  - Deleted old local `components/dashbord/orders/orderStatusConfig.ts` file to keep a single source of truth.
+- **Shared Dashboard Pagination Hook**:
+  - `components/dashbord/hooks/useDashboardPagination.ts` [NEW]: Built a generalized React custom hook that encapsulates query states (pagination page, search text, limit, sorting key, sorting direction) and manages resetting current pages to 1 automatically when search input or query filters change.
+  - Refactored `components/dashbord/hooks/useOrdersSection.ts` and `components/dashbord/ProductsSection.tsx` to consume the new shared hook, ensuring a unified pagination interface.
+- **Affected Files**:
+  - `types/orderStatusConfig.ts` [NEW]
+  - `components/dashbord/hooks/useDashboardPagination.ts` [NEW]
+  - `components/dashbord/orders/orderStatusConfig.ts` [DELETE]
+  - `app/api/orders/[id]/route.ts` [MODIFY]
+  - `components/dashbord/OrdersSection.tsx` [MODIFY]
+  - `components/dashbord/orders/OrdersTable.tsx` [MODIFY]
+  - `components/dashbord/orders/OrderDetailsModal.tsx` [MODIFY]
+  - `components/dashbord/orders/OrderStatusConfirmModal.tsx` [MODIFY]
+  - `app/orders/page.tsx` [MODIFY]
+  - `app/orders/[id]/page.tsx` [MODIFY]
+  - `components/dashbord/hooks/useOrdersSection.ts` [MODIFY]
+  - `components/dashbord/ProductsSection.tsx` [MODIFY]
+- **Testing**:
+  - `tests/shared-refactoring.test.tsx` [NEW]: Dedicated JSDOM unit tests confirming transition guard safety logic and verification of search/filter-dependent pagination resets inside `useDashboardPagination`.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 172 tests pass successfully under `vitest` (`npx vitest run`) across 22 test files.
+  - All 176 tests pass successfully under `vitest` (`npx vitest run`) across 23 test files.
 
 
 

@@ -4,30 +4,38 @@ import { useProducts } from '@/lib/hooks/use-products';
 import { useDashboardStore } from '@/lib/dashboard-store';
 import PriceDisplay from '@/components/PriceDisplay';
 import { ProductStateBadge } from './products/ProductStateBadge';
+import { useDashboardPagination } from './hooks/useDashboardPagination';
 
 
 export default function ProductsSection() {
-  const [sortBy, setSortBy] = useState<'default' | 'rating-desc' | 'rating-asc'>('default');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const store = useDashboardStore();
+  const { openEdit, openDelete, openCreate } = store;
 
   const {
-    searchQuery,
-    setSearchQuery,
     currentPage,
     setCurrentPage,
-    openEdit,
-    openDelete,
-    openCreate,
-  } = useDashboardStore();
-
-  const itemsPerPage = 5;
+    searchQuery,
+    setSearchQuery,
+    sortBy,
+    setSortBy,
+    limit: itemsPerPage,
+  } = useDashboardPagination({
+    searchQuery: store.searchQuery,
+    setSearchQuery: store.setSearchQuery,
+    currentPage: store.currentPage,
+    setCurrentPage: store.setCurrentPage,
+    initialSortBy: 'default',
+    initialLimit: 5,
+    filters: { category: categoryFilter },
+  });
 
   const { data: products = [], isLoading, error: productsError } = useProducts({
     page: currentPage,
     limit: itemsPerPage,
     search: searchQuery,
     category: categoryFilter,
-    sortBy: sortBy,
+    sortBy: sortBy as any,
     isDashboard: true,
   });
   
@@ -39,11 +47,6 @@ export default function ProductsSection() {
   const indexOfFirstItem = (currentPage - 1) * itemsPerPage;
   const indexOfLastItem = indexOfFirstItem + products.length;
   const currentItems = products;
-
-  // Reset page when query or category changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, categoryFilter, setCurrentPage]);
 
   return (
     <>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useOrders, useUpdateOrderStatus, Order } from '@/lib/hooks/use-orders';
 import { useDashboardStore } from '@/lib/dashboard-store';
+import { useDashboardPagination } from './useDashboardPagination';
 
 export function useOrdersSection() {
   const {
@@ -12,16 +13,32 @@ export function useOrdersSection() {
     setOrderCurrentPage,
   } = useDashboardStore();
 
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState('desc');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  const [ordersPerPage, setOrdersPerPage] = useState(5);
+  const {
+    currentPage,
+    searchQuery,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
+    limit: ordersPerPage,
+    setLimit: setOrdersPerPage,
+  } = useDashboardPagination({
+    searchQuery: orderSearchQuery,
+    setSearchQuery: setOrderSearchQuery,
+    currentPage: orderCurrentPage,
+    setCurrentPage: setOrderCurrentPage,
+    initialSortBy: 'createdAt',
+    initialSortOrder: 'desc',
+    initialLimit: 5,
+    filters: { status: orderStatusFilter },
+  });
 
   const { data: ordersData, isLoading: isOrdersLoading, error: ordersError } = useOrders({
-    page: orderCurrentPage,
+    page: currentPage,
     limit: ordersPerPage,
-    query: orderSearchQuery,
+    query: searchQuery,
     status: orderStatusFilter,
     sortBy,
     sortOrder,
@@ -30,11 +47,11 @@ export function useOrdersSection() {
   const updateStatusMutation = useUpdateOrderStatus();
 
   return {
-    orderSearchQuery,
+    orderSearchQuery: searchQuery,
     setOrderSearchQuery,
     orderStatusFilter,
     setOrderStatusFilter,
-    orderCurrentPage,
+    orderCurrentPage: currentPage,
     setOrderCurrentPage,
     sortBy,
     setSortBy,

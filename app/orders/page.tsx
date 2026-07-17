@@ -10,12 +10,7 @@ import SiteFooter from '@/components/site-footer';
 import { Order } from '@/lib/hooks/use-orders';
 import PriceDisplay from "@/components/PriceDisplay";
 
-const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-  PENDING:   { label: 'En attente',  color: 'text-amber-700',   bg: 'bg-amber-100/80' },
-  ACCEPTED:  { label: 'Acceptée',    color: 'text-blue-700',    bg: 'bg-blue-100/80' },
-  DELIVERED: { label: 'Livrée',      color: 'text-emerald-700', bg: 'bg-emerald-100/80' },
-  CANCELLED: { label: 'Annulée',     color: 'text-rose-700',    bg: 'bg-rose-100/80' },
-};
+import { ORDER_STATUS_CONFIG } from '@/types/orderStatusConfig';
 
 function OrderSkeleton() {
   return (
@@ -123,11 +118,9 @@ export default function OrdersPage() {
           <div className="space-y-md">
             {orders.map((order) => {
               const statusKey = order.status.toUpperCase();
-              const statusInfo = STATUS_MAP[statusKey] ?? {
-                label: order.status,
-                color: 'text-on-surface-variant',
-                bg: 'bg-surface-container',
-              };
+              const statusInfo = ORDER_STATUS_CONFIG[statusKey as keyof typeof ORDER_STATUS_CONFIG];
+              const label = statusInfo?.label || order.status;
+              const badgeClass = statusInfo?.badgeClass || 'bg-neutral-100 text-neutral-800';
 
               return (
                 <div
@@ -139,9 +132,9 @@ export default function OrdersPage() {
                     <div className="flex-1 space-y-xs">
                       <div className="flex flex-wrap items-center gap-sm">
                         <span
-                          className={`rounded-full px-sm py-[2px] text-xs font-bold uppercase ${statusInfo.bg} ${statusInfo.color}`}
+                          className={`rounded-full px-sm py-[2px] text-xs font-bold uppercase ${badgeClass}`}
                         >
-                          {statusInfo.label}
+                          {label}
                         </span>
                         <span className="text-xs text-on-surface-variant font-mono">
                           {order.reference ?? `#${order.id.slice(0, 8).toUpperCase()}`}

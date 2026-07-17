@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { isValidStatusTransition } from '@/types/orderStatusConfig';
 
 export async function PUT(
   request: NextRequest,
@@ -43,6 +44,11 @@ export async function PUT(
     // Restrictions: Cannot cancel Accepted or Delivered orders
     if (targetStatus === 'CANCELLED' && (currentStatus === 'ACCEPTED' || currentStatus === 'DELIVERED')) {
       return NextResponse.json({ error: 'Cannot cancel an accepted or delivered order' }, { status: 400 });
+    }
+
+    // Validate general status transitions
+    if (!isValidStatusTransition(currentStatus, targetStatus)) {
+      return NextResponse.json({ error: 'Invalid status transition' }, { status: 400 });
     }
 
     const updatedOrder = await prisma.order.update({

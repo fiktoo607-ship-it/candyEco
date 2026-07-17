@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
-import { ORDER_STATUS_CONFIG } from './orderStatusConfig';
+import { ORDER_STATUS_CONFIG } from '@/types/orderStatusConfig';
 
 interface OrderStatusConfirmModalProps {
   isOpen: boolean;
