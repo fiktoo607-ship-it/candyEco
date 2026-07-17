@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getSiteConfig } from '@/lib/config';
@@ -205,57 +206,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function getAggregations(uniquePhones: string[], uniqueUserIds: string[]) {
-  const completedOrdersByPhone = uniquePhones.length > 0 ? await prisma.order.groupBy({
-    by: ['customerPhone'],
-    where: {
-      status: { in: ['DELIVERED', 'COMPLETED'] },
-      customerPhone: { in: uniquePhones },
-    },
-    _sum: {
-      totalAmount: true,
-    },
-  }) : [];
-
-  const completedOrdersByUser = uniqueUserIds.length > 0 ? await prisma.order.groupBy({
-    by: ['userId'],
-    where: {
-      status: { in: ['DELIVERED', 'COMPLETED'] },
-      userId: { in: uniqueUserIds },
-    },
-    _sum: {
-      totalAmount: true,
-    },
-  }) : [];
-
-  const totalOrdersByPhone = uniquePhones.length > 0 ? await prisma.order.groupBy({
-    by: ['customerPhone'],
-    where: {
-      customerPhone: { in: uniquePhones },
-    },
-    _count: {
-      id: true,
-    },
-  }) : [];
-
-  const totalOrdersByUser = uniqueUserIds.length > 0 ? await prisma.order.groupBy({
-    by: ['userId'],
-    where: {
-      userId: { in: uniqueUserIds },
-    },
-    _count: {
-      id: true,
-    },
-  }) : [];
-
-  const phoneCountMap = new Map(completedOrdersByPhone.map(g => [g.customerPhone!, Math.floor(g._sum.totalAmount || 0)]));
-  const userCountMap = new Map(completedOrdersByUser.map(g => [g.userId!, Math.floor(g._sum.totalAmount || 0)]));
-  const phoneTotalCountMap = new Map(totalOrdersByPhone.map(g => [g.customerPhone!, g._count.id]));
-  const userTotalCountMap = new Map(totalOrdersByUser.map(g => [g.userId!, g._count.id]));
-
-  return { phoneCountMap, userCountMap, phoneTotalCountMap, userTotalCountMap };
-}
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -273,147 +223,117 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    // Build filters dynamically
-    interface QueryCondition {
-      status?: string;
-      userId?: string;
-      OR?: Array<{
-        customerName?: { contains: string; mode: 'insensitive' };
-        customerPhone?: { contains: string; mode: 'insensitive' };
-        customerEmail?: { contains: string; mode: 'insensitive' };
-        shippingAddress?: { contains: string; mode: 'insensitive' };
-        id?: { contains: string; mode: 'insensitive' };
-        reference?: { contains: string; mode: 'insensitive' };
-      }>;
-    }
-
-    const where: QueryCondition = {};
-
     const isAdmin = session.user.role === 'admin';
+
+    const conditions: Prisma.Sql[] = [];
+
     if (!isAdmin) {
-      where.userId = session.user.id;
+      conditions.push(Prisma.sql`o."userId" = ${session.user.id}`);
     }
 
     if (status) {
-      where.status = status.toUpperCase();
+      conditions.push(Prisma.sql`o.status = ${status.toUpperCase()}`);
     }
 
     if (query) {
-      where.OR = [
-        { customerName: { contains: query, mode: 'insensitive' } },
-        { customerPhone: { contains: query, mode: 'insensitive' } },
-        { customerEmail: { contains: query, mode: 'insensitive' } },
-        { shippingAddress: { contains: query, mode: 'insensitive' } },
-        { id: { contains: query, mode: 'insensitive' } },
-        { reference: { contains: query, mode: 'insensitive' } },
-      ];
+      const ilikeQuery = `%${query}%`;
+      conditions.push(Prisma.sql`(
+        o."customerName" ILIKE ${ilikeQuery} OR
+        o."customerPhone" ILIKE ${ilikeQuery} OR
+        o."customerEmail" ILIKE ${ilikeQuery} OR
+        o."shippingAddress" ILIKE ${ilikeQuery} OR
+        o.id::text ILIKE ${ilikeQuery} OR
+        o.reference ILIKE ${ilikeQuery}
+      )`);
     }
 
-    const total = await prisma.order.count({ where });
-    const totalPages = Math.ceil(total / limit) || 1;
+    const whereClause = conditions.length > 0
+      ? Prisma.sql`WHERE ${Prisma.join(conditions, ' AND ')}`
+      : Prisma.empty;
 
-    // Check if we can sort natively in database or must sort in memory
-    const isDatabaseSort = ['createdAt', 'status'].includes(sortBy);
-
-    if (isDatabaseSort) {
-      const orders = await prisma.order.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: {
-          [sortBy]: sortOrder as 'asc' | 'desc',
-        },
-        include: {
-          items: {
-            include: {
-              product: true,
-            },
-          },
-        },
-      });
-
-      const uniquePhones = Array.from(new Set(orders.map(o => o.customerPhone).filter((phone): phone is string => !!phone)));
-      const uniqueUserIds = Array.from(new Set(orders.map(o => o.userId).filter((id): id is string => !!id)));
-
-      const { phoneCountMap, userCountMap, phoneTotalCountMap, userTotalCountMap } = await getAggregations(uniquePhones, uniqueUserIds);
-
-      const mapped = orders.map((order) => {
-        const trustScore = order.userId
-          ? (userCountMap.get(order.userId) || 0)
-          : (order.customerPhone ? (phoneCountMap.get(order.customerPhone) || 0) : 0);
-        const orderCount = order.userId
-          ? (userTotalCountMap.get(order.userId) || 0)
-          : (order.customerPhone ? (phoneTotalCountMap.get(order.customerPhone) || 0) : 0);
-        return {
-          ...order,
-          customerTrustScore: trustScore,
-          customerOrderCount: orderCount,
-        };
-      });
-
-      return NextResponse.json({
-        data: mapped,
-        meta: {
-          total,
-          page,
-          limit,
-          totalPages,
-        },
-      });
+    // Determine orderBy clause
+    let orderBySql: Prisma.Sql;
+    if (sortBy === 'trustScore') {
+      orderBySql = sortOrder === 'asc' 
+        ? Prisma.sql`ORDER BY "customerTrustScore" ASC, o."createdAt" DESC` 
+        : Prisma.sql`ORDER BY "customerTrustScore" DESC, o."createdAt" DESC`;
+    } else if (sortBy === 'orderCount') {
+      orderBySql = sortOrder === 'asc' 
+        ? Prisma.sql`ORDER BY "customerOrderCount" ASC, o."createdAt" DESC` 
+        : Prisma.sql`ORDER BY "customerOrderCount" DESC, o."createdAt" DESC`;
+    } else if (sortBy === 'status') {
+      orderBySql = sortOrder === 'asc' 
+        ? Prisma.sql`ORDER BY o.status ASC, o."createdAt" DESC` 
+        : Prisma.sql`ORDER BY o.status DESC, o."createdAt" DESC`;
     } else {
-      // Sorting by computed fields: 'trustScore' or 'orderCount'
-      // 1. Fetch only metadata of matching orders (extremely lightweight)
-      const ordersMetadata = await prisma.order.findMany({
-        where,
-        select: {
-          id: true,
-          userId: true,
-          customerPhone: true,
-        },
-      });
+      // Default to createdAt
+      orderBySql = sortOrder === 'asc' 
+        ? Prisma.sql`ORDER BY o."createdAt" ASC` 
+        : Prisma.sql`ORDER BY o."createdAt" DESC`;
+    }
 
-      const uniquePhones = Array.from(new Set(ordersMetadata.map(o => o.customerPhone).filter((phone): phone is string => !!phone)));
-      const uniqueUserIds = Array.from(new Set(ordersMetadata.map(o => o.userId).filter((id): id is string => !!id)));
+    interface RawOrderResult {
+      id: string;
+      customerTrustScore: number | bigint;
+      customerOrderCount: number | bigint;
+    }
 
-      const { phoneCountMap, userCountMap, phoneTotalCountMap, userTotalCountMap } = await getAggregations(uniquePhones, uniqueUserIds);
+    // Wrap in a single transaction for consistent reads
+    const { total, rawOrders, orders } = await prisma.$transaction(async (tx) => {
+      // 1. Get total count
+      const countResult = await tx.$queryRaw<any[]>`
+        SELECT COUNT(*) as count
+        FROM "Order" o
+        ${whereClause}
+      `;
+      const total = Number(countResult[0]?.count || 0);
 
-      // 2. Map metadata to sorting values
-      const mappedMeta = ordersMetadata.map((order) => {
-        const trustScore = order.userId
-          ? (userCountMap.get(order.userId) || 0)
-          : (order.customerPhone ? (phoneCountMap.get(order.customerPhone) || 0) : 0);
-        const orderCount = order.userId
-          ? (userTotalCountMap.get(order.userId) || 0)
-          : (order.customerPhone ? (phoneTotalCountMap.get(order.customerPhone) || 0) : 0);
-        return {
-          id: order.id,
-          trustScore,
-          orderCount,
-        };
-      });
+      // 2. Fetch paginated orders with computed fields and sorting
+      const rawOrders = await tx.$queryRaw<RawOrderResult[]>`
+        SELECT
+          o.id,
+          FLOOR(COALESCE(
+            CASE
+              WHEN o."userId" IS NOT NULL THEN (
+                SELECT SUM(o2."totalAmount")
+                FROM "Order" o2
+                WHERE o2.status IN ('DELIVERED', 'COMPLETED') AND o2."userId" = o."userId"
+              )
+              WHEN o."customerPhone" IS NOT NULL THEN (
+                SELECT SUM(o2."totalAmount")
+                FROM "Order" o2
+                WHERE o2.status IN ('DELIVERED', 'COMPLETED') AND o2."customerPhone" = o."customerPhone"
+              )
+              ELSE 0
+            END,
+            0
+          )) AS "customerTrustScore",
+          COALESCE(
+            CASE
+              WHEN o."userId" IS NOT NULL THEN (
+                SELECT COUNT(*)
+                FROM "Order" o2
+                WHERE o2."userId" = o."userId"
+              )
+              WHEN o."customerPhone" IS NOT NULL THEN (
+                SELECT COUNT(*)
+                FROM "Order" o2
+                WHERE o2."customerPhone" = o."customerPhone"
+              )
+              ELSE 0
+            END,
+            0
+          ) AS "customerOrderCount"
+        FROM "Order" o
+        ${whereClause}
+        ${orderBySql}
+        LIMIT ${limit} OFFSET ${skip}
+      `;
 
-      // 3. Sort mapped meta list in memory
-      mappedMeta.sort((a, b) => {
-        let valA = 0;
-        let valB = 0;
-        if (sortBy === 'trustScore') {
-          valA = a.trustScore;
-          valB = b.trustScore;
-        } else if (sortBy === 'orderCount') {
-          valA = a.orderCount;
-          valB = b.orderCount;
-        }
+      const paginatedIds = rawOrders.map(o => o.id);
 
-        const diff = valA - valB;
-        return sortOrder === 'desc' ? -diff : diff;
-      });
-
-      // 4. Slice to get page's IDs
-      const paginatedMeta = mappedMeta.slice(skip, skip + limit);
-      const paginatedIds = paginatedMeta.map(o => o.id);
-
-      // 5. Fetch fully populated orders only for the current page
-      const orders = await prisma.order.findMany({
+      // 3. Fetch fully populated orders for the current page
+      const orders = paginatedIds.length > 0 ? await tx.order.findMany({
         where: {
           id: { in: paginatedIds },
         },
@@ -424,40 +344,47 @@ export async function GET(request: NextRequest) {
             },
           },
         },
+      }) : [];
+
+      return { total, rawOrders, orders };
+    });
+
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    const orderMetricsMap = new Map(rawOrders.map(o => [
+      o.id,
+      {
+        customerTrustScore: Number(o.customerTrustScore),
+        customerOrderCount: Number(o.customerOrderCount),
+      }
+    ]));
+
+    // 4. Map them back to the correct sorting order and attach computed scores
+    const idIndexMap = new Map(rawOrders.map((o, index) => [o.id, index]));
+    const sortedMapped = orders
+      .map((order) => {
+        const metrics = orderMetricsMap.get(order.id) || { customerTrustScore: 0, customerOrderCount: 0 };
+        return {
+          ...order,
+          customerTrustScore: metrics.customerTrustScore,
+          customerOrderCount: metrics.customerOrderCount,
+        };
+      })
+      .sort((a, b) => {
+        const idxA = idIndexMap.get(a.id) ?? 999;
+        const idxB = idIndexMap.get(b.id) ?? 999;
+        return idxA - idxB;
       });
 
-      // 6. Sort back to match the paginatedIds sequence and attach scores
-      const idIndexMap = new Map(paginatedIds.map((id, index) => [id, index]));
-      const sortedMapped = orders
-        .map((order) => {
-          const trustScore = order.userId
-            ? (userCountMap.get(order.userId) || 0)
-            : (order.customerPhone ? (phoneCountMap.get(order.customerPhone) || 0) : 0);
-          const orderCount = order.userId
-            ? (userTotalCountMap.get(order.userId) || 0)
-            : (order.customerPhone ? (phoneTotalCountMap.get(order.customerPhone) || 0) : 0);
-          return {
-            ...order,
-            customerTrustScore: trustScore,
-            customerOrderCount: orderCount,
-          };
-        })
-        .sort((a, b) => {
-          const idxA = idIndexMap.get(a.id) ?? 999;
-          const idxB = idIndexMap.get(b.id) ?? 999;
-          return idxA - idxB;
-        });
-
-      return NextResponse.json({
-        data: sortedMapped,
-        meta: {
-          total,
-          page,
-          limit,
-          totalPages,
-        },
-      });
-    }
+    return NextResponse.json({
+      data: sortedMapped,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+      },
+    });
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : 'Failed to fetch orders';
     console.error('[Orders API] Error fetching orders:', error);

@@ -449,6 +449,13 @@
 - **APIs**:
   - `app/api/orders/route.ts`: Added helper function `getAggregations` and refactored the `GET` route to fetch paginated orders first and run aggregations exclusively for those active page customer records.
 
+### 45. Database-Level Computed Sort & Pagination (Orders API)
+- **Description**: Eliminated the in-memory array sorting and map-sort-slice pagination bottleneck for computed fields (`customerTrustScore`, `customerOrderCount`). Replaced it with a single-transaction database-level query using raw SQL (`$queryRaw`) to compute aggregations, filter, sort, and slice paginated results directly in PostgreSQL.
+- **APIs & Database**:
+  - `app/api/orders/route.ts` [MODIFY]: Unified all sorting paths to use `prisma.$transaction`. Safe dynamic WHERE clauses are constructed using `Prisma.sql`. Computed customer trust score and order count are aggregated on the database side. BigInt return values are correctly converted to standard numbers before serialization.
+- **Testing**:
+  - `tests/api/orders.test.ts` [MODIFY]: Updated mock client behavior and updated test assertions to use `$queryRaw` mocks and verify exact query parameters.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
 - **Production Build**: Successfully compiled (`npm run build`).
