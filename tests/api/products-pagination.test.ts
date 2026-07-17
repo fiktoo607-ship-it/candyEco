@@ -43,19 +43,17 @@ describe('Products API - Pagination & Filtering', () => {
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
       where: {
-        category: { contains: 'traditionnel', mode: 'insensitive' }
+        category: 'aliments traditionnel'
       },
       orderBy: [
         { visibility: 'desc' },
         { createdAt: 'desc' },
       ],
-      skip: undefined,
-      take: undefined,
       include: { tags: true }
     });
   });
 
-  it('should pass correct category filtering for "gâteau" (NOT contains "traditionnel")', async () => {
+  it('should pass correct category filtering for "gâteau"', async () => {
     vi.mocked(prisma.product.findMany).mockResolvedValueOnce([]);
 
     const req = new NextRequest('http://localhost/api/products?category=gâteau');
@@ -63,14 +61,12 @@ describe('Products API - Pagination & Filtering', () => {
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
       where: {
-        NOT: { category: { contains: 'traditionnel', mode: 'insensitive' } }
+        category: 'gâteau'
       },
       orderBy: [
         { visibility: 'desc' },
         { createdAt: 'desc' },
       ],
-      skip: undefined,
-      take: undefined,
       include: { tags: true }
     });
   });

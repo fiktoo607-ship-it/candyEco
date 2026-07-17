@@ -132,6 +132,33 @@ describe('Products API', () => {
       expect(data[0].rating).toBe(4.5);
     });
 
+    it('should filter products dynamically by category when category query parameter is present', async () => {
+      const mockProducts = [
+        { ...mockProduct, id: 'prod-uuid-1', category: 'Cakes' },
+      ];
+      const expectedProducts = mockProducts.map(p => {
+        const copy = { ...p };
+        delete (copy as any).rating;
+        delete (copy as any).ratingCount;
+        return copy;
+      });
+      const expectedProductsJson = JSON.parse(JSON.stringify(expectedProducts));
+
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockProducts);
+
+      const req = new NextRequest('http://localhost/api/products?category=Cakes');
+      const response = await getProducts(req);
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+      expect(data).toEqual(expectedProductsJson);
+      expect(prisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          category: 'Cakes'
+        })
+      }));
+    });
+
     it('should return 500 when database fetching fails', async () => {
       vi.mocked(prisma.product.findMany).mockRejectedValueOnce(new Error('DB connection failed'));
 

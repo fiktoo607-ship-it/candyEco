@@ -424,11 +424,18 @@
 - **Testing**:
   - `tests/api/products.test.ts`: Added automated unit/integration tests confirming that a failing database query does not delete assets from Cloudinary.
 
+### 42. Dynamic Category Querying
+- **Description**: Replaced hardcoded category conditional filters in the products GET endpoint with a dynamic equality check.
+- **Core Logic**:
+  - `app/api/products/route.ts`: Resolves category parameter dynamically using a simple equality filter `where: { category }` in database queries.
+- **Testing**:
+  - `tests/api/products-pagination.test.ts` & `tests/api/products.test.ts`: Added and updated unit tests to verify dynamic category filter resolution.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 167 tests pass successfully under `vitest` (`npx vitest run`) across 21 test files.
+  - All 168 tests pass successfully under `vitest` (`npx vitest run`) across 21 test files.
 
 
 

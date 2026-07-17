@@ -28,11 +28,7 @@ export async function GET(request?: NextRequest) {
 
       if (category && category !== 'all') {
         hasWhere = true;
-        if (category === 'aliments traditionnel') {
-          where.category = { contains: 'traditionnel', mode: 'insensitive' };
-        } else {
-          where.NOT = { category: { contains: 'traditionnel', mode: 'insensitive' } };
-        }
+        where.category = category;
       }
 
       if (search && search.trim() !== '') {
