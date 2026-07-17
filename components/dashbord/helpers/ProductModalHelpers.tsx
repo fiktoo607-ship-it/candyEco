@@ -340,7 +340,7 @@ export function ProductTagsEditor({
       <label className="text-sm font-bold text-on-surface-variant">
         Mots-clés (Tags)
       </label>
-      <div className="flex gap-xs">
+      <div className="flex flex-col min-[415px]:flex-row gap-xs">
         <input
           type="text"
           placeholder="Ex: لوز, شوكولا, زيت..."

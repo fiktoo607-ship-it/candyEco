@@ -181,28 +181,16 @@ export function UsersTable({
           </div>
         ) : (
           filteredUsers.map((user) => {
-            const initials = (user.name || 'S N')
-              .split(' ')
-              .map((n) => n[0])
-              .slice(0, 2)
-              .join('')
-              .toUpperCase();
-
             return (
               <div key={user.id} className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft space-y-md hover:border-primary/20 transition-all flex flex-col justify-between">
                 <div className="space-y-sm">
                   {/* Card Header Profile */}
                   <div className="flex items-center justify-between gap-sm border-b border-outline-variant/10 pb-sm">
-                    <div className="flex items-center gap-sm">
-                      <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary font-bold text-sm flex items-center justify-center border border-primary/20">
-                        {initials}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-on-surface text-sm leading-normal">{user.name || 'Sans Nom'}</h3>
-                        <span className="text-xs text-on-surface-variant/80">ID: {user.id.substring(0, 8).toUpperCase()}</span>
-                      </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-on-surface text-sm leading-normal">{user.name || 'Sans Nom'}</h3>
+                      <span className="text-xs text-on-surface-variant/80">ID: {user.id.substring(0, 8).toUpperCase()}</span>
                     </div>
-                    <div>
+                    <div className="flex-shrink-0">
                       {getStatusBadge(user.status)}
                     </div>
                   </div>

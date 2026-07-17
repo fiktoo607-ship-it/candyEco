@@ -9,6 +9,8 @@ import {
   OrderStatusConfirmModal
 } from './helpers/OrdersSectionHelpers';
 import { useDashboardStore } from '@/lib/dashboard-store';
+import { OrderPrintReceipt } from './helpers/OrderPrintReceipt';
+import { Order } from '@/lib/hooks/use-orders';
 
 
 export default function OrdersSection() {
@@ -44,6 +46,8 @@ export default function OrdersSection() {
     reference: string;
     onConfirmExtra?: () => void;
   } | null>(null);
+
+  const [printOrder, setPrintOrder] = React.useState<Order | null>(null);
 
   const handleStatusChangeClick = (
     id: string,
@@ -97,6 +101,7 @@ export default function OrdersSection() {
         onViewDetails={setSelectedOrder}
         onStatusChangeClick={handleStatusChangeClick}
         onToastMessage={handleToastMessage}
+        onPrintOrder={setPrintOrder}
       />
 
       {/* Order Details Modal */}
@@ -134,6 +139,14 @@ export default function OrdersSection() {
         currentStatus={statusConfirmTarget?.currentStatus || ''}
         newStatus={statusConfirmTarget?.status || ''}
       />
+
+      {/* Print receipt portal */}
+      {printOrder && (
+        <OrderPrintReceipt
+          order={printOrder}
+          onClose={() => setPrintOrder(null)}
+        />
+      )}
     </div>
   );
 }

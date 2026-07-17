@@ -19,6 +19,8 @@ export function useDeliverySection() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitLoading, setSubmitLoading] = useState(false);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const fetchMethods = async () => {
     try {
       setLoading(true);
@@ -47,6 +49,7 @@ export function useDeliverySection() {
     setPrice('0.0');
     setActive(true);
     setSubmitError(null);
+    setIsModalOpen(false);
   };
 
   const handleEditClick = (method: DeliveryMethod) => {
@@ -56,6 +59,7 @@ export function useDeliverySection() {
     setDescription(method.description || '');
     setPrice(String(method.price));
     setActive(method.active);
+    setIsModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -163,5 +167,7 @@ export function useDeliverySection() {
     handleEditClick,
     handleToggleActive,
     handleDelete,
+    isModalOpen,
+    setIsModalOpen,
   };
 }

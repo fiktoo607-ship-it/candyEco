@@ -338,7 +338,7 @@
 - **PWA Asset Updates**:
   - `public/logo.jpeg`: Overwrote default logo asset with the new custom brand icon for standalone app installs.
 - **Carousel UI Refinements**:
-  - `components/home/NewProductsSection.tsx`, `components/home/PopularProductsSection.tsx`, `components/home/FeaturedProducts.tsx`: Updated slide indicator dots to make the active dot longer (w-8 pill-shape) than the inactive ones (w-3) to create a premium, dynamic feel.
+  - `components/home/NewProductsSection.tsx`, `components/home/PopularProductsSection.tsx`, `components/home/FeaturedProducts.tsx`, `components/home/HeroCarousel.tsx`: Updated slide indicator dots to make the active dot longer (w-12 pill-shape) than the inactive ones (w-3) to create a premium, dynamic feel.
 - **Body Scroll Locking for Modals**:
   - `lib/hooks/use-lock-body-scroll.ts`: Created a custom hook to toggle `overflow: hidden` on the page body when a modal is active.
   - Integrated this hook in all application modal components: `DeleteModal`, `ProductModal`, `DashboardDeleteModal`, `QnaModal`, `OrderDetailsModal`, `OrderStatusConfirmModal`, mobile filters modal in `ProductBrowser`, and rating modal in `ProductDetails`. Prevents scroll when popups are shown.
@@ -349,8 +349,35 @@
 - **Nested Modal Counting**: Tracks active scroll locks via a module-level counter (`lockCount`). Prevents early release of styles when a nested modal is closed before its parent, and only restores the original body styles (`overflow` and `padding-right`) when the count reaches `0`.
 - **Testing**: Added focused JSDOM test suite in `tests/scroll-lock.test.tsx` to verify layout shift calculations, nested/sequential modal locking, and cleanup behaviour.
 
+### 34. Responsive Tag Editor Layout
+- **Description**: Stacks the "Ajouter" (Add) tag button under the input field on screens narrower than 415px in the dashboard product editing modal.
+- **Affected Files**:
+  - `components/dashbord/helpers/ProductModalHelpers.tsx`: Changed the tag input container class in `ProductTagsEditor` to `flex flex-col min-[415px]:flex-row gap-xs` to responsive-stack elements on small viewports.
+
+### 35. Simplified Client Card UI
+- **Description**: Simplified the user/client card layout in the dashboard mobile/tablet view by removing the avatar initials icon and allowing the user name and ID container to span the full available width.
+- **Affected Files**:
+  - `components/dashbord/helpers/UsersSectionHelpers.tsx`: Removed the initials avatar element, changed the name/ID parent container class to `flex-1`, and deleted the unused `initials` calculation logic.
+
+### 36. Delivery Methods Modal Layout & Responsive Table
+- **Description**: Re-engineered the "Méthodes de livraison" (Delivery Methods) dashboard tab to look and behave like the products section. Replaced the split-column layout with a full-width table and converted the creation/update form into a popup modal overlay.
+- **Affected Files**:
+  - `components/dashbord/DeliverySection.tsx`: Swapped grid columns for a full-width header (featuring an "Ajouter une méthode" button) and rendered `DeliveryForm` inside a fixed popup modal.
+  - `components/dashbord/hooks/useDeliverySection.ts`: Expanded hook to manage and export modal visibility state (`isModalOpen`), automatically opening on edit and closing on submit/reset.
+  - `components/dashbord/helpers/DeliverySectionHelpers.tsx`: Refactored `DeliveryForm` as modal form contents (incorporating `useLockBodyScroll(true)`), removed obsolete border cards, and updated `DeliveryTable` breakpoints to `lg:hidden` (card grid) and `lg:block hidden` (table) for unified dashboard responsiveness.
+
+### 37. Print Order Feature
+- **Description**: Enabled administrators to print accepted orders directly from the dashboard. Generates a standard 10x15 cm (A6) viewport printout/PDF formatted with zero margins and high contrast.
+- **Components**:
+  - `components/dashbord/helpers/OrderPrintReceipt.tsx` [NEW]: Renders order details via a React Portal, applies print-specific media query styles, and invokes `window.print()` dynamically.
+  - `components/dashbord/helpers/OrdersSectionHelpers.tsx` [MODIFY]: Added Print buttons with printer icons in the mobile card and desktop table layouts for accepted orders.
+  - `components/dashbord/OrdersSection.tsx` [MODIFY]: Manages state for the active print order.
+- **Testing**:
+  - `tests/print-order.test.tsx` [NEW]: Unit tests for receipt printing layout, window.print triggering, and state cleanup.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 159 tests pass successfully under `vitest` (`npx vitest run`) across 19 test files.
+  - All 161 tests pass successfully under `vitest` (`npx vitest run`) across 20 test files.
+

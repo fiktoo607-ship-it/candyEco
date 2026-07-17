@@ -1,5 +1,6 @@
 import React from 'react';
 import PriceDisplay from '@/components/PriceDisplay';
+import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
 
 export interface DeliveryMethod {
   id: string;
@@ -44,23 +45,18 @@ export function DeliveryForm({
   onSubmit,
   onCancel,
 }: DeliveryFormProps) {
-  return (
-    <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft h-fit lg:col-span-1">
-      <h2 className="text-lg font-bold text-on-surface mb-md flex items-center gap-xs">
-        <span className="material-symbols-outlined text-primary text-xl">
-          {isEditing ? 'edit_note' : 'add_circle'}
-        </span>
-        {isEditing ? 'Modifier la méthode' : 'Créer une méthode de livraison'}
-      </h2>
+  useLockBodyScroll(true);
 
+  return (
+    <form onSubmit={onSubmit} className="p-md flex flex-col gap-sm overflow-y-auto flex-grow">
       {submitError && (
         <div className="rounded-xl bg-error-container/40 border border-error/20 p-sm text-center text-xs font-medium text-error mb-sm flex items-start gap-xs">
-          <span className="material-symbols-outlined text-base select-none shrink-0">error</span>
+          <span className="material-symbols-outlined text-base select-none shrink-0 mt-[2px]">error</span>
           <span>{submitError}</span>
         </div>
       )}
 
-      <form onSubmit={onSubmit} className="space-y-sm">
+      <div className="space-y-sm">
         <div>
           <label className="block text-sm font-bold text-on-surface-variant mb-xs">
             Nom de la méthode (ex: Home Delivery, Store Pickup)
@@ -124,32 +120,30 @@ export function DeliveryForm({
             </span>
           </label>
         </div>
+      </div>
 
-        <div className="flex gap-xs pt-md">
-          <button
-            type="submit"
-            disabled={submitLoading}
-            className="flex-1 rounded-xl bg-primary py-sm text-sm font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint flex items-center justify-center gap-xs disabled:opacity-55"
-          >
-            {submitLoading ? (
-              <span className="material-symbols-outlined text-sm animate-spin">sync</span>
-            ) : (
-              <span className="material-symbols-outlined text-sm">save</span>
-            )}
-            {isEditing ? 'Sauvegarder' : 'Créer'}
-          </button>
-          {isEditing && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="rounded-xl border border-outline-variant bg-surface px-md py-sm text-sm font-semibold text-on-surface hover:bg-surface-container-low transition-all"
-            >
-              Annuler
-            </button>
+      <footer className="mt-md flex justify-end gap-sm border-t border-outline-variant/20 pt-md mt-auto flex-shrink-0">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-xl border border-outline-variant bg-surface px-md py-sm text-sm font-semibold text-on-surface hover:bg-surface-container-high transition-colors"
+        >
+          Annuler
+        </button>
+        <button
+          type="submit"
+          disabled={submitLoading}
+          className="rounded-xl bg-primary px-md py-sm text-sm font-bold text-white hover:bg-surface-tint transition-all disabled:opacity-60 flex items-center justify-center gap-xs shadow-soft"
+        >
+          {submitLoading ? (
+            <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+          ) : (
+            <span className="material-symbols-outlined text-sm">save</span>
           )}
-        </div>
-      </form>
-    </div>
+          {isEditing ? 'Sauvegarder' : 'Créer'}
+        </button>
+      </footer>
+    </form>
   );
 }
 
@@ -171,9 +165,9 @@ export function DeliveryTable({
   onDelete,
 }: DeliveryTableProps) {
   return (
-    <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest shadow-soft lg:col-span-2 overflow-hidden flex flex-col justify-between">
-      {/* Mobile/Tablet Card Grid Layout (< 768px) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-md p-md md:hidden bg-surface/20">
+    <div className="rounded-2xl bg-surface-container-lowest overflow-hidden flex flex-col justify-between">
+      {/* Mobile/Tablet Card Grid Layout (< 1024px) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-md p-md lg:hidden bg-surface/20">
         {methods.length === 0 ? (
           <div className="col-span-full py-xl text-center text-on-surface-variant font-medium">
             Aucune méthode de livraison configurée.
@@ -229,8 +223,8 @@ export function DeliveryTable({
         )}
       </div>
 
-      {/* Desktop Grid Layout (>= 768px) */}
-      <div className="overflow-x-auto md:block hidden">
+      {/* Desktop Grid Layout (>= 1024px) */}
+      <div className="overflow-x-auto lg:block hidden">
         <table className="w-full text-left border-collapse text-sm">
           <thead>
             <tr className="border-b border-outline-variant/30 bg-surface-container-low text-xs font-bold text-on-surface-variant uppercase tracking-wider">
