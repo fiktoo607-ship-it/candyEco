@@ -444,6 +444,11 @@
 - **Testing**:
   - `tests/api/products.test.ts` & `tests/api/products-pagination.test.ts`: Added mocks for `prisma.product.count` and integration tests verifying database-side rating sorting.
 
+### 44. Scoped Order Aggregations (Database Optimization)
+- **Description**: Replaced the performance-heavy global group-by aggregations executed on all historical database orders during listing. The orders route now fetches the paginated page records first, extracts unique customers, and scopes database group-by aggregations (completed amounts and total count) only to those unique active page users/phones, resolving pagination scaling bottlenecks.
+- **APIs**:
+  - `app/api/orders/route.ts`: Added helper function `getAggregations` and refactored the `GET` route to fetch paginated orders first and run aggregations exclusively for those active page customer records.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
 - **Production Build**: Successfully compiled (`npm run build`).

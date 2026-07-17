@@ -205,6 +205,57 @@ export async function POST(request: NextRequest) {
   }
 }
 
+async function getAggregations(uniquePhones: string[], uniqueUserIds: string[]) {
+  const completedOrdersByPhone = uniquePhones.length > 0 ? await prisma.order.groupBy({
+    by: ['customerPhone'],
+    where: {
+      status: { in: ['DELIVERED', 'COMPLETED'] },
+      customerPhone: { in: uniquePhones },
+    },
+    _sum: {
+      totalAmount: true,
+    },
+  }) : [];
+
+  const completedOrdersByUser = uniqueUserIds.length > 0 ? await prisma.order.groupBy({
+    by: ['userId'],
+    where: {
+      status: { in: ['DELIVERED', 'COMPLETED'] },
+      userId: { in: uniqueUserIds },
+    },
+    _sum: {
+      totalAmount: true,
+    },
+  }) : [];
+
+  const totalOrdersByPhone = uniquePhones.length > 0 ? await prisma.order.groupBy({
+    by: ['customerPhone'],
+    where: {
+      customerPhone: { in: uniquePhones },
+    },
+    _count: {
+      id: true,
+    },
+  }) : [];
+
+  const totalOrdersByUser = uniqueUserIds.length > 0 ? await prisma.order.groupBy({
+    by: ['userId'],
+    where: {
+      userId: { in: uniqueUserIds },
+    },
+    _count: {
+      id: true,
+    },
+  }) : [];
+
+  const phoneCountMap = new Map(completedOrdersByPhone.map(g => [g.customerPhone!, Math.floor(g._sum.totalAmount || 0)]));
+  const userCountMap = new Map(completedOrdersByUser.map(g => [g.userId!, Math.floor(g._sum.totalAmount || 0)]));
+  const phoneTotalCountMap = new Map(totalOrdersByPhone.map(g => [g.customerPhone!, g._count.id]));
+  const userTotalCountMap = new Map(totalOrdersByUser.map(g => [g.userId!, g._count.id]));
+
+  return { phoneCountMap, userCountMap, phoneTotalCountMap, userTotalCountMap };
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -258,57 +309,6 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Fetch completed order amounts grouped by customerPhone
-    const completedOrdersByPhone = await prisma.order.groupBy({
-      by: ['customerPhone'],
-      where: {
-        status: { in: ['DELIVERED', 'COMPLETED'] },
-        customerPhone: { not: null },
-      },
-      _sum: {
-        totalAmount: true,
-      },
-    });
-
-    // Also fetch completed order amounts grouped by userId
-    const completedOrdersByUser = await prisma.order.groupBy({
-      by: ['userId'],
-      where: {
-        status: { in: ['DELIVERED', 'COMPLETED'] },
-        userId: { not: null },
-      },
-      _sum: {
-        totalAmount: true,
-      },
-    });
-
-    // Fetch total order counts grouped by customerPhone
-    const totalOrdersByPhone = await prisma.order.groupBy({
-      by: ['customerPhone'],
-      where: {
-        customerPhone: { not: null },
-      },
-      _count: {
-        id: true,
-      },
-    });
-
-    // Fetch total order counts grouped by userId
-    const totalOrdersByUser = await prisma.order.groupBy({
-      by: ['userId'],
-      where: {
-        userId: { not: null },
-      },
-      _count: {
-        id: true,
-      },
-    });
-
-    const phoneCountMap = new Map(completedOrdersByPhone.map(g => [g.customerPhone!, Math.floor(g._sum.totalAmount || 0)]));
-    const userCountMap = new Map(completedOrdersByUser.map(g => [g.userId!, Math.floor(g._sum.totalAmount || 0)]));
-    const phoneTotalCountMap = new Map(totalOrdersByPhone.map(g => [g.customerPhone!, g._count.id]));
-    const userTotalCountMap = new Map(totalOrdersByUser.map(g => [g.userId!, g._count.id]));
-
     const total = await prisma.order.count({ where });
     const totalPages = Math.ceil(total / limit) || 1;
 
@@ -331,6 +331,11 @@ export async function GET(request: NextRequest) {
           },
         },
       });
+
+      const uniquePhones = Array.from(new Set(orders.map(o => o.customerPhone).filter((phone): phone is string => !!phone)));
+      const uniqueUserIds = Array.from(new Set(orders.map(o => o.userId).filter((id): id is string => !!id)));
+
+      const { phoneCountMap, userCountMap, phoneTotalCountMap, userTotalCountMap } = await getAggregations(uniquePhones, uniqueUserIds);
 
       const mapped = orders.map((order) => {
         const trustScore = order.userId
@@ -366,6 +371,11 @@ export async function GET(request: NextRequest) {
           customerPhone: true,
         },
       });
+
+      const uniquePhones = Array.from(new Set(ordersMetadata.map(o => o.customerPhone).filter((phone): phone is string => !!phone)));
+      const uniqueUserIds = Array.from(new Set(ordersMetadata.map(o => o.userId).filter((id): id is string => !!id)));
+
+      const { phoneCountMap, userCountMap, phoneTotalCountMap, userTotalCountMap } = await getAggregations(uniquePhones, uniqueUserIds);
 
       // 2. Map metadata to sorting values
       const mappedMeta = ordersMetadata.map((order) => {
@@ -454,3 +464,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }
+
