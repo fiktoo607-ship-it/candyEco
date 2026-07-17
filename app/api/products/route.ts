@@ -13,15 +13,18 @@ export async function GET(request?: NextRequest) {
     };
 
     let isDashboard = false;
+    let pageStr: string | null = null;
+    let limitStr: string | null = null;
 
     if (request) {
       const { searchParams } = new URL(request.url);
       isDashboard = searchParams.get('dashboard') === 'true';
-      const pageStr = searchParams.get('page');
-      const limitStr = searchParams.get('limit');
+      pageStr = searchParams.get('page');
+      limitStr = searchParams.get('limit');
       const category = searchParams.get('category');
       const search = searchParams.get('search');
       const tagsParam = searchParams.get('tags');
+      const sortBy = searchParams.get('sortBy');
 
       const where: any = {};
       let hasWhere = false;
@@ -54,6 +57,18 @@ export async function GET(request?: NextRequest) {
         queryOptions.where = where;
       }
 
+      if (sortBy === 'rating-desc') {
+        queryOptions.orderBy = [
+          { rating: 'desc' },
+          { createdAt: 'desc' }
+        ];
+      } else if (sortBy === 'rating-asc') {
+        queryOptions.orderBy = [
+          { rating: 'asc' },
+          { createdAt: 'desc' }
+        ];
+      }
+
       if (pageStr || limitStr) {
         const page = Math.max(1, parseInt(pageStr || '1', 10));
         const limit = Math.max(1, parseInt(limitStr || '6', 10));
@@ -61,6 +76,10 @@ export async function GET(request?: NextRequest) {
         queryOptions.take = limit;
       }
     }
+
+    const total = await prisma.product.count({
+      where: queryOptions.where || {}
+    });
 
     const products = await prisma.product.findMany({
       ...queryOptions,
@@ -83,7 +102,19 @@ export async function GET(request?: NextRequest) {
       return mapped;
     });
 
-    return NextResponse.json(mappedProducts);
+    let hasNextPage = false;
+    if (pageStr || limitStr) {
+      const page = Math.max(1, parseInt(pageStr || '1', 10));
+      const limit = Math.max(1, parseInt(limitStr || '6', 10));
+      hasNextPage = total > page * limit;
+    }
+
+    return NextResponse.json(mappedProducts, {
+      headers: {
+        'x-total-count': total.toString(),
+        'x-has-next-page': hasNextPage.toString()
+      }
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch products';
     console.error('Error fetching products:', error);

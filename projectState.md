@@ -427,15 +427,28 @@
 ### 42. Dynamic Category Querying
 - **Description**: Replaced hardcoded category conditional filters in the products GET endpoint with a dynamic equality check.
 - **Core Logic**:
-  - `app/api/products/route.ts`: Resolves category parameter dynamically using a simple equality filter `where: { category }` in database queries.
+- `app/api/products/route.ts`: Resolves category parameter dynamically using a simple equality filter `where: { category }` in database queries.
 - **Testing**:
-  - `tests/api/products-pagination.test.ts` & `tests/api/products.test.ts`: Added and updated unit tests to verify dynamic category filter resolution.
+- `tests/api/products-pagination.test.ts` & `tests/api/products.test.ts`: Added and updated unit tests to verify dynamic category filter resolution.
+
+### 43. Server-Side Product Pagination and Lazy Loading
+- **Description**: Refactored the products GET endpoint, client hooks, and the admin dashboard products section to support server-side execution (pagination, sorting, and search) using PostgreSQL (via Prisma), while maintaining backward-compatibility and adding support for server-side infinite scroll.
+- **Backend API**:
+  - `app/api/products/route.ts`: Supported database-level sorting by rating via `sortBy` parameter. Computes total matching items count and has-next-page indicators, returning them in `x-total-count` and `x-has-next-page` response headers.
+- **Client-Side Hooks**:
+  - `lib/hooks/use-products.ts`: Refactored `useProducts` query hook to accept pagination, filter, and sorting parameters, mapping the returned `x-total-count` header to a `.total` property. Added `useInfiniteProducts` utilizing TanStack React Query `useInfiniteQuery` and `x-has-next-page` header mapping for server-side infinite scrolling.
+- **Dashboard View**:
+  - `components/dashbord/ProductsSection.tsx`: Replaced client-side sorting, filtering, and slicing in favor of sending pagination and filter parameters directly to the query hook, ensuring only lightweight page chunks are fetched and rendered.
+- **Product Browser Catalog**:
+  - `components/our-product/ProductBrowser.tsx`: Refactored the lazy-loading products browser to consume the unified `useInfiniteProducts` hook and integrated `rootMargin: '250px'` in the Intersection Observer configuration to enable proactive next-page prefetching before the user reaches the bottom.
+- **Testing**:
+  - `tests/api/products.test.ts` & `tests/api/products-pagination.test.ts`: Added mocks for `prisma.product.count` and integration tests verifying database-side rating sorting.
 
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 168 tests pass successfully under `vitest` (`npx vitest run`) across 21 test files.
+  - All 170 tests pass successfully under `vitest` (`npx vitest run`) across 21 test files.
 
 
 

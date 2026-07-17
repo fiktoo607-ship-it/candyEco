@@ -8,6 +8,7 @@ vi.mock('@/lib/prisma', () => {
     prisma: {
       product: {
         findMany: vi.fn(),
+        count: vi.fn().mockResolvedValue(0),
       },
     },
   };
@@ -122,6 +123,36 @@ describe('Products API - Pagination & Filtering', () => {
     expect(prisma.product.findMany).toHaveBeenCalledWith({
       orderBy: [
         { visibility: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      include: { tags: true }
+    });
+  });
+
+  it('should order by rating desc when sortBy=rating-desc is specified', async () => {
+    vi.mocked(prisma.product.findMany).mockResolvedValueOnce([]);
+
+    const req = new NextRequest('http://localhost/api/products?sortBy=rating-desc');
+    await getProducts(req);
+
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      orderBy: [
+        { rating: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      include: { tags: true }
+    });
+  });
+
+  it('should order by rating asc when sortBy=rating-asc is specified', async () => {
+    vi.mocked(prisma.product.findMany).mockResolvedValueOnce([]);
+
+    const req = new NextRequest('http://localhost/api/products?sortBy=rating-asc');
+    await getProducts(req);
+
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      orderBy: [
+        { rating: 'asc' },
         { createdAt: 'desc' },
       ],
       include: { tags: true }

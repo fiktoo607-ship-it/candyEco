@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { Product, useInfiniteProducts } from '@/lib/hooks/use-products';
+import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
 import ProductCard from '@/components/ProductCard';
 import SearchBar from '@/components/SearchBar';
 import { useBakeryStore } from '@/lib/store';
 import dictionary from '@/lib/copy-dictionary.json';
-import { Product } from '@/lib/hooks/use-products';
-import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
 
 const filters = [
   { value: 'all', label: dictionary.productBrowser.filters.all },
@@ -132,23 +131,11 @@ export default function ProductBrowser() {
     isFetching,
     isFetchingNextPage,
     isLoading,
-  } = useInfiniteQuery<Product[]>({
-    queryKey: ['products-infinite', activeCategory, debouncedSearchQuery, selectedTags],
-    queryFn: async ({ pageParam = 1 }) => {
-      const categoryParam = activeCategory !== 'all' ? `&category=${encodeURIComponent(activeCategory)}` : '';
-      const searchParam = debouncedSearchQuery.trim() !== '' ? `&search=${encodeURIComponent(debouncedSearchQuery.trim())}` : '';
-      const tagsParam = selectedTags.length > 0 ? `&tags=${encodeURIComponent(selectedTags.join(','))}` : '';
-      const res = await fetch(`/api/products?page=${pageParam}&limit=${ITEMS_PER_PAGE}${categoryParam}${searchParam}${tagsParam}`);
-      if (!res.ok) {
-        throw new Error('Failed to load products');
-      }
-      return res.json();
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) => {
-      // If the last page has fewer items than our limit, there are no more pages.
-      return lastPage.length === ITEMS_PER_PAGE ? allPages.length + 1 : undefined;
-    },
+  } = useInfiniteProducts({
+    limit: ITEMS_PER_PAGE,
+    category: activeCategory,
+    search: debouncedSearchQuery,
+    tags: selectedTags,
   });
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -162,7 +149,7 @@ export default function ProductBrowser() {
           fetchNextPage();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: '250px' }
     );
 
     const currentTarget = loadMoreRef.current;
