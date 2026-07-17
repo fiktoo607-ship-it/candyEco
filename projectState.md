@@ -340,17 +340,17 @@
 - **Carousel UI Refinements**:
   - `components/home/NewProductsSection.tsx`, `components/home/PopularProductsSection.tsx`, `components/home/FeaturedProducts.tsx`: Updated slide indicator dots to make the active dot longer (w-8 pill-shape) than the inactive ones (w-3) to create a premium, dynamic feel.
 - **Body Scroll Locking for Modals**:
-  - `lib/hooks/use-lock-body-scroll.ts`: Created a new custom hook to toggle `overflow: hidden` on the page body when a modal is active.
-  - Integrated this hook in all application modal components: `DeleteModal`, `ProductModal`, `DashboardDeleteModal`, `QnaModal`, `OrderDetailsModal`, `OrderStatusConfirmModal`, mobile filters modal in `ProductBrowser`, and rating modal in `ProductDetails`. Prevents scroll and background shifting when popups are shown.
+  - `lib/hooks/use-lock-body-scroll.ts`: Created a custom hook to toggle `overflow: hidden` on the page body when a modal is active.
+  - Integrated this hook in all application modal components: `DeleteModal`, `ProductModal`, `DashboardDeleteModal`, `QnaModal`, `OrderDetailsModal`, `OrderStatusConfirmModal`, mobile filters modal in `ProductBrowser`, and rating modal in `ProductDetails`. Prevents scroll when popups are shown.
+
+### 33. Scrollbar Layout Shift Prevention & Multi-Modal Support
+- **Description**: Re-engineered the scroll-locking system to completely prevent horizontal page content jumping (layout shift) and correctly support multiple/nested active modals.
+- **Scrollbar Padding Compensation**: Calculates the exact viewport scrollbar width via `window.innerWidth - document.documentElement.clientWidth` when a modal is opened, applying the width as `paddingRight` to `document.body` while scroll is locked.
+- **Nested Modal Counting**: Tracks active scroll locks via a module-level counter (`lockCount`). Prevents early release of styles when a nested modal is closed before its parent, and only restores the original body styles (`overflow` and `padding-right`) when the count reaches `0`.
+- **Testing**: Added focused JSDOM test suite in `tests/scroll-lock.test.tsx` to verify layout shift calculations, nested/sequential modal locking, and cleanup behaviour.
 
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 153 tests pass successfully under `vitest` (`npx vitest run`).
-
-
-
-
-
-
+  - All 159 tests pass successfully under `vitest` (`npx vitest run`) across 19 test files.
