@@ -41,7 +41,8 @@
   - `prisma/seed.ts`: Updated database seed script to explicitly connect initial products with tags upon creation.
   - `lib/tags.ts`: Built a server-side helper `ensureProductTags` that scans the database for products lacking tags and maps appropriate tags based on Arabic/French keyword matching (e.g. chocolate, butter, lemon, olive oil, etc.).
   - `app/api/tags/route.ts`: Rewritten to call `ensureProductTags` and query the `Tag` table, applying the `products: { some: {} }` constraint to filter out any unused tags from being shown in the autocomplete filter search.
-  - `app/api/products/route.ts` & `app/api/products/[id]/route.ts`: Updated GET, POST, and PUT handlers to link tags relation and map returned tags to `string[]` for frontend compatibility. GET queries call `ensureProductTags` first.
+  - `app/api/products/route.ts` & `app/api/products/[id]/route.ts`: Updated GET, POST, and PUT handlers to link tags relation and map returned tags to `string[]` for frontend compatibility. Removed database write modification (`ensureProductTags()`) from the products GET handler in `app/api/products/route.ts` to eliminate database latency and keep catalog loads read-only.
+  - `scripts/ensure-tags.ts`: Standalone database seeding/migration script that runs the tag verification routine via `npm run db:ensure-tags`.
   - `tests/api/tags.test.ts`: Added automated unit/integration tests to verify tag endpoints and product association rules.
 
 ### 5. Product Rating System

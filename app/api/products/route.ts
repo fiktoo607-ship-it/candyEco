@@ -2,13 +2,9 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { ensureProductTags } from '@/lib/tags';
 
 export async function GET(request?: NextRequest) {
   try {
-    // Ensure all products in the database have their tags assigned
-    await ensureProductTags();
-
     const queryOptions: any = {
       orderBy: [
         { visibility: 'desc' },
