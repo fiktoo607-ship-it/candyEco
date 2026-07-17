@@ -499,11 +499,19 @@
   - `components/dashbord/users/UsersFilters.tsx` [NEW]
   - `components/dashbord/users/UsersTable.tsx` [NEW]
 
+### 50. React Query Cache Invalidation & Order Dashboard Synchronization
+- **Description**: Enforced React Query cache invalidation to fix state synchronization issues in the orders dashboard. Removed temporary local state patching in `OrderDetailsModal.tsx` and implemented automatic synchronization between the `selectedOrder` state and the React Query `['orders']` cache.
+- **Affected Files**:
+  - `components/dashbord/orders/OrderDetailsModal.tsx` [MODIFY]: Removed `onUpdateOrderLocal` prop and callbacks.
+  - `components/dashbord/OrdersSection.tsx` [MODIFY]: Removed `onUpdateOrderLocal={setSelectedOrder}` and added a `useEffect` hook to keep `selectedOrder` dynamically synchronized with the React Query cache list. If the order is no longer in the list (e.g., due to filter status updates), the modal automatically closes.
+- **Testing**:
+  - `tests/orders-sync.test.tsx` [NEW]: Focused unit and integration tests verifying order status updates, React Query cache invalidation, and modal state synchronization/auto-closure.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 170 tests pass successfully under `vitest` (`npx vitest run`) across 21 test files.
+  - All 172 tests pass successfully under `vitest` (`npx vitest run`) across 22 test files.
 
 
 

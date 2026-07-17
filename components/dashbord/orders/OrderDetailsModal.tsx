@@ -9,7 +9,6 @@ interface OrderDetailsModalProps {
   order: Order | null;
   onClose: () => void;
   updateStatusMutation: any;
-  onUpdateOrderLocal: (updatedOrder: Order) => void;
   onStatusChangeClick: (
     id: string,
     status: string,
@@ -23,7 +22,6 @@ export function OrderDetailsModal({
   order,
   onClose,
   updateStatusMutation,
-  onUpdateOrderLocal,
   onStatusChangeClick,
 }: OrderDetailsModalProps) {
   useLockBodyScroll(!!order);
@@ -175,11 +173,7 @@ export function OrderDetailsModal({
                   order.id,
                   'ACCEPTED',
                   order.status,
-                  order.reference || `#${order.id.substring(0, 8).toUpperCase()}`,
-                  () => onUpdateOrderLocal({
-                    ...order,
-                    status: 'ACCEPTED',
-                  })
+                  order.reference || `#${order.id.substring(0, 8).toUpperCase()}`
                 );
               }}
               disabled={updateStatusMutation.isPending}
@@ -196,11 +190,7 @@ export function OrderDetailsModal({
                   order.id,
                   'DELIVERED',
                   order.status,
-                  order.reference || `#${order.id.substring(0, 8).toUpperCase()}`,
-                  () => onUpdateOrderLocal({
-                    ...order,
-                    status: 'DELIVERED',
-                  })
+                  order.reference || `#${order.id.substring(0, 8).toUpperCase()}`
                 );
               }}
               disabled={updateStatusMutation.isPending}

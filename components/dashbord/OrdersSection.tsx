@@ -47,6 +47,18 @@ export default function OrdersSection() {
 
   const [printOrder, setPrintOrder] = React.useState<Order | null>(null);
 
+  // Sync selectedOrder with the latest data from the orders query
+  React.useEffect(() => {
+    if (selectedOrder && !isLoading) {
+      const updated = orders.find((o) => o.id === selectedOrder.id);
+      if (updated) {
+        setSelectedOrder(updated);
+      } else {
+        setSelectedOrder(null);
+      }
+    }
+  }, [orders, selectedOrder?.id, isLoading, setSelectedOrder]);
+
   const handleStatusChangeClick = (
     id: string,
     status: string,
@@ -107,7 +119,6 @@ export default function OrdersSection() {
         order={selectedOrder}
         onClose={() => setSelectedOrder(null)}
         updateStatusMutation={updateStatusMutation}
-        onUpdateOrderLocal={setSelectedOrder}
         onStatusChangeClick={handleStatusChangeClick}
       />
 
