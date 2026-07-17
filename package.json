@@ -7,7 +7,8 @@
     "build": "node ./scripts/next-with-swc-lockfile-shim.cjs build",
     "start": "node ./scripts/next-with-swc-lockfile-shim.cjs start",
     "postinstall": "prisma generate",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:ensure-tags": "npx tsx scripts/ensure-tags.ts"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
