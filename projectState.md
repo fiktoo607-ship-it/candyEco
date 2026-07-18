@@ -532,11 +532,19 @@
 - **Testing**:
   - `tests/shared-refactoring.test.tsx` [NEW]: Dedicated JSDOM unit tests confirming transition guard safety logic and verification of search/filter-dependent pagination resets inside `useDashboardPagination`.
 
+### 52. Minimal Browser Desktop Notifications
+- **Description**: Added native OS-level desktop notification capability for administrators. When a new order is received via the existing real-time SSE listener in the background, a native browser `Notification` alert is triggered alongside the chime sound. Includes a simple, premium button in the notification bell dropdown to request browser notification permission.
+- **Affected Files**:
+  - `components/dashbord/hooks/useNotificationBell.ts` [MODIFY]: Instantiates native `Notification` constructor when SSE message is received if permission is granted.
+  - `components/dashbord/NotificationBell.tsx` [MODIFY]: Tracks permission state and renders a request button.
+- **Testing**:
+  - `tests/desktop-notifications.test.tsx` [NEW]: Unit tests verifying the notification construction, permission request updates, and denied state bypass logic.
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 176 tests pass successfully under `vitest` (`npx vitest run`) across 23 test files.
+  - All 179 tests pass successfully under `vitest` (`npx vitest run`) across 24 test files.
 
 
 

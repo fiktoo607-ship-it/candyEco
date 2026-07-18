@@ -144,3 +144,70 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// Push notification event listener
+self.addEventListener('push', (event) => {
+  if (!event.data) {
+    console.log('[Service Worker] Push event received with no data.');
+    return;
+  }
+
+  let payload = {
+    title: 'Candy Eco',
+    body: 'Vous avez une nouvelle notification.',
+    icon: '/logo.jpeg',
+    url: '/',
+  };
+
+  try {
+    const parsedData = event.data.json();
+    payload = {
+      title: parsedData.title || payload.title,
+      body: parsedData.body || payload.body,
+      icon: parsedData.icon || payload.icon,
+      url: parsedData.url || payload.url,
+      data: parsedData.data || {},
+    };
+  } catch (err) {
+    payload.body = event.data.text();
+  }
+
+  const options = {
+    body: payload.body,
+    icon: payload.icon,
+    badge: '/logo.jpeg',
+    data: {
+      url: payload.url,
+      ...payload.data
+    },
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, options)
+  );
+});
+
+// Notification click event listener
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const clickUrl = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Find an open window matching the origin and focus it
+      for (const client of windowClients) {
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+          if (client.url !== new URL(clickUrl, self.location.origin).href && 'navigate' in client) {
+            client.navigate(clickUrl);
+          }
+          return client.focus();
+        }
+      }
+      // If no window is open, open a new one
+      if (clients.openWindow) {
+        return clients.openWindow(clickUrl);
+      }
+    })
+  );
+});

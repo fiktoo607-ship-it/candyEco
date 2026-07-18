@@ -26,7 +26,12 @@ interface HeroCarouselProps {
 
 export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Touch Swipe gesture states
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -240,7 +245,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
       )}
 
       {/* Slide Indicator Dots centered at the bottom */}
-      {displaySlides.length > 1 && (
+      {isMounted && displaySlides.length > 1 && (
         <div className="absolute bottom-md left-1/2 z-30 flex -translate-x-1/2 items-center gap-3">
           {displaySlides.map((_, index) => {
             const isActive = index === currentSlide;

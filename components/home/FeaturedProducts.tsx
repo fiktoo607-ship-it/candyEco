@@ -244,7 +244,7 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
       </div>
 
       {/* Dotted Slide Indicators */}
-      {N > 1 && (
+      {isMounted && N > 1 && (
         <div className="mt-lg flex gap-3 justify-center items-center z-20 relative">
           {Array.from({ length: N }).map((_, index) => {
             const isActive = index === activeIndicatorIndex;

@@ -159,6 +159,7 @@ model User {
   sessions      Session[]
   createdAt     DateTime  @default(now())
   orders        Order[]
+  pushSubscriptions PushSubscription[]
 }
 
 model VerificationToken {
@@ -186,3 +187,22 @@ model OrderNotification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model PushSubscription {
+  id             String   @id @default(uuid())
+  endpoint       String   @unique
+  expirationTime Float?
+  p256dh         String
+  auth           String
+
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  deviceToken    String?  // Links to guest's sessionId or unique device token
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@index([deviceToken])
+}
+

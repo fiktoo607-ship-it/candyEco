@@ -6,7 +6,7 @@ export default function TabVisibilityNotifier() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // 1. Force-unregister any active service workers to ensure deleted sw.js is fully purged (preserving the new sw.js)
+    // 1. Force-unregister any active service workers to ensure deleted sw.js is fully purged (preserving the new sw.js only in production)
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then((registrations) => {
         for (const registration of registrations) {
@@ -21,7 +21,7 @@ export default function TabVisibilityNotifier() {
           }
           registration.unregister().then((success) => {
             if (success) {
-              console.log('Successfully unregistered ghost service worker:', registration.scope);
+              console.log('Successfully unregistered service worker:', registration.scope);
             }
           });
         }
