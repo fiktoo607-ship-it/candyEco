@@ -8,6 +8,7 @@ vi.mock('@/lib/prisma', () => {
     prisma: {
       product: {
         findMany: vi.fn(),
+        count: vi.fn().mockResolvedValue(0),
       },
     },
   };
@@ -43,19 +44,17 @@ describe('Products API - Pagination & Filtering', () => {
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
       where: {
-        category: { contains: 'traditionnel', mode: 'insensitive' }
+        category: 'aliments traditionnel'
       },
       orderBy: [
         { visibility: 'desc' },
         { createdAt: 'desc' },
       ],
-      skip: undefined,
-      take: undefined,
       include: { tags: true }
     });
   });
 
-  it('should pass correct category filtering for "gâteau" (NOT contains "traditionnel")', async () => {
+  it('should pass correct category filtering for "gâteau"', async () => {
     vi.mocked(prisma.product.findMany).mockResolvedValueOnce([]);
 
     const req = new NextRequest('http://localhost/api/products?category=gâteau');
@@ -63,14 +62,12 @@ describe('Products API - Pagination & Filtering', () => {
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
       where: {
-        NOT: { category: { contains: 'traditionnel', mode: 'insensitive' } }
+        category: 'gâteau'
       },
       orderBy: [
         { visibility: 'desc' },
         { createdAt: 'desc' },
       ],
-      skip: undefined,
-      take: undefined,
       include: { tags: true }
     });
   });
@@ -126,6 +123,36 @@ describe('Products API - Pagination & Filtering', () => {
     expect(prisma.product.findMany).toHaveBeenCalledWith({
       orderBy: [
         { visibility: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      include: { tags: true }
+    });
+  });
+
+  it('should order by rating desc when sortBy=rating-desc is specified', async () => {
+    vi.mocked(prisma.product.findMany).mockResolvedValueOnce([]);
+
+    const req = new NextRequest('http://localhost/api/products?sortBy=rating-desc');
+    await getProducts(req);
+
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      orderBy: [
+        { rating: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      include: { tags: true }
+    });
+  });
+
+  it('should order by rating asc when sortBy=rating-asc is specified', async () => {
+    vi.mocked(prisma.product.findMany).mockResolvedValueOnce([]);
+
+    const req = new NextRequest('http://localhost/api/products?sortBy=rating-asc');
+    await getProducts(req);
+
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      orderBy: [
+        { rating: 'asc' },
         { createdAt: 'desc' },
       ],
       include: { tags: true }

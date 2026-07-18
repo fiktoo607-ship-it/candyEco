@@ -2,15 +2,14 @@
 
 import React from 'react';
 import { useOrdersSection } from './hooks/useOrdersSection';
-import {
-  OrdersFilters,
-  OrdersTable,
-  OrderDetailsModal,
-  OrderStatusConfirmModal
-} from './helpers/OrdersSectionHelpers';
+import { OrdersFilters } from './orders/OrdersFilters';
+import { OrdersTable } from './orders/OrdersTable';
+import { OrderDetailsModal } from './orders/OrderDetailsModal';
+import { OrderStatusConfirmModal } from './orders/OrderStatusConfirmModal';
 import { useDashboardStore } from '@/lib/dashboard-store';
 import { OrderPrintReceipt } from './helpers/OrderPrintReceipt';
 import { Order } from '@/lib/hooks/use-orders';
+import { isValidStatusTransition } from '@/types/orderStatusConfig';
 
 
 export default function OrdersSection() {
@@ -49,6 +48,18 @@ export default function OrdersSection() {
 
   const [printOrder, setPrintOrder] = React.useState<Order | null>(null);
 
+  // Sync selectedOrder with the latest data from the orders query
+  React.useEffect(() => {
+    if (selectedOrder && !isLoading) {
+      const updated = orders.find((o) => o.id === selectedOrder.id);
+      if (updated) {
+        setSelectedOrder(updated);
+      } else {
+        setSelectedOrder(null);
+      }
+    }
+  }, [orders, selectedOrder?.id, isLoading, setSelectedOrder]);
+
   const handleStatusChangeClick = (
     id: string,
     status: string,
@@ -58,6 +69,10 @@ export default function OrdersSection() {
   ) => {
     if (status === 'CANCELLED' && (currentStatus === 'ACCEPTED' || currentStatus === 'DELIVERED')) {
       showToast("Vous ne pouvez pas annuler une commande déjà acceptée ou livrée.", "error");
+      return;
+    }
+    if (!isValidStatusTransition(currentStatus, status)) {
+      showToast("Transition de statut invalide.", "error");
       return;
     }
     setStatusConfirmTarget({ id, status, currentStatus, reference, onConfirmExtra });
@@ -109,7 +124,6 @@ export default function OrdersSection() {
         order={selectedOrder}
         onClose={() => setSelectedOrder(null)}
         updateStatusMutation={updateStatusMutation}
-        onUpdateOrderLocal={setSelectedOrder}
         onStatusChangeClick={handleStatusChangeClick}
       />
 

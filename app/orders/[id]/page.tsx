@@ -7,6 +7,7 @@ import SiteHeader from '@/components/site-header';
 import SiteFooter from '@/components/site-footer';
 import { Order } from '@/lib/hooks/use-orders';
 import PriceDisplay from '@/components/PriceDisplay';
+import { ORDER_STATUS_CONFIG, isValidStatusTransition } from '@/types/orderStatusConfig';
 
 export default function OrderTrackingPage() {
   const params = useParams();
@@ -46,6 +47,10 @@ export default function OrderTrackingPage() {
   }, [id]);
 
   const handleCancelOrder = async () => {
+    if (order && !isValidStatusTransition(order.status, 'CANCELLED')) {
+      alert("Vous ne pouvez pas annuler cette commande.");
+      return;
+    }
     if (!window.confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
       return;
     }
@@ -134,15 +139,16 @@ export default function OrderTrackingPage() {
                 <span className="text-xs text-on-surface-variant">
                   Statut actuel :
                 </span>
-                {order.status === "CANCELLED" ? (
-                  <span className="rounded-full bg-rose-500/10 px-sm py-[2px] text-xs font-bold text-rose-600 uppercase">
-                    Annulée
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-emerald-500/10 px-sm py-[2px] text-xs font-bold text-emerald-600 uppercase">
-                    {steps[activeIndex]?.label || order.status}
-                  </span>
-                )}
+                {(() => {
+                  const statusInfo = ORDER_STATUS_CONFIG[order.status as keyof typeof ORDER_STATUS_CONFIG];
+                  const label = statusInfo?.label || order.status;
+                  const bgClass = statusInfo?.bg || 'bg-surface-container text-on-surface-variant';
+                  return (
+                    <span className={`rounded-full px-sm py-[2px] text-xs font-bold uppercase ${bgClass}`}>
+                      {label}
+                    </span>
+                  );
+                })()}
               </div>
             </div>
 

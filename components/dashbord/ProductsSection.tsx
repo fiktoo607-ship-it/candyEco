@@ -3,61 +3,50 @@ import { useEffect, useState } from 'react';
 import { useProducts } from '@/lib/hooks/use-products';
 import { useDashboardStore } from '@/lib/dashboard-store';
 import PriceDisplay from '@/components/PriceDisplay';
-import { ProductStateBadge } from './helpers/ProductModalHelpers';
+import { ProductStateBadge } from './products/ProductStateBadge';
+import { useDashboardPagination } from './hooks/useDashboardPagination';
 
 
 export default function ProductsSection() {
-  const { data: products = [], isLoading, error: productsError } = useProducts(true);
-  const error = productsError instanceof Error ? productsError.message : null;
-  const [sortBy, setSortBy] = useState<'default' | 'rating-desc' | 'rating-asc'>('default');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const store = useDashboardStore();
+  const { openEdit, openDelete, openCreate } = store;
 
   const {
-    searchQuery,
-    setSearchQuery,
     currentPage,
     setCurrentPage,
-    openEdit,
-    openDelete,
-    openCreate,
-  } = useDashboardStore();
-
-  const itemsPerPage = 5;
-
-  // Filter products by search query and category
-  const filteredProducts = products.filter((p) => {
-    const matchesSearch =
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      categoryFilter === 'all' ||
-      p.category.toLowerCase() === categoryFilter.toLowerCase();
-    return matchesSearch && matchesCategory;
+    searchQuery,
+    setSearchQuery,
+    sortBy,
+    setSortBy,
+    limit: itemsPerPage,
+  } = useDashboardPagination({
+    searchQuery: store.searchQuery,
+    setSearchQuery: store.setSearchQuery,
+    currentPage: store.currentPage,
+    setCurrentPage: store.setCurrentPage,
+    initialSortBy: 'default',
+    initialLimit: 5,
+    filters: { category: categoryFilter },
   });
 
-  // Sort products
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sortBy === 'rating-desc') {
-      return (b.rating ?? 0) - (a.rating ?? 0);
-    }
-    if (sortBy === 'rating-asc') {
-      return (a.rating ?? 0) - (b.rating ?? 0);
-    }
-    return 0;
+  const { data: products = [], isLoading, error: productsError } = useProducts({
+    page: currentPage,
+    limit: itemsPerPage,
+    search: searchQuery,
+    category: categoryFilter,
+    sortBy: sortBy as any,
+    isDashboard: true,
   });
+  
+  const error = productsError instanceof Error ? productsError.message : null;
 
   // Pagination calculations
-  const totalItems = sortedProducts.length;
+  const totalItems = (products as any).total ?? 0;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = sortedProducts.slice(indexOfFirstItem, indexOfLastItem);
-
-  // Reset page when query or category changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, categoryFilter, setCurrentPage]);
+  const indexOfFirstItem = (currentPage - 1) * itemsPerPage;
+  const indexOfLastItem = indexOfFirstItem + products.length;
+  const currentItems = products;
 
   return (
     <>

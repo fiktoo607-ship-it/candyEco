@@ -68,6 +68,19 @@ export function useNotificationBell() {
             ? rawPrice.includes('€') ? rawPrice : `${rawPrice} €`
             : '0.00 €';
 
+          // Trigger native browser notification if permission is granted
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+              new Notification('Nouvelle commande reçue ! 🍰', {
+                body: `${clientName} a passé une commande de ${amount}.`,
+                icon: '/logo.jpeg',
+                tag: `order-${newNotif.id}`,
+              });
+            } catch (err) {
+              console.error('Failed to trigger desktop notification:', err);
+            }
+          }
+
           setToast({
             id: newNotif.id,
             clientName,

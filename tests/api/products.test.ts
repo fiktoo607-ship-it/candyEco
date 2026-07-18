@@ -34,6 +34,7 @@ vi.mock('@/lib/prisma', () => {
       findUnique: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
     },
     order: {
       count: vi.fn(),
@@ -130,6 +131,33 @@ describe('Products API', () => {
       const data = await response.json();
       expect(data).toEqual(mockProductsJson);
       expect(data[0].rating).toBe(4.5);
+    });
+
+    it('should filter products dynamically by category when category query parameter is present', async () => {
+      const mockProducts = [
+        { ...mockProduct, id: 'prod-uuid-1', category: 'Cakes' },
+      ];
+      const expectedProducts = mockProducts.map(p => {
+        const copy = { ...p };
+        delete (copy as any).rating;
+        delete (copy as any).ratingCount;
+        return copy;
+      });
+      const expectedProductsJson = JSON.parse(JSON.stringify(expectedProducts));
+
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockProducts);
+
+      const req = new NextRequest('http://localhost/api/products?category=Cakes');
+      const response = await getProducts(req);
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+      expect(data).toEqual(expectedProductsJson);
+      expect(prisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          category: 'Cakes'
+        })
+      }));
     });
 
     it('should return 500 when database fetching fails', async () => {
@@ -521,6 +549,25 @@ describe('Products API', () => {
       expect(prisma.product.update).toHaveBeenCalled();
     });
 
+    it('should NOT trigger deleteImage on Cloudinary if imageUrl changes but database transaction fails', async () => {
+      vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(mockProduct);
+      vi.mocked(prisma.product.update).mockRejectedValueOnce(new Error('Update database failed'));
+
+      const updateData = {
+        imageUrl: 'https://res.cloudinary.com/dummy/image/upload/v12345/products/new-mock.jpg',
+      };
+
+      const req = new NextRequest(`http://localhost/api/products/${mockProduct.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData),
+      });
+
+      const response = await updateProduct(req, { params: Promise.resolve({ id: mockProduct.id }) });
+      expect(response.status).toBe(500);
+      expect(deleteImage).not.toHaveBeenCalled();
+    });
+
     it('should return 500 when product update fails in the database', async () => {
       vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(mockProduct);
       vi.mocked(prisma.product.update).mockRejectedValueOnce(new Error('Update database timeout'));
@@ -676,6 +723,19 @@ describe('Products API', () => {
       expect(prisma.product.delete).toHaveBeenCalledWith({
         where: { id: mockProduct.id },
       });
+    });
+
+    it('should NOT trigger deleteImage on Cloudinary if database deletion transaction fails', async () => {
+      vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(mockProduct);
+      vi.mocked(prisma.product.delete).mockRejectedValueOnce(new Error('Delete database failed'));
+
+      const req = new NextRequest(`http://localhost/api/products/${mockProduct.id}`, {
+        method: 'DELETE',
+      });
+
+      const response = await deleteProduct(req, { params: Promise.resolve({ id: mockProduct.id }) });
+      expect(response.status).toBe(500);
+      expect(deleteImage).not.toHaveBeenCalled();
     });
 
     it('should return 500 when product deletion fails', async () => {

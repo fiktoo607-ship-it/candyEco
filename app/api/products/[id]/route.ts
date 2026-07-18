@@ -64,7 +64,38 @@ export async function PUT(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    // If imageUrl is changing, clean up the old image from Cloudinary
+    const updatedProduct = await prisma.$transaction(async (tx) => {
+      return await tx.product.update({
+        where: { id },
+        data: {
+          title: title !== undefined ? title : existingProduct.title,
+          slug: slug !== undefined ? slug : existingProduct.slug,
+          category: category !== undefined ? category : existingProduct.category,
+          price: price !== undefined ? price : existingProduct.price,
+          imageUrl: imageUrl !== undefined ? imageUrl : existingProduct.imageUrl,
+          description: description !== undefined ? description : existingProduct.description,
+          story: story !== undefined ? story : existingProduct.story,
+          limitBay: limitBay !== undefined ? (limitBay === null ? null : Number(limitBay)) : existingProduct.limitBay,
+          state: state !== undefined ? state : existingProduct.state,
+          visibility: visibility !== undefined ? Number(visibility) : existingProduct.visibility,
+          rating: rating !== undefined ? Number(rating) : existingProduct.rating,
+          ratingCount: ratingCount !== undefined ? Number(ratingCount) : existingProduct.ratingCount,
+          tags: tags !== undefined ? {
+            set: [],
+            connectOrCreate: (Array.isArray(tags) ? tags : []).map((name: string) => ({
+              where: { name },
+              create: { name },
+            }))
+          } : undefined,
+          publishedAt: publishedAt !== undefined ? (publishedAt ? new Date(publishedAt) : null) : existingProduct.publishedAt,
+        },
+        include: {
+          tags: true
+        }
+      });
+    });
+
+    // If imageUrl is changing, clean up the old image from Cloudinary only after database update completes successfully
     if (imageUrl !== undefined && imageUrl !== existingProduct.imageUrl && existingProduct.imageUrl) {
       try {
         await deleteImage(existingProduct.imageUrl);
@@ -72,35 +103,6 @@ export async function PUT(
         console.error('Failed to delete old image from Cloudinary:', cloudErr);
       }
     }
-
-    const updatedProduct = await prisma.product.update({
-      where: { id },
-      data: {
-        title: title !== undefined ? title : existingProduct.title,
-        slug: slug !== undefined ? slug : existingProduct.slug,
-        category: category !== undefined ? category : existingProduct.category,
-        price: price !== undefined ? price : existingProduct.price,
-        imageUrl: imageUrl !== undefined ? imageUrl : existingProduct.imageUrl,
-        description: description !== undefined ? description : existingProduct.description,
-        story: story !== undefined ? story : existingProduct.story,
-        limitBay: limitBay !== undefined ? (limitBay === null ? null : Number(limitBay)) : existingProduct.limitBay,
-        state: state !== undefined ? state : existingProduct.state,
-        visibility: visibility !== undefined ? Number(visibility) : existingProduct.visibility,
-        rating: rating !== undefined ? Number(rating) : existingProduct.rating,
-        ratingCount: ratingCount !== undefined ? Number(ratingCount) : existingProduct.ratingCount,
-        tags: tags !== undefined ? {
-          set: [],
-          connectOrCreate: (Array.isArray(tags) ? tags : []).map((name: string) => ({
-            where: { name },
-            create: { name },
-          }))
-        } : undefined,
-        publishedAt: publishedAt !== undefined ? (publishedAt ? new Date(publishedAt) : null) : existingProduct.publishedAt,
-      },
-      include: {
-        tags: true
-      }
-    });
 
     return NextResponse.json({
       ...updatedProduct,
@@ -135,7 +137,13 @@ export async function DELETE(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    // Delete image from Cloudinary if applicable
+    await prisma.$transaction(async (tx) => {
+      await tx.product.delete({
+        where: { id },
+      });
+    });
+
+    // Delete image from Cloudinary only after database deletion completes successfully if applicable
     if (existingProduct.imageUrl) {
       try {
         await deleteImage(existingProduct.imageUrl);
@@ -143,10 +151,6 @@ export async function DELETE(
         console.error('Failed to delete image from Cloudinary:', cloudErr);
       }
     }
-
-    await prisma.product.delete({
-      where: { id },
-    });
 
     return NextResponse.json({ message: 'Product deleted successfully' });
   } catch (error) {

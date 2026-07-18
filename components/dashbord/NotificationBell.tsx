@@ -3,6 +3,8 @@
 import React from 'react';
 import { useNotificationBell } from './hooks/useNotificationBell';
 import { getRelativeTimeFrench } from './helpers/NotificationHelpers';
+import { usePushNotifications } from '@/lib/hooks/use-push-notifications';
+import { createPortal } from 'react-dom';
 
 export default function NotificationBell() {
   const {
@@ -17,6 +19,14 @@ export default function NotificationBell() {
     handleClearAll,
     setActiveTab,
   } = useNotificationBell();
+
+  const {
+    isSupported,
+    isSubscribed,
+    subscribeToPush,
+    unsubscribeFromPush,
+    loading: pushLoading,
+  } = usePushNotifications();
 
   return (
     <div className="relative inline-block text-left">
@@ -60,6 +70,28 @@ export default function NotificationBell() {
               </button>
             )}
           </div>
+
+          {isSupported && (
+            <button
+              disabled={pushLoading}
+              onClick={() => isSubscribed ? unsubscribeFromPush() : subscribeToPush()}
+              className={`w-full mb-sm rounded-xl p-sm text-xs font-semibold transition-all text-center flex items-center justify-center gap-xs ${
+                isSubscribed
+                  ? "bg-error/10 hover:bg-error/20 text-error"
+                  : "bg-primary/10 hover:bg-primary/20 text-primary"
+              }`}
+            >
+              <span className="material-symbols-outlined text-base">
+                {isSubscribed ? 'notifications_off' : 'notifications'}
+              </span>
+              {pushLoading
+                ? 'Chargement...'
+                : isSubscribed
+                  ? 'Désactiver les notifications push'
+                  : 'Activer les notifications push'
+              }
+            </button>
+          )}
 
           <div className="max-h-80 overflow-y-auto flex flex-col gap-xs pr-xs">
             {notifications.length === 0 ? (
@@ -126,8 +158,8 @@ export default function NotificationBell() {
       )}
 
       {/* Floating Real-time Toast Alert */}
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-[90] flex max-w-sm rounded-2xl border border-primary/20 bg-surface-container-lowest/90 backdrop-blur-md p-md shadow-soft animate-in slide-in-from-bottom duration-300">
+      {toast && typeof document !== 'undefined' && createPortal(
+        <div className="fixed bottom-6 right-6 z-[95] flex max-w-sm rounded-2xl border border-primary/20 bg-surface-container-lowest/90 backdrop-blur-md p-md shadow-soft animate-in slide-in-from-bottom duration-300">
           <div className="flex gap-sm">
             <span className="material-symbols-outlined rounded-full bg-primary/10 p-sm text-primary text-2xl shrink-0 self-center">
               campaign
@@ -167,7 +199,8 @@ export default function NotificationBell() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
