@@ -31,6 +31,11 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    const vipConfig = await prisma.siteConfig.findUnique({ where: { key: 'fidelity_vip_threshold' } });
+    const fideleConfig = await prisma.siteConfig.findUnique({ where: { key: 'fidelity_fidele_threshold' } });
+    const vipThreshold = vipConfig ? parseInt(vipConfig.value) : 500;
+    const fideleThreshold = fideleConfig ? parseInt(fideleConfig.value) : 100;
+
     const mappedUsers = dbUsers.map((user) => {
       const completedOrders = user.orders.filter(
         (order) => order.status === 'DELIVERED' || order.status === 'COMPLETED'
@@ -38,7 +43,8 @@ export async function GET(request: NextRequest) {
       const completedOrderCount = completedOrders.length;
 
       const totalAmountSpent = completedOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-      const trustScore = Math.floor(totalAmountSpent);
+      const calculatedScore = Math.floor(totalAmountSpent);
+      const trustScore = user.trustScore !== null && user.trustScore !== undefined ? user.trustScore : calculatedScore;
 
       let latestActivity = user.createdAt || new Date(0);
       user.orders.forEach((order) => {
@@ -47,15 +53,19 @@ export async function GET(request: NextRequest) {
         }
       });
 
-      // Determine client status
-      let status = 'Non vérifié';
-      const hasDeliveredOrder = user.orders.some((order) => order.status === 'DELIVERED');
-      if (trustScore >= 500) {
-        status = 'VIP';
-      } else if (trustScore >= 100) {
-        status = 'Fidèle';
-      } else if (hasDeliveredOrder) {
-        status = 'Vérifié';
+      // Determine client status (prioritize stored admin status if set)
+      let status = user.status;
+      if (!status) {
+        const hasDeliveredOrder = user.orders.some((order) => order.status === 'DELIVERED');
+        if (trustScore >= vipThreshold) {
+          status = 'VIP';
+        } else if (trustScore >= fideleThreshold) {
+          status = 'Fidèle';
+        } else if (hasDeliveredOrder) {
+          status = 'Vérifié';
+        } else {
+          status = 'Non vérifié';
+        }
       }
 
       return {

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, description, price, active } = body;
+    const { name, description, price, homePrice, stockPrice, active } = body;
 
     if (!name) {
       return NextResponse.json({ error: 'Le nom de la méthode de livraison est requis' }, { status: 400 });
@@ -41,11 +41,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cette méthode de livraison existe déjà' }, { status: 400 });
     }
 
+    const parsedPrice = price !== undefined ? parseFloat(price) : 0.0;
+    const parsedHomePrice = homePrice !== undefined ? parseFloat(homePrice) : parsedPrice;
+    const parsedStockPrice = stockPrice !== undefined ? parseFloat(stockPrice) : parsedPrice;
+
     const newMethod = await prisma.deliveryMethod.create({
       data: {
         name,
         description,
-        price: price !== undefined ? parseFloat(price) : 0.0,
+        price: parsedPrice,
+        homePrice: parsedHomePrice,
+        stockPrice: parsedStockPrice,
         active: active !== undefined ? Boolean(active) : true,
       },
     });

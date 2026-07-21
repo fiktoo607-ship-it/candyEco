@@ -14,12 +14,22 @@ export function useDeliverySection() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('0.0');
+  const [homePrice, setHomePrice] = useState('0.0');
+  const [stockPrice, setStockPrice] = useState('0.0');
   const [active, setActive] = useState(true);
   
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitLoading, setSubmitLoading] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Lieu Price Quick Update Modal State
+  const [lieuModalMethod, setLieuModalMethod] = useState<DeliveryMethod | null>(null);
+  const [isLieuModalOpen, setIsLieuModalOpen] = useState(false);
+  const [lieuHomePrice, setLieuHomePrice] = useState('0.0');
+  const [lieuStockPrice, setLieuStockPrice] = useState('0.0');
+  const [lieuSubmitLoading, setLieuSubmitLoading] = useState(false);
+  const [lieuSubmitError, setLieuSubmitError] = useState<string | null>(null);
 
   const fetchMethods = async () => {
     try {
@@ -47,9 +57,63 @@ export function useDeliverySection() {
     setName('');
     setDescription('');
     setPrice('0.0');
+    setHomePrice('0.0');
+    setStockPrice('0.0');
     setActive(true);
     setSubmitError(null);
     setIsModalOpen(false);
+  };
+
+  const handleOpenLieuModal = (method: DeliveryMethod) => {
+    setLieuModalMethod(method);
+    setLieuHomePrice(String(method.homePrice ?? method.price ?? 0));
+    setLieuStockPrice(String(method.stockPrice ?? method.price ?? 0));
+    setLieuSubmitError(null);
+    setIsLieuModalOpen(true);
+  };
+
+  const handleCloseLieuModal = () => {
+    setIsLieuModalOpen(false);
+    setLieuModalMethod(null);
+    setLieuSubmitError(null);
+  };
+
+  const handleSaveLieuPrice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!lieuModalMethod) return;
+
+    try {
+      setLieuSubmitLoading(true);
+      setLieuSubmitError(null);
+
+      const parsedHome = parseFloat(lieuHomePrice) || 0.0;
+      const parsedStock = parseFloat(lieuStockPrice) || 0.0;
+
+      const res = await fetch(`/api/delivery-methods/${lieuModalMethod.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          homePrice: parsedHome,
+          stockPrice: parsedStock,
+          price: parsedHome, // keep base price in sync with home price
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erreur lors de la mise à jour des prix.');
+      }
+
+      showToast("Prix par lieu mis à jour avec succès !", "success");
+      handleCloseLieuModal();
+      fetchMethods();
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Erreur réseau.';
+      setLieuSubmitError(errMsg);
+      showToast(errMsg, "error");
+    } finally {
+      setLieuSubmitLoading(false);
+    }
   };
 
   const handleEditClick = (method: DeliveryMethod) => {
@@ -57,7 +121,9 @@ export function useDeliverySection() {
     setEditingId(method.id);
     setName(method.name);
     setDescription(method.description || '');
-    setPrice(String(method.price));
+    setPrice(String(method.price ?? 0));
+    setHomePrice(String(method.homePrice ?? method.price ?? 0));
+    setStockPrice(String(method.stockPrice ?? method.price ?? 0));
     setActive(method.active);
     setIsModalOpen(true);
   };
@@ -79,13 +145,19 @@ export function useDeliverySection() {
       
       const method = isEditing ? 'PUT' : 'POST';
 
+      const parsedHome = parseFloat(homePrice) || 0.0;
+      const parsedStock = parseFloat(stockPrice) || 0.0;
+      const parsedBase = parseFloat(price) || parsedHome || 0.0;
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
           description: description || null,
-          price: parseFloat(price) || 0.0,
+          price: parsedBase,
+          homePrice: parsedHome,
+          stockPrice: parsedStock,
           active,
         }),
       });
@@ -158,6 +230,10 @@ export function useDeliverySection() {
     setDescription,
     price,
     setPrice,
+    homePrice,
+    setHomePrice,
+    stockPrice,
+    setStockPrice,
     active,
     setActive,
     submitError,
@@ -169,5 +245,17 @@ export function useDeliverySection() {
     handleDelete,
     isModalOpen,
     setIsModalOpen,
+    // Lieu Price Modal exports
+    lieuModalMethod,
+    isLieuModalOpen,
+    lieuHomePrice,
+    setLieuHomePrice,
+    lieuStockPrice,
+    setLieuStockPrice,
+    lieuSubmitLoading,
+    lieuSubmitError,
+    handleOpenLieuModal,
+    handleCloseLieuModal,
+    handleSaveLieuPrice,
   };
 }

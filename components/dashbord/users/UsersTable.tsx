@@ -65,9 +65,9 @@ export function UsersTable({
                     </div>
                     <div className="text-center">
                       <span className="text-[10px] text-on-surface-variant block uppercase font-bold tracking-wider">Points</span>
-                      <span className="inline-flex items-center gap-[2px] text-xs font-bold text-emerald-600 mt-[2px]">
+                      <span className="inline-flex items-center gap-[2px] text-xs font-bold text-emerald-600 mt-[2px] whitespace-nowrap">
                         <span className="material-symbols-outlined text-xs select-none">verified_user</span>
-                        {user.trustScore} point{user.trustScore !== 1 ? 's' : ''}
+                        <span>{user.trustScore} p</span>
                       </span>
                     </div>
                   </div>
@@ -107,7 +107,7 @@ export function UsersTable({
               <th className="p-md">E-mail / Téléphone</th>
               <th className="p-md">Statut</th>
               <th className="p-md">Commandes</th>
-              <th className="p-md">Points de Confiance</th>
+              <th className="p-md">Points (p)</th>
               <th className="p-md">Dernière Activité</th>
               <th className="p-md text-right">Actions</th>
             </tr>
@@ -139,9 +139,9 @@ export function UsersTable({
                     {user.completedOrderCount}
                   </td>
                   <td className="p-md">
-                    <span className="inline-flex items-center gap-xs rounded-full bg-emerald-500/10 px-sm py-xs text-xs font-bold text-emerald-600 border border-emerald-500/20">
+                    <span className="inline-flex items-center gap-xs rounded-full bg-emerald-500/10 px-sm py-xs text-xs font-bold text-emerald-600 border border-emerald-500/20 whitespace-nowrap">
                       <span className="material-symbols-outlined text-xs select-none">verified_user</span>
-                      {user.trustScore} point{user.trustScore !== 1 ? 's' : ''}
+                      <span className="whitespace-nowrap">{user.trustScore} p</span>
                     </span>
                   </td>
                   <td className="p-md text-on-surface-variant text-xs font-medium whitespace-nowrap">
