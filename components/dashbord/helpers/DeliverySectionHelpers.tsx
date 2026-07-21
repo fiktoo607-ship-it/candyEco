@@ -178,19 +178,30 @@ export function DeliveryTable({
               <div className="space-y-sm">
                 <div className="flex items-center justify-between gap-sm border-b border-outline-variant/10 pb-sm">
                   <h3 className="font-bold text-on-surface text-base">{method.name}</h3>
-                  <button
-                    onClick={() => onToggleActive(method)}
-                    className={`inline-flex items-center gap-[2px] rounded-full px-sm py-[2px] text-xs font-bold transition-all border ${
-                      method.active
-                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600'
-                        : 'bg-rose-500/10 border-rose-500/20 text-rose-600'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-xs select-none">
-                      {method.active ? 'check_circle' : 'cancel'}
+                  <div className="flex items-center gap-xs">
+                    <button
+                      type="button"
+                      onClick={() => onToggleActive(method)}
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full p-[2px] transition-all duration-200 ease-in-out focus:outline-none border ${
+                        method.active
+                          ? 'bg-[#161a17] border-[#94b59b]'
+                          : 'bg-[#181818] border-neutral-600/70'
+                      }`}
+                      role="switch"
+                      aria-checked={method.active}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full transition-all duration-200 ease-in-out ${
+                          method.active
+                            ? 'translate-x-5 bg-[#94b59b]'
+                            : 'translate-x-0 bg-neutral-500'
+                        }`}
+                      />
+                    </button>
+                    <span className={`text-xs font-bold ${method.active ? 'text-[#94b59b]' : 'text-neutral-500'}`}>
+                      {method.active ? 'Actif' : 'Inactif'}
                     </span>
-                    {method.active ? 'Actif' : 'Inactif'}
-                  </button>
+                  </div>
                 </div>
                 <p className="text-xs text-on-surface-variant">{method.description || 'Aucune description'}</p>
               </div>
@@ -255,19 +266,30 @@ export function DeliveryTable({
                     <PriceDisplay price={method.price} />
                   </td>
                   <td className="px-lg py-md">
-                    <button
-                      onClick={() => onToggleActive(method)}
-                      className={`inline-flex items-center gap-xs rounded-full px-sm py-xs text-xs font-bold transition-all border ${
-                        method.active
-                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 hover:bg-emerald-500/20'
-                          : 'bg-rose-500/10 border-rose-500/20 text-rose-600 hover:bg-rose-500/20'
-                      }`}
-                    >
-                      <span className="material-symbols-outlined text-xs select-none">
-                        {method.active ? 'check_circle' : 'cancel'}
+                    <div className="flex items-center gap-xs">
+                      <button
+                        type="button"
+                        onClick={() => onToggleActive(method)}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full p-[2px] transition-all duration-200 ease-in-out focus:outline-none border ${
+                          method.active
+                            ? 'bg-[#161a17] border-[#94b59b]'
+                            : 'bg-[#181818] border-neutral-600/70'
+                        }`}
+                        role="switch"
+                        aria-checked={method.active}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full transition-all duration-200 ease-in-out ${
+                            method.active
+                              ? 'translate-x-5 bg-[#94b59b]'
+                              : 'translate-x-0 bg-neutral-500'
+                          }`}
+                        />
+                      </button>
+                      <span className={`text-xs font-bold ${method.active ? 'text-[#94b59b]' : 'text-neutral-500'}`}>
+                        {method.active ? 'Actif' : 'Inactif'}
                       </span>
-                      {method.active ? 'Actif' : 'Inactif'}
-                    </button>
+                    </div>
                   </td>
                   <td className="px-lg py-md text-right whitespace-nowrap">
                     <button

@@ -245,9 +245,9 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
       )}
 
       {/* Slide Indicator Dots centered at the bottom */}
-      {isMounted && displaySlides.length > 1 && (
+      {displaySlides.length > 1 && (
         <div className="absolute bottom-md left-1/2 z-30 flex -translate-x-1/2 items-center gap-3">
-          {displaySlides.map((_, index) => {
+          {isMounted && displaySlides.map((_, index) => {
             const isActive = index === currentSlide;
             return (
               <button

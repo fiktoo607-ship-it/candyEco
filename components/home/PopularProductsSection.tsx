@@ -245,9 +245,9 @@ export default function PopularProductsSection({ products }: PopularProductsSect
       </div>
 
       {/* Dotted Slide Indicators */}
-      {isMounted && N > 1 && (
+      {N > 1 && (
         <div className="mt-lg flex gap-3 justify-center items-center z-20 relative">
-          {Array.from({ length: N }).map((_, index) => {
+          {isMounted && Array.from({ length: N }).map((_, index) => {
             const isActive = index === activeIndicatorIndex;
             return (
               <button

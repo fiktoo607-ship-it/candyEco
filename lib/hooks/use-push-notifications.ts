@@ -24,18 +24,31 @@ function urlBase64ToUint8Array(base64String: string) {
 
 export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
-  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [permission, setPermission] =
+    useState<NotificationPermission>("default");
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscription, setSubscription] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   // Checks support and current subscription status on mount
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const checkSupportAndSubscription = async () => {
-      const isSwSupported = 'serviceWorker' in navigator;
-      const isPushSupported = 'PushManager' in window;
+      const userAgent = window.navigator.userAgent || "";
+      const ios =
+        /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+      setIsIOS(ios);
+
+      const standalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (navigator as any).standalone === true;
+      setIsStandalone(standalone);
+
+      const isSwSupported = "serviceWorker" in navigator;
+      const isPushSupported = "PushManager" in window;
       const supported = isSwSupported && isPushSupported;
       setIsSupported(supported);
 
@@ -49,12 +62,15 @@ export function usePushNotifications() {
       try {
         // Manually registers or gets the service worker at /sw.js
         let registration = await navigator.serviceWorker.getRegistration();
-        
+
         if (!registration) {
-          registration = await navigator.serviceWorker.register('/sw.js', { 
-            updateViaCache: 'none' 
+          registration = await navigator.serviceWorker.register("/sw.js", {
+            updateViaCache: "none",
           });
-          console.log('[Push SDK] Service Worker registered manually:', registration.scope);
+          console.log(
+            "[Push SDK] Service Worker registered manually:",
+            registration.scope,
+          );
         }
 
         const sub = await registration.pushManager.getSubscription();
@@ -63,28 +79,35 @@ export function usePushNotifications() {
 
         if (sub) {
           // Sync with database to ensure it's persisted in the active environment
-          fetch('/api/notifications/subscribe', {
-            method: 'POST',
+          fetch("/api/notifications/subscribe", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               subscription: sub.toJSON(),
             }),
           })
-          .then((res) => {
-            if (res.ok) {
-              console.log('[Push SDK] Subscription synchronized with database.');
-            } else {
-              console.warn('[Push SDK] Subscription sync returned non-OK status.');
-            }
-          })
-          .catch((err) => {
-            console.warn('[Push SDK] Failed to sync subscription with database:', err);
-          });
+            .then((res) => {
+              if (res.ok) {
+                console.log(
+                  "[Push SDK] Subscription synchronized with database.",
+                );
+              } else {
+                console.warn(
+                  "[Push SDK] Subscription sync returned non-OK status.",
+                );
+              }
+            })
+            .catch((err) => {
+              console.warn(
+                "[Push SDK] Failed to sync subscription with database:",
+                err,
+              );
+            });
         }
       } catch (err) {
-        console.error('[Push SDK] Error checking subscription status:', err);
+        console.error("[Push SDK] Error checking subscription status:", err);
       } finally {
         setLoading(false);
       }
@@ -98,69 +121,83 @@ export function usePushNotifications() {
    * Prompts for permission if needed.
    * Sends subscription details to the Next.js API route.
    */
-  const subscribeToPush = useCallback(async (deviceToken?: string) => {
-    if (!isSupported) {
-      console.warn('[Push SDK] Push notifications are not supported on this browser.');
-      return;
-    }
-
-    if (!VAPID_PUBLIC_KEY) {
-      console.error('[Push SDK] VAPID Public Key is missing in environment variables.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // 1. Request notification permission
-      const requestedPermission = await Notification.requestPermission();
-      setPermission(requestedPermission);
-
-      if (requestedPermission !== 'granted') {
-        throw new Error('Notification permission denied');
+  const subscribeToPush = useCallback(
+    async (deviceToken?: string) => {
+      if (!isSupported) {
+        console.warn(
+          "[Push SDK] Push notifications are not supported on this browser.",
+        );
+        return;
       }
 
-      // 2. Ensure service worker is registered and ready
-      let registration = await navigator.serviceWorker.getRegistration();
-      if (!registration) {
-        registration = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
-      }
-      
-      const swReady = await navigator.serviceWorker.ready;
-
-      // 3. Format VAPID key and subscribe
-      const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-      const sub = await swReady.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey,
-      });
-
-      // 4. Send subscription JSON payload to Next.js API route
-      const res = await fetch('/api/notifications/subscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          subscription: sub.toJSON(),
-          deviceToken,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to save subscription on backend');
+      if (!VAPID_PUBLIC_KEY) {
+        console.error(
+          "[Push SDK] VAPID Public Key is missing in environment variables.",
+        );
+        return;
       }
 
-      setSubscription(sub);
-      setIsSubscribed(true);
-      console.log('[Push SDK] Push notification subscribed successfully.');
-    } catch (err) {
-      console.error('[Push SDK] Failed to subscribe to push notifications:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [isSupported]);
+      setLoading(true);
+      try {
+        // 1. Request notification permission
+        const requestedPermission = await Notification.requestPermission();
+        setPermission(requestedPermission);
+
+        if (requestedPermission !== "granted") {
+          throw new Error("Notification permission denied");
+        }
+
+        // 2. Ensure service worker is registered and ready
+        let registration = await navigator.serviceWorker.getRegistration();
+        if (!registration) {
+          registration = await navigator.serviceWorker.register("/sw.js", {
+            updateViaCache: "none",
+          });
+        }
+
+        const swReady = await navigator.serviceWorker.ready;
+
+        // 3. Format VAPID key and subscribe
+        const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+        const sub = await swReady.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey,
+        });
+
+        // 4. Send subscription JSON payload to Next.js API route
+        const res = await fetch("/api/notifications/subscribe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            subscription: sub.toJSON(),
+            deviceToken,
+          }),
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(
+            errorData.error || "Failed to save subscription on backend",
+          );
+        }
+
+        setSubscription(sub);
+        setIsSubscribed(true);
+        console.log("[Push SDK] Push notification subscribed successfully.");
+      } catch (err) {
+        console.error(
+          "[Push SDK] Failed to subscribe to push notifications:",
+          err,
+        );
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [isSupported],
+  );
 
   /**
    * Unsubscribes the user from push notifications.
@@ -175,10 +212,10 @@ export function usePushNotifications() {
       await subscription.unsubscribe();
 
       // 2. Delete subscription from our database
-      const res = await fetch('/api/notifications/subscribe', {
-        method: 'DELETE',
+      const res = await fetch("/api/notifications/subscribe", {
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           endpoint: subscription.endpoint,
@@ -187,14 +224,19 @@ export function usePushNotifications() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to delete subscription on backend');
+        throw new Error(
+          errorData.error || "Failed to delete subscription on backend",
+        );
       }
 
       setSubscription(null);
       setIsSubscribed(false);
-      console.log('[Push SDK] Push notification unsubscribed successfully.');
+      console.log("[Push SDK] Push notification unsubscribed successfully.");
     } catch (err) {
-      console.error('[Push SDK] Failed to unsubscribe from push notifications:', err);
+      console.error(
+        "[Push SDK] Failed to unsubscribe from push notifications:",
+        err,
+      );
       throw err;
     } finally {
       setLoading(false);
@@ -209,5 +251,7 @@ export function usePushNotifications() {
     loading,
     subscribeToPush,
     unsubscribeFromPush,
+    isIOS,
+    isStandalone,
   };
 }

@@ -26,6 +26,8 @@ export default function NotificationBell() {
     subscribeToPush,
     unsubscribeFromPush,
     loading: pushLoading,
+    isIOS,
+    isStandalone,
   } = usePushNotifications();
 
   return (
@@ -91,6 +93,30 @@ export default function NotificationBell() {
                   : 'Activer les notifications push'
               }
             </button>
+          )}
+
+          {isIOS && !isStandalone && (
+            <div className="mb-sm rounded-xl bg-primary/5 p-sm border border-primary/15 text-xs text-on-surface-variant flex flex-col gap-xs select-none">
+              <span className="font-semibold text-primary flex items-center gap-xxs">
+                <span className="material-symbols-outlined text-base">info</span>
+                Notifications sur iOS
+              </span>
+              <p className="leading-relaxed">
+                Pour activer les notifications sur iOS, vous devez d'abord ajouter l'application à votre écran d'accueil :
+              </p>
+              <ol className="list-decimal pl-md flex flex-col gap-xxs">
+                <li>
+                  Appuyez sur <strong>Partager</strong>{" "}
+                  <span className="material-symbols-outlined text-sm inline-block align-text-bottom">share</span> dans Safari.
+                </li>
+                <li>
+                  Sélectionnez <strong>Sur l'écran d'accueil</strong>.
+                </li>
+                <li>
+                  Ouvrez l'application depuis votre écran d'accueil pour y activer les notifications.
+                </li>
+              </ol>
+            </div>
           )}
 
           <div className="max-h-80 overflow-y-auto flex flex-col gap-xs pr-xs">
