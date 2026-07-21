@@ -73,6 +73,46 @@ export function useUsersSection() {
     );
   });
 
+  const handleUpdateUserStatus = async (id: string, newStatus: string, newScore?: number) => {
+    try {
+      let calcScore = newScore;
+      if (calcScore === undefined) {
+        if (newStatus === 'VIP') calcScore = 500;
+        else if (newStatus === 'Fidèle') calcScore = 100;
+      }
+
+      const res = await fetch(`/api/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, trustScore: calcScore }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erreur lors de la mise à jour du statut.');
+      }
+
+      setUsers((prev) =>
+        prev.map((u) => {
+          if (u.id === id) {
+            return {
+              ...u,
+              status: newStatus,
+              trustScore: calcScore !== undefined ? calcScore : u.trustScore,
+            };
+          }
+          return u;
+        })
+      );
+      showToast(`Statut du client mis à jour (${newStatus}) avec succès !`, "success");
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Une erreur est survenue.';
+      showToast(errMsg, "error");
+    }
+  };
+
+  const [isFidelityModalOpen, setIsFidelityModalOpen] = useState(false);
+
   return {
     session,
     users,
@@ -90,5 +130,9 @@ export function useUsersSection() {
     deleteError,
     filteredUsers,
     handleDeleteUser,
+    handleUpdateUserStatus,
+    isFidelityModalOpen,
+    setIsFidelityModalOpen,
+    fetchUsers,
   };
 }

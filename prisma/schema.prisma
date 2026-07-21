@@ -155,6 +155,8 @@ model User {
   role          String    @default("user")
   phone         String?   @unique
   address       String?
+  status        String?
+  trustScore    Int?
   accounts      Account[]
   sessions      Session[]
   createdAt     DateTime  @default(now())
@@ -175,6 +177,8 @@ model DeliveryMethod {
   name        String   @unique
   description String?
   price       Float    @default(0.0)
+  homePrice   Float    @default(0.0)
+  stockPrice  Float    @default(0.0)
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

@@ -4,6 +4,7 @@ import React from 'react';
 import { useUsersSection } from './hooks/useUsersSection';
 import { UsersFilters } from './users/UsersFilters';
 import { UsersTable } from './users/UsersTable';
+import { FidelityConfigModal } from './users/FidelityConfigModal';
 import DashboardDeleteModal from './helpers/DashboardDeleteModal';
 
 export default function UsersSection() {
@@ -23,6 +24,10 @@ export default function UsersSection() {
     deleteError,
     filteredUsers,
     handleDeleteUser,
+    handleUpdateUserStatus,
+    isFidelityModalOpen,
+    setIsFidelityModalOpen,
+    fetchUsers,
   } = useUsersSection();
 
   if (loading) {
@@ -56,6 +61,7 @@ export default function UsersSection() {
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
         totalUsers={filteredUsers.length}
+        onOpenFidelityModal={() => setIsFidelityModalOpen(true)}
       />
 
       {deleteError && (
@@ -73,6 +79,15 @@ export default function UsersSection() {
         setConfirmDeleteId={setConfirmDeleteId}
         deleteLoading={deleteLoading}
         onDeleteUser={(id) => setConfirmDeleteId(id)}
+      />
+
+      {/* Fidelity Config Modal */}
+      <FidelityConfigModal
+        isOpen={isFidelityModalOpen}
+        onClose={() => setIsFidelityModalOpen(false)}
+        users={filteredUsers}
+        onUpdateUserStatus={handleUpdateUserStatus}
+        onRefreshUsers={fetchUsers}
       />
 
       {/* Custom Delete Modal */}

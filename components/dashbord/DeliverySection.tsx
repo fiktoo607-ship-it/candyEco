@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { useDeliverySection } from './hooks/useDeliverySection';
 import { 
   DeliveryForm, 
-  DeliveryTable 
+  DeliveryTable,
+  LieuPriceModal,
 } from './helpers/DeliverySectionHelpers';
 import DashboardDeleteModal from './helpers/DashboardDeleteModal';
 
@@ -20,6 +21,10 @@ export default function DeliverySection() {
     setDescription,
     price,
     setPrice,
+    homePrice,
+    setHomePrice,
+    stockPrice,
+    setStockPrice,
     active,
     setActive,
     submitError,
@@ -31,6 +36,18 @@ export default function DeliverySection() {
     handleDelete,
     isModalOpen,
     setIsModalOpen,
+    // Lieu Price Modal State & Handlers
+    lieuModalMethod,
+    isLieuModalOpen,
+    lieuHomePrice,
+    setLieuHomePrice,
+    lieuStockPrice,
+    setLieuStockPrice,
+    lieuSubmitLoading,
+    lieuSubmitError,
+    handleOpenLieuModal,
+    handleCloseLieuModal,
+    handleSaveLieuPrice,
   } = useDeliverySection();
 
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -81,6 +98,7 @@ export default function DeliverySection() {
           onToggleActive={handleToggleActive}
           onEdit={handleEditClick}
           onDelete={(id) => setDeleteTargetId(id)}
+          onEditLieuPrice={handleOpenLieuModal}
         />
       </div>
 
@@ -114,6 +132,10 @@ export default function DeliverySection() {
               setDescription={setDescription}
               price={price}
               setPrice={setPrice}
+              homePrice={homePrice}
+              setHomePrice={setHomePrice}
+              stockPrice={stockPrice}
+              setStockPrice={setStockPrice}
               active={active}
               setActive={setActive}
               onSubmit={handleSubmit}
@@ -122,6 +144,20 @@ export default function DeliverySection() {
           </div>
         </div>
       )}
+
+      {/* Pop-up Modal to update price per Lieu */}
+      <LieuPriceModal
+        isOpen={isLieuModalOpen}
+        method={lieuModalMethod}
+        homePrice={lieuHomePrice}
+        setHomePrice={setLieuHomePrice}
+        stockPrice={lieuStockPrice}
+        setStockPrice={setLieuStockPrice}
+        submitLoading={lieuSubmitLoading}
+        submitError={lieuSubmitError}
+        onSubmit={handleSaveLieuPrice}
+        onClose={handleCloseLieuModal}
+      />
 
       {/* Custom Delete Modal */}
       <DashboardDeleteModal

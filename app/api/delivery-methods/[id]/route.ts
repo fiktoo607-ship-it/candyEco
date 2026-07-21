@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
+// Refreshed Prisma client for homePrice / stockPrice
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -15,7 +17,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, description, price, active } = body;
+    const { name, description, price, homePrice, stockPrice, active } = body;
 
     const existing = await prisma.deliveryMethod.findUnique({
       where: { id },
@@ -34,12 +36,16 @@ export async function PUT(
       }
     }
 
+    const updatedPrice = price !== undefined ? parseFloat(price) : existing.price;
+
     const updated = await prisma.deliveryMethod.update({
       where: { id },
       data: {
         name: name !== undefined ? name : existing.name,
         description: description !== undefined ? description : existing.description,
-        price: price !== undefined ? parseFloat(price) : existing.price,
+        price: updatedPrice,
+        homePrice: homePrice !== undefined ? parseFloat(homePrice) : existing.homePrice ?? updatedPrice,
+        stockPrice: stockPrice !== undefined ? parseFloat(stockPrice) : existing.stockPrice ?? updatedPrice,
         active: active !== undefined ? Boolean(active) : existing.active,
       },
     });
