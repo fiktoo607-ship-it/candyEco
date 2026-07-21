@@ -57,9 +57,9 @@ export default function ProductsSection() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-soft border border-outline-variant/10">
+      <div className="overflow-hidden rounded-none border-x-0 border-t-0 sm:rounded-2xl sm:border bg-surface-container-lowest shadow-soft border-outline-variant/10">
         {/* Search and Filters */}
-        <div className="flex flex-col gap-md border-b border-outline-variant/30 p-md lg:flex-row lg:items-center lg:justify-between bg-surface-container-lowest/50">
+        <div className="flex flex-col gap-sm sm:gap-md border-b border-outline-variant/30 p-sm sm:p-md lg:flex-row lg:items-center lg:justify-between bg-surface-container-lowest/50">
           <div className="flex flex-col gap-sm sm:flex-row sm:items-center w-full lg:w-auto flex-1 flex-wrap">
             {/* Search Input */}
             <label className="relative w-full lg:w-80 flex-shrink-0">
@@ -87,7 +87,9 @@ export default function ProductsSection() {
               >
                 <option value="all">Toutes les catégories</option>
                 <option value="gâteau">Gâteaux</option>
-                <option value="aliments traditionnel">Aliments Traditionnels</option>
+                <option value="aliments traditionnel">
+                  Aliments Traditionnels
+                </option>
               </select>
               <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
                 arrow_drop_down
@@ -96,7 +98,10 @@ export default function ProductsSection() {
 
             {/* Sort Select */}
             <div className="relative w-full sm:w-64 flex-shrink-0">
-              <span className="material-symbols-outlined notranslate absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none" translate="no">
+              <span
+                className="material-symbols-outlined notranslate absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none"
+                translate="no"
+              >
                 sort
               </span>
               <select
@@ -105,8 +110,8 @@ export default function ProductsSection() {
                 className="w-full rounded-xl border border-outline-variant bg-surface-container-low pl-9 pr-8 py-sm text-base text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer h-[46px] appearance-none"
               >
                 <option value="default">Tri par défaut</option>
-                <option value="rating-desc">Note : Élevée à Faible</option>
-                <option value="rating-asc">Note : Faible à Élevée</option>
+                <option value="rating-desc">Élevée à Faible</option>
+                <option value="rating-asc">Faible à Élevée</option>
               </select>
               <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
                 arrow_drop_down
@@ -114,17 +119,21 @@ export default function ProductsSection() {
             </div>
 
             {/* Reset Filters Button */}
-            {(searchQuery !== '' || categoryFilter !== 'all' || sortBy !== 'default') && (
+            {(searchQuery !== "" ||
+              categoryFilter !== "all" ||
+              sortBy !== "default") && (
               <button
                 type="button"
                 onClick={() => {
-                  setSearchQuery('');
-                  setCategoryFilter('all');
-                  setSortBy('default');
+                  setSearchQuery("");
+                  setCategoryFilter("all");
+                  setSortBy("default");
                 }}
                 className="rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-sm font-semibold text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-xs h-[46px] text-primary"
               >
-                <span className="material-symbols-outlined text-base">filter_alt_off</span>
+                <span className="material-symbols-outlined text-base">
+                  filter_alt_off
+                </span>
                 <span>Réinitialiser</span>
               </button>
             )}
@@ -132,16 +141,28 @@ export default function ProductsSection() {
           {/* Action buttons and Product Count */}
           <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end gap-md flex-shrink-0 mt-sm lg:mt-0 border-t border-outline-variant/10 pt-md lg:border-t-0 lg:pt-0">
             <button
-              onClick={() => openCreate('gâteau')}
+              onClick={() => openCreate("gâteau")}
               className="inline-flex items-center justify-center gap-xs rounded-xl bg-primary px-md py-sm text-sm font-semibold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint hover:scale-[1.02] h-[46px]"
             >
-              <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              <svg
+                className="w-4 h-4 select-none"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4.5v15m7.5-7.5h-15"
+                />
               </svg>
               <span>Ajouter un produit</span>
             </button>
             <div className="text-sm text-on-surface-variant font-semibold text-right">
-              Total des produits : <span className="text-primary font-bold">{totalItems}</span>
+              Total des produits :{" "}
+              <span className="text-primary font-bold">{totalItems}</span>
             </div>
           </div>
         </div>
@@ -153,7 +174,10 @@ export default function ProductsSection() {
             <div className="hidden lg:block space-y-sm">
               <div className="h-12 bg-surface-container-low rounded-xl animate-pulse" />
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex gap-md items-center py-sm border-b border-outline-variant/10 animate-pulse">
+                <div
+                  key={i}
+                  className="flex gap-md items-center py-sm border-b border-outline-variant/10 animate-pulse"
+                >
                   <div className="h-16 w-16 bg-surface-container-low rounded-xl" />
                   <div className="flex-1 space-y-xs">
                     <div className="h-4 bg-surface-container-low rounded-lg w-1/3" />
@@ -168,7 +192,10 @@ export default function ProductsSection() {
             {/* Mobile Cards Skeleton (Hidden on Desktop) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-md lg:hidden">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md space-y-md animate-pulse">
+                <div
+                  key={i}
+                  className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md space-y-md animate-pulse"
+                >
                   <div className="aspect-video w-full rounded-xl bg-surface-container-low" />
                   <div className="space-y-sm">
                     <div className="flex justify-between">
@@ -188,8 +215,19 @@ export default function ProductsSection() {
           </div>
         ) : currentItems.length === 0 ? (
           <div className="flex h-64 flex-col items-center justify-center gap-sm text-on-surface-variant bg-surface/10">
-            <svg className="w-12 h-12 text-on-surface-variant/60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.31c-.4 0-.785-.158-1.07-.44l-2.12-2.12z" />
+            <svg
+              className="w-12 h-12 text-on-surface-variant/60"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.31c-.4 0-.785-.158-1.07-.44l-2.12-2.12z"
+              />
             </svg>
             <p className="text-lg font-semibold">Aucun produit trouvé</p>
             <p className="text-sm">
@@ -199,9 +237,12 @@ export default function ProductsSection() {
         ) : (
           <>
             {/* Mobile/Tablet Card Grid Layout (< 1024px) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-md p-md lg:hidden bg-surface/20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm sm:gap-md p-0 sm:p-md lg:hidden bg-surface/20">
               {currentItems.map((product) => (
-                <div key={product.id} className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft space-y-md hover:border-primary/20 transition-all flex flex-col justify-between">
+                <div
+                  key={product.id}
+                  className="rounded-none border-x-0 sm:rounded-2xl sm:border border-outline-variant/30 bg-surface-container-lowest p-sm sm:p-md shadow-soft space-y-sm sm:space-y-md hover:border-primary/20 transition-all flex flex-col justify-between"
+                >
                   <div className="space-y-sm">
                     {/* Product Image & Badges */}
                     <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-neutral-900 shadow-sm border border-outline-variant/10 group">
@@ -218,7 +259,9 @@ export default function ProductsSection() {
                       </div>
                       {/* Price Tag */}
                       <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md px-sm py-[2px] rounded-lg">
-                        <span className="text-xs font-bold text-white"><PriceDisplay price={product.price} /></span>
+                        <span className="text-xs font-bold text-white">
+                          <PriceDisplay price={product.price} />
+                        </span>
                       </div>
                     </div>
 
@@ -230,12 +273,22 @@ export default function ProductsSection() {
                         </span>
                         {/* Rating */}
                         <div className="flex items-center gap-[2px] font-semibold text-xs text-on-surface-variant">
-                          <span className="material-symbols-outlined text-amber-500 text-base select-none">star</span>
-                          <span>{product.rating !== undefined ? Number(product.rating).toFixed(1) : '0.0'}</span>
+                          <span className="material-symbols-outlined text-amber-500 text-base select-none">
+                            star
+                          </span>
+                          <span>
+                            {product.rating !== undefined
+                              ? Number(product.rating).toFixed(1)
+                              : "0.0"}
+                          </span>
                         </div>
                       </div>
-                      <h3 className="font-semibold text-on-surface text-base mt-xs">{product.title}</h3>
-                      <p className="text-xs text-on-surface-variant line-clamp-2 mt-xs">{product.description}</p>
+                      <h3 className="font-semibold text-on-surface text-base mt-xs">
+                        {product.title}
+                      </h3>
+                      <p className="text-xs text-on-surface-variant line-clamp-2 mt-xs">
+                        {product.description}
+                      </p>
                     </div>
                   </div>
 
@@ -243,7 +296,9 @@ export default function ProductsSection() {
                   <div className="space-y-sm pt-sm border-t border-outline-variant/10 mt-auto">
                     <div className="flex justify-between items-center text-xs text-on-surface-variant">
                       <span className="flex items-center gap-[2px]">
-                        <span className="material-symbols-outlined text-sm">visibility</span>
+                        <span className="material-symbols-outlined text-sm">
+                          visibility
+                        </span>
                         Visibilité: <strong>{product.visibility ?? 0}</strong>
                       </span>
                     </div>
@@ -253,14 +308,18 @@ export default function ProductsSection() {
                         onClick={() => openEdit(product)}
                         className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-bold text-primary hover:bg-surface-container-high transition-colors flex items-center gap-xs"
                       >
-                        <span className="material-symbols-outlined text-sm">edit</span>
+                        <span className="material-symbols-outlined text-sm">
+                          edit
+                        </span>
                         Modifier
                       </button>
                       <button
                         onClick={() => openDelete(product)}
                         className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-sm py-xs text-xs font-bold text-error hover:bg-rose-500/10 transition-colors flex items-center gap-xs"
                       >
-                        <span className="material-symbols-outlined text-sm">delete</span>
+                        <span className="material-symbols-outlined text-sm">
+                          delete
+                        </span>
                         Supprimer
                       </button>
                     </div>
@@ -325,8 +384,14 @@ export default function ProductsSection() {
                       </td>
                       <td className="p-md">
                         <div className="flex items-center gap-xs font-semibold text-on-surface-variant">
-                          <span className="material-symbols-outlined text-amber-500 text-lg">star</span>
-                          <span>{product.rating !== undefined ? Number(product.rating).toFixed(1) : '0.0'}</span>
+                          <span className="material-symbols-outlined text-amber-500 text-lg">
+                            star
+                          </span>
+                          <span>
+                            {product.rating !== undefined
+                              ? Number(product.rating).toFixed(1)
+                              : "0.0"}
+                          </span>
                         </div>
                       </td>
                       <td className="p-md text-right">
@@ -336,14 +401,18 @@ export default function ProductsSection() {
                             className="inline-flex items-center justify-center rounded-xl p-2 text-primary border border-outline-variant/20 hover:bg-surface-container-low active:scale-95 transition-all h-[34px] w-[34px]"
                             title="Modifier"
                           >
-                            <span className="material-symbols-outlined text-lg">edit</span>
+                            <span className="material-symbols-outlined text-lg">
+                              edit
+                            </span>
                           </button>
                           <button
                             onClick={() => openDelete(product)}
                             className="inline-flex items-center justify-center rounded-xl p-2 text-error border border-rose-500/20 hover:bg-rose-500/5 active:scale-95 transition-all h-[34px] w-[34px]"
                             title="Supprimer"
                           >
-                            <span className="material-symbols-outlined text-lg">delete</span>
+                            <span className="material-symbols-outlined text-lg">
+                              delete
+                            </span>
                           </button>
                         </div>
                       </td>
@@ -366,7 +435,7 @@ export default function ProductsSection() {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
-                className="rounded-xl border border-outline-variant text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 flex items-center justify-center font-bold p-0"
+                className="rounded-xl border border-outline-variant text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 max-sm:h-11 max-sm:w-11 flex items-center justify-center font-bold p-0"
               >
                 ‹
               </button>
@@ -376,7 +445,7 @@ export default function ProductsSection() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`rounded-xl text-xs md:text-sm font-semibold transition-all h-9 w-9 flex items-center justify-center p-0 ${
+                      className={`rounded-xl text-xs md:text-sm max-sm:text-base font-semibold transition-all h-9 w-9 max-sm:h-11 max-sm:w-11 flex items-center justify-center p-0 ${
                         currentPage === page
                           ? "bg-primary text-white shadow-soft font-bold"
                           : "border border-outline-variant text-on-surface hover:bg-surface-container-low"
@@ -392,7 +461,7 @@ export default function ProductsSection() {
                 onClick={() =>
                   setCurrentPage(Math.min(currentPage + 1, totalPages))
                 }
-                className="rounded-xl border border-outline-variant text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 flex items-center justify-center font-bold p-0"
+                className="rounded-xl border border-outline-variant text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 max-sm:h-11 max-sm:w-11 flex items-center justify-center font-bold p-0"
               >
                 ›
               </button>

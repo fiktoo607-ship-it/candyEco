@@ -383,7 +383,7 @@ export function OrdersTable({
             <button
               disabled={orderCurrentPage === 1}
               onClick={() => setOrderCurrentPage(Math.max(orderCurrentPage - 1, 1))}
-              className="rounded-xl border border-outline-variant text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 flex items-center justify-center font-bold p-0"
+              className="rounded-xl border border-outline-variant text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 max-sm:h-11 max-sm:w-11 flex items-center justify-center font-bold p-0"
             >
               ‹
             </button>
@@ -392,7 +392,7 @@ export function OrdersTable({
                 <button
                   key={page}
                   onClick={() => setOrderCurrentPage(page)}
-                  className={`rounded-xl text-xs md:text-sm font-semibold transition-all h-9 w-9 flex items-center justify-center p-0 ${
+                  className={`rounded-xl text-xs md:text-sm max-sm:text-base font-semibold transition-all h-9 w-9 max-sm:h-11 max-sm:w-11 flex items-center justify-center p-0 ${
                     orderCurrentPage === page
                       ? 'bg-primary text-white shadow-soft font-bold'
                       : 'border border-outline-variant text-on-surface hover:bg-surface-container-low'
@@ -405,7 +405,7 @@ export function OrdersTable({
             <button
               disabled={orderCurrentPage === totalPages}
               onClick={() => setOrderCurrentPage(Math.min(orderCurrentPage + 1, totalPages))}
-              className="rounded-xl border border-outline-variant text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 flex items-center justify-center font-bold p-0"
+              className="rounded-xl border border-outline-variant text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 max-sm:h-11 max-sm:w-11 flex items-center justify-center font-bold p-0"
             >
               ›
             </button>

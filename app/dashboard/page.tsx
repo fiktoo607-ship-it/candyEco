@@ -61,7 +61,7 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        <div className="w-full flex-1 p-gutter">
+        <div className="w-full flex-1 p-0 sm:p-gutter">
           {activeTab === "products" ? (
             <ProductsSection />
           ) : activeTab === "orders" ? (
