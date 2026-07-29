@@ -130,6 +130,8 @@ describe('Delivery Method Selection API Tests', () => {
           name: 'Store Pickup',
           description: 'Store pickup desc',
           price: 0,
+          homePrice: 0,
+          stockPrice: 0,
           active: true,
         },
       });

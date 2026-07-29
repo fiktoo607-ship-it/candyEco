@@ -5,6 +5,7 @@ import { notificationEmitter } from "@/lib/notification-emitter";
 
 export const dynamic = 'force-dynamic';
 
+// SSE endpoint 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -20,6 +21,7 @@ export async function GET(request: NextRequest) {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-transform',
       'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
     };
 
     // Callback on new order notification
@@ -33,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     notificationEmitter.on('new-order', onNewOrder);
 
-    // Keep connection alive
+    // Keep connection alive: heartbeat ping every 15 seconds
     const keepAliveInterval = setInterval(() => {
       try {
         writer.write(encoder.encode(': ping\n\n'));

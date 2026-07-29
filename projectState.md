@@ -540,11 +540,76 @@
 - **Testing**:
   - `tests/desktop-notifications.test.tsx` [NEW]: Unit tests verifying the notification construction, permission request updates, and denied state bypass logic.
 
+### 53. Console Error Resolution, Hydration Mismatch & Test Harness Fixes
+- **Description**: Resolved console errors and warnings reported in runtime logs and unit test suites:
+  - **Sidebar Navigation TypeError**: Added optional chaining and safe string fallback (`dictionary?.dashboard?.navigation?.clients || "Clients"`) in `components/dashbord/Sidebar.tsx` to handle optional dictionary structures gracefully.
+  - **HeroCarousel Hydration Mismatch**: Removed `{isMounted && ...}` conditional wrapper around slide indicator buttons in `components/home/HeroCarousel.tsx` to align initial SSR and client DOM output.
+  - **PostgreSQL SSL Warning**: Appended `&uselibpqcompat=true` to `DATABASE_URL` in `.env` to satisfy `pg-connection-string` security standards and eliminate runtime SSL mode deprecation warnings.
+  - **Unit Test Suite Integrity**: Added `siteConfig` Prisma mock to `tests/api/trust.test.ts`, updated assertions in `tests/api/delivery.test.ts`, and stubbed `PushManager`, `serviceWorker`, `matchMedia`, and `fetch` in `tests/desktop-notifications.test.tsx`.
+- **Affected Files**:
+  - `components/dashbord/Sidebar.tsx` [MODIFY]
+  - `components/home/HeroCarousel.tsx` [MODIFY]
+  - `.env` [MODIFY]
+  - `lib/hooks/use-push-notifications.ts` [MODIFY]
+  - `tests/api/trust.test.ts` [MODIFY]
+  - `tests/api/delivery.test.ts` [MODIFY]
+  - `tests/desktop-notifications.test.tsx` [MODIFY]
+- **Verification**:
+  - All 180 unit and integration tests across 25 test files pass with 0 failures (`npx vitest run`).
+  - TypeScript compilation completed with 0 errors (`npx tsc --noEmit`).
+
+### 54. Multi-Instance Redis Pub/Sub, SSE 15s Heartbeat, and Web Push Deduplication
+- **Description**: Resolved 3 core architectural notification issues:
+  1. **EventEmitter Limitations (Redis Pub/Sub)**: Created `lib/redis.ts` and updated `lib/notification-emitter.ts` to utilize Redis Pub/Sub for broadcasting SSE notifications across multi-instance / serverless deployments when `REDIS_URL` is set, with seamless fallback to Node.js `EventEmitter` for local/test environments.
+  2. **SSE Connection Timeouts (15s Heartbeat)**: Added explicit keep-alive heartbeat interval (`: ping\n\n` every 15 seconds) and proxy buffering headers (`X-Accel-Buffering: no`) in `app/api/notifications/sse/route.ts` to keep long-lived connections active across proxies and serverless environments.
+  3. **Notification Deduplication (Active Tab Presence)**: Implemented `lib/presence.ts` and `/api/notifications/presence` API route to track active visible admin dashboard tabs (`document.visibilityState === 'visible'`). Added presence checks in `app/api/orders/route.ts` to skip triggering Web Push notifications if the admin tab is currently open and active.
+- **Affected Files**:
+  - `package.json` [MODIFY]: Installed `ioredis` and `@types/ioredis`.
+  - `lib/redis.ts` [NEW]: Redis Pub/Sub connection manager with offline queue disabled and error handlers.
+  - `lib/notification-emitter.ts` [MODIFY]: Enhanced emitter class to publish and subscribe over Redis channels with local fallback.
+  - `lib/presence.ts` [NEW]: Redis/memory-backed presence service for tracking active admin dashboard tabs with 30s TTL.
+  - `app/api/notifications/presence/route.ts` [NEW]: Presence reporting API endpoint for client tab visibility changes.
+  - `app/api/notifications/sse/route.ts` [MODIFY]: Enhanced SSE route handler with 15s heartbeat interval and `X-Accel-Buffering: no` header.
+  - `app/api/orders/route.ts` [MODIFY]: Integrated `hasActiveAdminTab()` check before dispatching Web Push notifications.
+  - `components/dashbord/hooks/useNotificationBell.ts` [MODIFY]: Added `useEffect` hook to report tab visibility state and periodic presence heartbeats.
+- **Testing**:
+  - `tests/api/pubsub-sse-dedup.test.ts` [NEW]: Unit tests verifying presence API endpoint, admin active tab tracking, SSE headers, and `notificationEmitter` fallback.
+  - All 185 unit tests across 26 test files pass cleanly (`npx vitest run`).
+  - TypeScript validation passed (`npx tsc --noEmit`).
+
+### 55. Database Connection Fallback, Hydration Mismatch & Sidebar TypeError Fixes
+- **Description**: Resolved 3 runtime errors encountered during initial admin panel & homepage loading:
+  1. **Database Connection Fallback**: Wrapped `prisma.siteConfig.findMany()` in `lib/config.ts` (`getDictionaryWithDbOverrides`) in a try/catch block. If PostgreSQL is offline or unreachable, the application catches the error gracefully and returns the static `copy-dictionary.json` dictionary without crashing SSR.
+  2. **Hydration Mismatch Fix**: Removed `{isMounted && ...}` conditional guard from the slide indicator buttons container in `components/home/NewProductsSection.tsx`. Now, indicator buttons render consistently across both SSR and client hydration.
+  3. **Sidebar TypeError Fix**: Replaced unsafe property access (`dictionary.dashboard.navigation.clients`) on lines 276 & 280 in `components/dashbord/Sidebar.tsx` with optional chaining (`dictionary?.dashboard?.navigation?.clients || "Clients"`).
+- **Affected Files**:
+  - `lib/config.ts` [MODIFY]: Wrapped dictionary override DB query in try/catch fallback.
+  - `components/home/NewProductsSection.tsx` [MODIFY]: Removed `isMounted` wrapper around slide indicator buttons.
+  - `components/dashbord/Sidebar.tsx` [MODIFY]: Added optional chaining for dictionary properties.
+- **Verification**:
+  - All 185 unit tests across 26 test files pass cleanly (`npx vitest run`).
+  - TypeScript validation passed with 0 errors (`npx tsc --noEmit`).
+
+### 56. Slide Indicator Hydration Warning Suppression & Module Export Resolution
+- **Description**: Fixed remaining hydration mismatch warnings and module import resolution issues:
+  1. **Slide Indicator Hydration Warnings**: Added `suppressHydrationWarning` to the dot indicator container elements across [`components/home/HeroCarousel.tsx`](file:///c:/Users/InfoBulles/Desktop/candyEco/candy_client/components/home/HeroCarousel.tsx), [`components/home/NewProductsSection.tsx`](file:///c:/Users/InfoBulles/Desktop/candyEco/candy_client/components/home/NewProductsSection.tsx), and [`components/home/PopularProductsSection.tsx`](file:///c:/Users/InfoBulles/Desktop/candyEco/candy_client/components/home/PopularProductsSection.tsx). Removed `{isMounted && ...}` guard in `PopularProductsSection.tsx` so indicators render consistently on SSR and client without throwing hydration errors.
+  2. **Product Hook Module Resolution**: Refreshed `useInfiniteProducts` export in [`lib/hooks/use-products.ts`](file:///c:/Users/InfoBulles/Desktop/candyEco/candy_client/lib/hooks/use-products.ts) for [`components/our-product/ProductBrowser.tsx`](file:///c:/Users/InfoBulles/Desktop/candyEco/candy_client/components/our-product/ProductBrowser.tsx).
+- **Affected Files**:
+  - `components/home/HeroCarousel.tsx` [MODIFY]
+  - `components/home/NewProductsSection.tsx` [MODIFY]
+  - `components/home/PopularProductsSection.tsx` [MODIFY]
+  - `lib/hooks/use-products.ts` [MODIFY]
+- **Verification**:
+  - All 185 unit tests across 26 test files pass with 0 failures (`npx vitest run`).
+  - TypeScript validation completed with 0 errors (`npx tsc --noEmit`).
+
 ## Verification & Build Status
 - **Type Checking**: Passed (`npx tsc --noEmit`).
 - **Production Build**: Successfully compiled (`npm run build`).
 - **Unit & Integration Tests**:
-  - All 179 tests pass successfully under `vitest` (`npx vitest run`) across 24 test files.
+  - All 185 tests pass successfully under `vitest` (`npx vitest run`) across 26 test files.
+
+
 
 
 

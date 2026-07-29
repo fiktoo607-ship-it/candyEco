@@ -2,9 +2,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React, { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
-import NotificationBell from '@/components/dashbord/NotificationBell';
-
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY = 'BPHTjZ8sucNYke7fVDjQMgGVs00eEI1Amoz9I3_HqAWWuHaaehCP7vU3lraagWGxWPnxO7taIKgssavdYgqY8o8';
+
+import NotificationBell from '@/components/dashbord/NotificationBell';
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
@@ -100,6 +101,41 @@ describe('Desktop Notifications System', () => {
 
     vi.stubGlobal('EventSource', MockEventSource);
     vi.stubGlobal('AudioContext', MockAudioContext);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ success: true }) }));
+    vi.stubGlobal('PushManager', class MockPushManager {});
+    Object.defineProperty(navigator, 'serviceWorker', {
+      value: {
+        getRegistration: vi.fn().mockResolvedValue(null),
+        register: vi.fn().mockResolvedValue({
+          pushManager: {
+            getSubscription: vi.fn().mockResolvedValue(null),
+            subscribe: vi.fn().mockResolvedValue({
+              toJSON: () => ({ endpoint: 'https://example.com' }),
+            }),
+          },
+        }),
+        ready: Promise.resolve({
+          pushManager: {
+            getSubscription: vi.fn().mockResolvedValue(null),
+            subscribe: vi.fn().mockResolvedValue({
+              toJSON: () => ({ endpoint: 'https://example.com' }),
+            }),
+          },
+        }),
+      },
+      configurable: true,
+      writable: true,
+    });
+    vi.stubGlobal('matchMedia', vi.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })));
   });
 
   afterEach(() => {
@@ -127,7 +163,7 @@ describe('Desktop Notifications System', () => {
 
     // Check that the permission button is rendered
     const permBtn = Array.from(container!.querySelectorAll('button')).find(
-      btn => btn.textContent?.includes('Activer les notifications de bureau')
+      btn => btn.textContent?.includes('Activer les notifications')
     );
     expect(permBtn).toBeDefined();
 

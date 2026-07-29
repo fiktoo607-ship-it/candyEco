@@ -130,7 +130,8 @@ export function usePushNotifications() {
         return;
       }
 
-      if (!VAPID_PUBLIC_KEY) {
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY;
+      if (!vapidKey) {
         console.error(
           "[Push SDK] VAPID Public Key is missing in environment variables.",
         );
@@ -139,12 +140,26 @@ export function usePushNotifications() {
 
       setLoading(true);
       try {
+        let currentPermission = typeof Notification !== 'undefined' ? Notification.permission : 'default';
+        
+        if (currentPermission === 'denied') {
+          const alertMsg = "Les notifications sont bloquées pour ce site. Veuillez appuyer sur l'icône de cadenas ou ouvrir les paramètres Chrome / Android pour autoriser les notifications.";
+          if (typeof window !== 'undefined') {
+            alert(alertMsg);
+          }
+          setPermission('denied');
+          return;
+        }
+
         // 1. Request notification permission
         const requestedPermission = await Notification.requestPermission();
         setPermission(requestedPermission);
 
         if (requestedPermission !== "granted") {
-          throw new Error("Notification permission denied");
+          if (typeof window !== 'undefined') {
+            alert("Autorisation de notification refusée. Veuillez autoriser les notifications dans les paramètres du navigateur.");
+          }
+          return;
         }
 
         // 2. Ensure service worker is registered and ready
@@ -158,7 +173,7 @@ export function usePushNotifications() {
         const swReady = await navigator.serviceWorker.ready;
 
         // 3. Format VAPID key and subscribe
-        const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+        const applicationServerKey = urlBase64ToUint8Array(vapidKey);
         const sub = await swReady.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey,
@@ -186,12 +201,14 @@ export function usePushNotifications() {
         setSubscription(sub);
         setIsSubscribed(true);
         console.log("[Push SDK] Push notification subscribed successfully.");
-      } catch (err) {
+      } catch (err: any) {
         console.error(
           "[Push SDK] Failed to subscribe to push notifications:",
           err,
         );
-        throw err;
+        if (typeof window !== 'undefined' && err?.message && !err.message.includes('denied')) {
+          alert(`Erreur lors de l'activation des notifications: ${err.message}`);
+        }
       } finally {
         setLoading(false);
       }

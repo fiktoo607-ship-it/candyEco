@@ -20,6 +20,9 @@ export function useNotificationBell() {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) return;
       const audioCtx = new AudioContextClass();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
       
       // Play a lovely double chime
       const playTone = (freq: number, start: number, duration: number) => {
@@ -43,6 +46,41 @@ export function useNotificationBell() {
       console.warn('Failed to play chime:', e);
     }
   };
+
+  // Tab visibility status reporter for Web Push deduplication
+  useEffect(() => {
+    function reportPresence() {
+      const isVisible = typeof document !== 'undefined' && document.visibilityState === 'visible';
+      fetch('/api/notifications/presence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isVisible }),
+      }).catch(() => {});
+    }
+
+    reportPresence();
+
+    const handleVisibilityChange = () => {
+      reportPresence();
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    const heartbeat = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        reportPresence();
+      }
+    }, 20000);
+
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+      clearInterval(heartbeat);
+    };
+  }, []);
 
   // Setup Server-Sent Events for real-time notification updates
   useEffect(() => {
@@ -70,14 +108,29 @@ export function useNotificationBell() {
 
           // Trigger native browser notification if permission is granted
           if ('Notification' in window && Notification.permission === 'granted') {
-            try {
-              new Notification('Nouvelle commande reçue ! 🍰', {
-                body: `${clientName} a passé une commande de ${amount}.`,
-                icon: '/logo.jpeg',
-                tag: `order-${newNotif.id}`,
-              });
-            } catch (err) {
-              console.error('Failed to trigger desktop notification:', err);
+            const title = 'Nouvelle commande reçue ! 🍰';
+            const options = {
+              body: `${clientName} a passé une commande de ${amount}.`,
+              icon: '/logo.jpeg',
+              badge: '/logo.jpeg',
+              tag: `order-${newNotif.id}`,
+              data: { url: '/dashboard' },
+            };
+
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+              navigator.serviceWorker.ready
+                .then((reg) => {
+                  reg.showNotification(title, options);
+                })
+                .catch(() => {
+                  new Notification(title, options);
+                });
+            } else {
+              try {
+                new Notification(title, options);
+              } catch (err) {
+                console.error('Failed to trigger desktop notification:', err);
+              }
             }
           }
 

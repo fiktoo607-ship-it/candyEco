@@ -243,19 +243,21 @@ export async function getDictionaryWithDbOverrides() {
 
   try {
     const dbConfigs = await prisma.siteConfig.findMany();
-    for (const item of dbConfigs) {
-      const path = CMS_MAP[item.key];
-      if (path) {
-        try {
-          const parsedValue = JSON.parse(item.value);
-          setNestedValue(dict, path, parsedValue);
-        } catch {
-          setNestedValue(dict, path, item.value);
+    if (dbConfigs && dbConfigs.length > 0) {
+      for (const item of dbConfigs) {
+        const path = CMS_MAP[item.key];
+        if (path) {
+          try {
+            const parsedValue = JSON.parse(item.value);
+            setNestedValue(dict, path, parsedValue);
+          } catch {
+            setNestedValue(dict, path, item.value);
+          }
         }
       }
     }
   } catch (dbError) {
-    console.error('[Config Service] Failed to overlay database configs on dictionary:', dbError);
+    console.warn('[Config Service] Database unavailable for dictionary overrides, falling back to static dictionary:', dbError instanceof Error ? dbError.message : dbError);
   }
 
   return dict;

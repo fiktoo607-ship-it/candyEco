@@ -192,23 +192,30 @@ export async function POST(request: NextRequest) {
       const { notificationEmitter } = await import('@/lib/notification-emitter');
       notificationEmitter.emit('new-order', notification);
 
-      // Trigger Web Push notification to all subscribed administrator devices
-      const { sendPushNotification } = await import('@/lib/push-notifications');
-      const clientName = newOrder.customerName || 'Nouveau Client';
-      const amount = newOrder.totalPrice || '0.00 €';
-      
-      sendPushNotification(
-        { role: 'admin' },
-        {
-          title: 'Nouvelle commande ! 🍰',
-          body: `${clientName} a passé une commande de ${amount}.`,
-          icon: '/logo.jpeg',
-          url: '/dashboard',
-          data: { orderId: newOrder.id }
-        }
-      ).catch((err) => {
-        console.error('[Orders API] Failed to dispatch admin Web Push notification:', err);
-      });
+      const { hasActiveAdminTab } = await import('@/lib/presence');
+      const isAdminActive = await hasActiveAdminTab();
+
+      if (isAdminActive) {
+        console.log('[Orders API] Active admin tab detected (visibilityState=visible). Skipping Web Push notification.');
+      } else {
+        // Trigger Web Push notification to all subscribed administrator devices
+        const { sendPushNotification } = await import('@/lib/push-notifications');
+        const clientName = newOrder.customerName || 'Nouveau Client';
+        const amount = newOrder.totalPrice || '0.00 €';
+        
+        sendPushNotification(
+          { role: 'admin' },
+          {
+            title: 'Nouvelle commande ! 🍰',
+            body: `${clientName} a passé une commande de ${amount}.`,
+            icon: '/logo.jpeg',
+            url: '/dashboard',
+            data: { orderId: newOrder.id }
+          }
+        ).catch((err) => {
+          console.error('[Orders API] Failed to dispatch admin Web Push notification:', err);
+        });
+      }
     } catch (e) {
       console.error('[Orders API] Failed to emit new-order notification:', e);
     }
