@@ -57,9 +57,9 @@ export default function ProductsSection() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-none border-x-0 border-t-0 sm:rounded-2xl sm:border bg-surface-container-lowest shadow-soft border-outline-variant/10">
+      <div className="overflow-hidden rounded-2xl border bg-surface-container-lowest shadow-soft border-outline-variant/10">
         {/* Search and Filters */}
-        <div className="flex flex-col gap-sm sm:gap-md border-b border-outline-variant/30 p-sm sm:p-md lg:flex-row lg:items-center lg:justify-between bg-surface-container-lowest/50">
+        <div className="flex flex-col gap-md border-b border-outline-variant/30 p-md lg:flex-row lg:items-center lg:justify-between bg-surface-container-lowest/50">
           <div className="flex flex-col gap-sm sm:flex-row sm:items-center w-full lg:w-auto flex-1 flex-wrap">
             {/* Search Input */}
             <label className="relative w-full lg:w-80 flex-shrink-0">
@@ -237,11 +237,11 @@ export default function ProductsSection() {
         ) : (
           <>
             {/* Mobile/Tablet Card Grid Layout (< 1024px) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm sm:gap-md p-0 sm:p-md lg:hidden bg-surface/20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-md p-md lg:hidden bg-surface/20">
               {currentItems.map((product) => (
                 <div
                   key={product.id}
-                  className="rounded-none border-x-0 sm:rounded-2xl sm:border border-outline-variant/30 bg-surface-container-lowest p-sm sm:p-md shadow-soft space-y-sm sm:space-y-md hover:border-primary/20 transition-all flex flex-col justify-between"
+                  className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft space-y-md hover:border-primary/20 transition-all flex flex-col justify-between"
                 >
                   <div className="space-y-sm">
                     {/* Product Image & Badges */}

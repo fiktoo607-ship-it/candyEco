@@ -48,7 +48,10 @@ export default function CmsSection() {
     handleSlideImageUpload,
     handleSlideSubmit,
     visibleCount,
-    setVisibleCount
+    setVisibleCount,
+    isAboutUploading,
+    aboutUploadError,
+    handleAboutImageUpload
   } = useCmsSection();
 
   if (isConfigLoading) {
@@ -128,7 +131,14 @@ export default function CmsSection() {
         <HomepageStorySection register={register} />
 
         {/* SECTION 3: Page Notre Histoire */}
-        <AboutHistorySection register={register} />
+        <AboutHistorySection 
+          register={register} 
+          watch={watch}
+          setValue={setValue}
+          isAboutUploading={isAboutUploading}
+          aboutUploadError={aboutUploadError}
+          handleAboutImageUpload={handleAboutImageUpload}
+        />
 
         {/* SECTION 4: Contacts & Réseaux Sociaux */}
         <ContactSocialSection register={register} />

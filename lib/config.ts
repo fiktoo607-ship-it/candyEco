@@ -36,6 +36,7 @@ export const DEFAULT_CONFIGS: Record<string, any> = {
   
   about_hero_title: "Un voyage ancré dans la passion et la tradition",
   about_hero_description: "Tout a commencé dans un petit atelier fariné où l'air embaumait constamment la levure et le beurre caramélisé. Nous croyons que le véritable artisanat demande du temps.",
+  about_heritage_image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAQ9D8JLa_bfz2-LqILaPS5Y5BNwRA_3_bfuzgyv-_AiSHUdnRMTf5_AZb6INTxhlP88O8s1X6XR4AHvNDEXK2EDRRgpY4cna0MCbdHkCPv5-jz00MwRuChHhuklDPaHhX_dCvMy5Dv9urTEaOek3gFOHeGFvTCbs0nYdUqQJqghQfUlyn25b0pdgqrw3irttdyHjTFncU2Z5NssW_4gRAVVey6EbOYqQdOcZJoP5395MAXo8JM1qL2SqWTp83OEnG2GDgZVOXJyyo",
   about_heritage_title: "Héritage Boulanger",
   about_heritage_desc1: "Nous ne faisons pas que cuire du pain ; nous créons des expériences. En honorant les techniques ancestrales tout en y apportant une touche de créativité moderne, nous confectionnons des gourmandises à la fois réconfortantes et inattendues.",
   about_heritage_desc2: "Nourrir le levain naturel, feuilleter les viennoiseries avec précision et façonner chaque miche à la main sont les détails qui donnent à nos créations leur caractère unique.",
@@ -61,6 +62,7 @@ export const CMS_MAP: Record<string, string> = {
   homepage_story_description: 'home.story.description',
   about_hero_title: 'about.hero.title',
   about_hero_description: 'about.hero.description',
+  about_heritage_image: 'about.heritage.image',
   about_heritage_title: 'about.heritage.title',
   about_heritage_desc1: 'about.heritage.description1',
   about_heritage_desc2: 'about.heritage.description2',

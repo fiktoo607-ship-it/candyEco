@@ -22,6 +22,7 @@ interface FormValues {
   
   about_hero_title: string;
   about_hero_description: string;
+  about_heritage_image: string;
   about_heritage_title: string;
   about_heritage_desc1: string;
   about_heritage_desc2: string;
@@ -56,6 +57,46 @@ export function useCmsSection() {
   const { showToast } = useDashboardStore();
   const [productSearchQuery, setProductSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(9);
+
+  // About heritage image upload state
+  const [isAboutUploading, setIsAboutUploading] = useState(false);
+  const [aboutUploadError, setAboutUploadError] = useState<string | null>(null);
+
+  const handleAboutImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAboutUploadError(null);
+    setIsAboutUploading(true);
+
+    try {
+      const webpBlob = await convertToWebP(file);
+      const originalName = file.name;
+      const dotIndex = originalName.lastIndexOf(".");
+      const baseName = dotIndex !== -1 ? originalName.substring(0, dotIndex) : originalName;
+      const webpFileName = `${baseName}.webp`;
+      const webpFile = new File([webpBlob], webpFileName, { type: "image/webp" });
+
+      if (webpFile.size > 10 * 1024 * 1024) {
+        setAboutUploadError("La taille de l'image doit être inférieure à 10 Mo");
+        setIsAboutUploading(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", webpFile);
+
+      const data = await uploadImageMutation.mutateAsync(formData);
+      setValue('about_heritage_image', data.url, { shouldDirty: true });
+      showToast("Photo importée avec succès !", "success");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Échec du chargement de l'image";
+      console.error(msg);
+      setAboutUploadError(msg);
+    } finally {
+      setIsAboutUploading(false);
+    }
+  };
 
 
   // Carousel slide modal states
@@ -288,6 +329,9 @@ export function useCmsSection() {
     handleSlideImageUpload,
     handleSlideSubmit,
     visibleCount,
-    setVisibleCount
+    setVisibleCount,
+    isAboutUploading,
+    aboutUploadError,
+    handleAboutImageUpload
   };
 }

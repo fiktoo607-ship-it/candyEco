@@ -14,6 +14,7 @@ export default async function AboutPage() {
   const heritageTitle = dictionary.about?.heritage?.title || "";
   const heritageDesc1 = dictionary.about?.heritage?.description1 || "";
   const heritageDesc2 = dictionary.about?.heritage?.description2 || "";
+  const heritageImage = dictionary.about?.heritage?.image || "";
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -24,6 +25,7 @@ export default async function AboutPage() {
           title={heritageTitle}
           desc1={heritageDesc1}
           desc2={heritageDesc2}
+          image={heritageImage}
         />
         <ValuesSection />
       </main>

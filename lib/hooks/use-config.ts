@@ -11,6 +11,7 @@ export interface SiteConfigs {
   
   about_hero_title: string;
   about_hero_description: string;
+  about_heritage_image: string;
   about_heritage_title: string;
   about_heritage_desc1: string;
   about_heritage_desc2: string;
