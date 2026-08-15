@@ -75,29 +75,22 @@ export function AboutHistorySection({
               ) : null}
 
               <div className="flex-1 space-y-xs w-full">
-                <div className="flex gap-xs">
-                  <input
-                    type="text"
-                    {...register('about_heritage_image')}
-                    placeholder="URL de l'image (https://...)"
-                    className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 w-full transition-all"
-                  />
-                  {handleAboutImageUpload && (
-                    <label className="cursor-pointer inline-flex items-center gap-xs rounded-xl bg-primary/10 hover:bg-primary/20 text-primary px-sm py-xs text-xs font-semibold whitespace-nowrap transition-all">
-                      <span className={`material-symbols-outlined text-base ${isAboutUploading ? 'animate-spin' : ''}`}>
-                        {isAboutUploading ? 'sync' : 'upload'}
-                      </span>
-                      {isAboutUploading ? 'Chargement...' : 'Téléverser'}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleAboutImageUpload}
-                        disabled={isAboutUploading}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
-                </div>
+                <input type="hidden" {...register('about_heritage_image')} />
+                {handleAboutImageUpload && (
+                  <label className="cursor-pointer inline-flex items-center gap-xs rounded-xl bg-primary/10 hover:bg-primary/20 text-primary px-sm py-xs text-xs font-semibold whitespace-nowrap transition-all w-fit">
+                    <span className={`material-symbols-outlined text-base ${isAboutUploading ? 'animate-spin' : ''}`}>
+                      {isAboutUploading ? 'sync' : 'upload'}
+                    </span>
+                    {isAboutUploading ? 'Chargement...' : 'Téléverser'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAboutImageUpload}
+                      disabled={isAboutUploading}
+                      className="hidden"
+                    />
+                  </label>
+                )}
                 {aboutUploadError && (
                   <p className="text-xs text-error">{aboutUploadError}</p>
                 )}
