@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { deleteImage } from '@/lib/cloudinary';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
 
 export async function GET(
   request: NextRequest,
@@ -176,6 +177,21 @@ export async function POST(
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Vous devez vous connecter pour évaluer un produit.' }, { status: 401 });
+    }
+
+    const clientIp = getClientIp(request);
+    const identifier = session?.user?.id ? `user:${session.user.id}` : `ip:${clientIp}`;
+    const rateLimitResult = await checkRateLimit(identifier, {
+      keyPrefix: 'reviews',
+      limit: 5,
+      windowSeconds: 60,
+    });
+
+    if (!rateLimitResult.success) {
+      return createRateLimitResponse(
+        rateLimitResult,
+        'Trop d\'évaluations soumises. Veuillez patienter une minute avant de réessayer.'
+      );
     }
 
     // Verification: Order containing the product must be DELIVERED or COMPLETED

@@ -32,10 +32,10 @@ export default function HomeProductSection({
   initialFaqs = [],
 }: HomeProductSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: allProducts = [], isLoading } = useProducts();
+  const isSearchActive = searchQuery.trim() !== "";
+  const { data: allProducts = [], isLoading } = useProducts({ enabled: isSearchActive });
   const searchBarRef = useRef<HTMLDivElement>(null);
 
-  const isSearchActive = searchQuery.trim() !== "";
   const filteredProducts = isSearchActive
     ? filterProductsByTitle(allProducts, searchQuery)
     : [];

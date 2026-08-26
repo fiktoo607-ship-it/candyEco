@@ -1,22 +1,26 @@
-"use client";
-
 import Link from 'next/link';
 import { THEME_CONFIG } from '@/lib/theme';
 import { SocialIcon } from '@/lib/social-icons';
 import dictionary from '@/lib/copy-dictionary.json';
-import { useConfig } from '@/lib/hooks/use-config';
 
-export default function SiteFooter() {
-  const { data: configs } = useConfig();
+interface SiteFooterProps {
+  contactHours?: string;
+  instagramHref?: string;
+  tiktokHref?: string;
+}
 
-  // Fallback values from THEME_CONFIG if database config is not yet loaded
-  const hours = configs?.contact_hours || THEME_CONFIG.brand.contact.hours;
-  const instagramHref = configs?.contact_social_instagram || THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'Instagram')?.href || '#';
-  const tiktokHref = configs?.contact_social_tiktok || THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'TikTok')?.href || '#';
+export default function SiteFooter({
+  contactHours,
+  instagramHref,
+  tiktokHref,
+}: SiteFooterProps = {}) {
+  const hours = contactHours || THEME_CONFIG.brand.contact.hours;
+  const igHref = instagramHref || THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'Instagram')?.href || '#';
+  const ttHref = tiktokHref || THEME_CONFIG.brand.contact.socialLinks.find(l => l.label === 'TikTok')?.href || '#';
 
   const socialLinks = [
-    { label: 'Instagram', href: instagramHref },
-    { label: 'TikTok', href: tiktokHref }
+    { label: 'Instagram', href: igHref },
+    { label: 'TikTok', href: ttHref }
   ];
 
   return (

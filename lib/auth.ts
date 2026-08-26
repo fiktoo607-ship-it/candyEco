@@ -4,6 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { checkRateLimit } from "@/lib/rate-limiter";
 import { logAuthData } from "@/logs/featurs";
 
 export const authOptions: NextAuthOptions = {
@@ -62,13 +63,34 @@ export const authOptions: NextAuthOptions = {
         phone: { label: "Phone Number", type: "text" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.phone || !credentials?.password) {
           throw new Error("MissingCredentials");
         }
 
+        const phoneNormalized = credentials.phone.trim();
+        const forwarded = req?.headers?.['x-forwarded-for'];
+        let clientIp = '127.0.0.1';
+        if (forwarded) {
+          clientIp = String(forwarded).split(',')[0].trim();
+        } else if (req?.headers?.['x-real-ip']) {
+          clientIp = String(req.headers['x-real-ip']).trim();
+        }
+
+        // Apply rate limit on phone/password login attempts: max 5 attempts per 15-minute window per IP/phone
+        const identifier = `auth:login:${phoneNormalized}:${clientIp}`;
+        const rateLimitResult = await checkRateLimit(identifier, {
+          keyPrefix: 'login',
+          limit: 5,
+          windowSeconds: 900, // 15 minutes
+        });
+
+        if (!rateLimitResult.success) {
+          throw new Error("TooManyRequests");
+        }
+
         const user = await prisma.user.findFirst({
-          where: { phone: credentials.phone.trim() }
+          where: { phone: phoneNormalized }
         });
 
         if (!user || !user.password) {

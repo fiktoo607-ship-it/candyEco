@@ -34,3 +34,9 @@ img {
   background: rgba(172, 52, 0, 0.16);
   color: #121c2a;
 }
+
+/* Hide native browser password reveal and clear icons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}

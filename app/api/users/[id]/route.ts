@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { z } from 'zod';
+
+const updateUserSchema = z.object({
+  status: z.enum(['VIP', 'Fidèle', 'Vérifié', 'Non vérifié']).optional(),
+  trustScore: z
+    .union([
+      z.number().int().min(0, 'Le score de confiance ne peut pas être négatif'),
+      z.string().regex(/^\d+$/, 'Le score de confiance doit être un entier positif').transform(Number)
+    ])
+    .optional(),
+});
 
 export async function PUT(
   request: NextRequest,
@@ -15,7 +26,16 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { status, trustScore } = body;
+
+    const validationResult = updateUserSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Données invalides', details: validationResult.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const { status, trustScore } = validationResult.data;
 
     const existingUser = await prisma.user.findUnique({
       where: { id },
@@ -36,7 +56,7 @@ export async function PUT(
       where: { id },
       data: {
         ...(status !== undefined && { status }),
-        trustScore: trustScore !== undefined ? parseInt(trustScore) : defaultScore,
+        trustScore: trustScore !== undefined ? trustScore : defaultScore,
       },
     });
 

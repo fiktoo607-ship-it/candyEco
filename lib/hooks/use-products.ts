@@ -47,6 +47,8 @@ export interface UseProductsParams {
   sortBy?: string;
   isDashboard?: boolean;
   tags?: string | string[];
+  enabled?: boolean;
+  initialData?: PaginatedProducts;
 }
 
 export type PaginatedProducts = Product[] & { total?: number };
@@ -59,6 +61,8 @@ export function useProducts(params?: boolean | UseProductsParams) {
 
   return useQuery<PaginatedProducts>({
     queryKey: ['products', resolvedParams],
+    enabled: resolvedParams.enabled,
+    initialData: resolvedParams.initialData,
     queryFn: async () => {
       let url = '/api/products';
       const queryParts: string[] = [];

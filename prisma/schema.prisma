@@ -27,6 +27,10 @@ model Product {
 
   cartItems   CartItem[]
   orderItems  OrderItem[]
+
+  @@index([category])
+  @@index([visibility, createdAt])
+  @@index([state])
 }
 
 model Cart {
@@ -72,6 +76,12 @@ model Order {
   user               User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
   deliveryMethod     String?
   notifications      OrderNotification[]
+
+  @@index([userId])
+  @@index([customerPhone])
+  @@index([status])
+  @@index([createdAt])
+  @@index([sessionId])
 }
 
 model OrderItem {
@@ -86,6 +96,9 @@ model OrderItem {
 
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model SiteConfig {
@@ -190,6 +203,9 @@ model OrderNotification {
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([read, createdAt])
 }
 
 model PushSubscription {

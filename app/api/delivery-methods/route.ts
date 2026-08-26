@@ -2,6 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { z } from 'zod';
+
+const createDeliveryMethodSchema = z.object({
+  name: z.string().min(1, 'Le nom de la méthode de livraison est requis').trim(),
+  description: z.string().optional().nullable(),
+  price: z.union([
+    z.number().nonnegative('Le prix doit être supérieur ou égal à 0'),
+    z.string().regex(/^\d+(\.\d+)?$/, 'Le prix doit être un nombre positif').transform(Number)
+  ]).default(0.0),
+  homePrice: z.union([
+    z.number().nonnegative('Le prix à domicile doit être supérieur ou égal à 0'),
+    z.string().regex(/^\d+(\.\d+)?$/, 'Le prix à domicile doit être un nombre positif').transform(Number)
+  ]).optional(),
+  stockPrice: z.union([
+    z.number().nonnegative('Le prix en point relais doit être supérieur ou égal à 0'),
+    z.string().regex(/^\d+(\.\d+)?$/, 'Le prix en point relais doit être un nombre positif').transform(Number)
+  ]).optional(),
+  active: z.boolean().default(true).optional(),
+});
 
 export async function GET() {
   try {
@@ -28,11 +47,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, description, price, homePrice, stockPrice, active } = body;
+    const validationResult = createDeliveryMethodSchema.safeParse(body);
 
-    if (!name) {
-      return NextResponse.json({ error: 'Le nom de la méthode de livraison est requis' }, { status: 400 });
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Données invalides', details: validationResult.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+
+    const { name, description, price, homePrice, stockPrice, active } = validationResult.data;
 
     const existing = await prisma.deliveryMethod.findUnique({
       where: { name },
@@ -41,18 +65,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cette méthode de livraison existe déjà' }, { status: 400 });
     }
 
-    const parsedPrice = price !== undefined ? parseFloat(price) : 0.0;
-    const parsedHomePrice = homePrice !== undefined ? parseFloat(homePrice) : parsedPrice;
-    const parsedStockPrice = stockPrice !== undefined ? parseFloat(stockPrice) : parsedPrice;
+    const parsedHomePrice = homePrice !== undefined ? homePrice : price;
+    const parsedStockPrice = stockPrice !== undefined ? stockPrice : price;
 
     const newMethod = await prisma.deliveryMethod.create({
       data: {
         name,
-        description,
-        price: parsedPrice,
+        description: description || null,
+        price,
         homePrice: parsedHomePrice,
         stockPrice: parsedStockPrice,
-        active: active !== undefined ? Boolean(active) : true,
+        active: active !== undefined ? active : true,
       },
     });
 
@@ -62,3 +85,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: err }, { status: 500 });
   }
 }
+

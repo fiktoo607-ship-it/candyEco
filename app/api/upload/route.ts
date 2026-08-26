@@ -2,12 +2,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { uploadImage } from '@/lib/cloudinary';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const clientIp = getClientIp(request);
+    const identifier = session?.user?.id ? `user:${session.user.id}` : `ip:${clientIp}`;
+    const rateLimitResult = await checkRateLimit(identifier, {
+      keyPrefix: 'upload',
+      limit: 10,
+      windowSeconds: 60,
+    });
+
+    if (!rateLimitResult.success) {
+      return createRateLimitResponse(
+        rateLimitResult,
+        'Trop de téléversements. Veuillez patienter une minute avant de réessayer.'
+      );
     }
 
     const formData = await request.formData();

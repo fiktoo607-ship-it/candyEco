@@ -2,8 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { z } from 'zod';
 
-// Refreshed Prisma client for homePrice / stockPrice
+const updateDeliveryMethodSchema = z.object({
+  name: z.string().min(1, 'Le nom ne peut pas être vide').trim().optional(),
+  description: z.string().optional().nullable(),
+  price: z.union([
+    z.number().nonnegative('Le prix doit être supérieur ou égal à 0'),
+    z.string().regex(/^\d+(\.\d+)?$/, 'Le prix doit être un nombre positif').transform(Number)
+  ]).optional(),
+  homePrice: z.union([
+    z.number().nonnegative('Le prix à domicile doit être supérieur ou égal à 0'),
+    z.string().regex(/^\d+(\.\d+)?$/, 'Le prix à domicile doit être un nombre positif').transform(Number)
+  ]).optional(),
+  stockPrice: z.union([
+    z.number().nonnegative('Le prix en point relais doit être supérieur ou égal à 0'),
+    z.string().regex(/^\d+(\.\d+)?$/, 'Le prix en point relais doit être un nombre positif').transform(Number)
+  ]).optional(),
+  active: z.boolean().optional(),
+});
 
 export async function PUT(
   request: NextRequest,
@@ -17,7 +34,16 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, description, price, homePrice, stockPrice, active } = body;
+
+    const validationResult = updateDeliveryMethodSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Données invalides', details: validationResult.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const { name, description, price, homePrice, stockPrice, active } = validationResult.data;
 
     const existing = await prisma.deliveryMethod.findUnique({
       where: { id },
@@ -36,7 +62,7 @@ export async function PUT(
       }
     }
 
-    const updatedPrice = price !== undefined ? parseFloat(price) : existing.price;
+    const updatedPrice = price !== undefined ? price : existing.price;
 
     const updated = await prisma.deliveryMethod.update({
       where: { id },
@@ -44,8 +70,8 @@ export async function PUT(
         name: name !== undefined ? name : existing.name,
         description: description !== undefined ? description : existing.description,
         price: updatedPrice,
-        homePrice: homePrice !== undefined ? parseFloat(homePrice) : existing.homePrice ?? updatedPrice,
-        stockPrice: stockPrice !== undefined ? parseFloat(stockPrice) : existing.stockPrice ?? updatedPrice,
+        homePrice: homePrice !== undefined ? homePrice : existing.homePrice ?? updatedPrice,
+        stockPrice: stockPrice !== undefined ? stockPrice : existing.stockPrice ?? updatedPrice,
         active: active !== undefined ? Boolean(active) : existing.active,
       },
     });
@@ -56,6 +82,7 @@ export async function PUT(
     return NextResponse.json({ error: err }, { status: 500 });
   }
 }
+
 
 export async function DELETE(
   request: NextRequest,
