@@ -2,20 +2,31 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { isValidStatusTransition } from '@/types/orderStatusConfig';
+import { isValidStatusTransition, isValidOrderStatus, OrderStatus } from '@/types/orderStatusConfig';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
     const { status } = body;
 
-    if (!status) {
+    if (!status || typeof status !== 'string') {
       return NextResponse.json({ error: 'Status is required' }, { status: 400 });
     }
+
+    const trimmedStatus = status.trim().toUpperCase();
+    if (!isValidOrderStatus(trimmedStatus)) {
+      return NextResponse.json({ error: 'Invalid status value' }, { status: 400 });
+    }
+    const targetStatus = trimmedStatus as OrderStatus;
 
     const existingOrder = await prisma.order.findUnique({
       where: { id },
@@ -25,14 +36,15 @@ export async function PUT(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    const session = await getServerSession(authOptions);
-    const isAdmin = session?.user?.role === 'admin';
-
-    const targetStatus = status.toUpperCase();
+    const isAdmin = session.user.role === 'admin';
+    const isOwner = existingOrder.userId === session.user.id;
     const currentStatus = existingOrder.status.toUpperCase();
 
-    // Customer rules: Can cancel order while status is Pending.
+    // Customer rules: Can cancel own order only while status is Pending.
     if (!isAdmin) {
+      if (!isOwner) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      }
       if (targetStatus !== 'CANCELLED') {
         return NextResponse.json({ error: 'Unauthorized to update order status' }, { status: 403 });
       }
@@ -65,9 +77,8 @@ export async function PUT(
 
     return NextResponse.json(updatedOrder);
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : 'Failed to update order';
     console.error('[Orders Detail API] Error updating order:', error);
-    return NextResponse.json({ error: errMsg }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
   }
 }
 
@@ -76,6 +87,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
 
     const order = await prisma.order.findUnique({
@@ -93,10 +109,16 @@ export async function GET(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
+    const isAdmin = session.user.role === 'admin';
+    const isOwner = order.userId === session.user.id;
+
+    if (!isAdmin && !isOwner) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
     return NextResponse.json(order);
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : 'Failed to fetch order';
     console.error('[Orders Detail API] Error fetching order:', error);
-    return NextResponse.json({ error: errMsg }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch order' }, { status: 500 });
   }
 }

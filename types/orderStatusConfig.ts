@@ -28,9 +28,20 @@ export const ORDER_STATUS_CONFIG: Record<
   },
 };
 
+export const VALID_ORDER_STATUSES = ['PENDING', 'ACCEPTED', 'DELIVERED', 'CANCELLED'] as const;
+export type OrderStatus = (typeof VALID_ORDER_STATUSES)[number];
+
+export function isValidOrderStatus(status: string): status is OrderStatus {
+  return VALID_ORDER_STATUSES.includes(status.toUpperCase() as OrderStatus);
+}
+
 export function isValidStatusTransition(current: string, target: string): boolean {
   const cur = current.toUpperCase();
   const tgt = target.toUpperCase();
+
+  if (!isValidOrderStatus(tgt)) {
+    return false;
+  }
 
   if (cur === tgt) return true;
 
@@ -51,3 +62,4 @@ export function isValidStatusTransition(current: string, target: string): boolea
 
   return false;
 }
+

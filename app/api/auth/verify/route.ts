@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
 
 export async function POST(request: NextRequest) {
   try {
+    const clientIp = getClientIp(request);
+    const rateLimitResult = await checkRateLimit(clientIp, {
+      keyPrefix: 'verify',
+      limit: 10,
+      windowSeconds: 900, // 15 minutes
+    });
+
+    if (!rateLimitResult.success) {
+      return createRateLimitResponse(
+        rateLimitResult,
+        'Trop de tentatives de vérification. Veuillez réessayer dans quelques minutes.'
+      );
+    }
+
     const body = await request.json();
     const { token } = body;
 

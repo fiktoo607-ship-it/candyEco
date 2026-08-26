@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
 
 export async function POST(request: NextRequest) {
   try {
+    const clientIp = getClientIp(request);
+    const rateLimitResult = await checkRateLimit(clientIp, {
+      keyPrefix: 'register',
+      limit: 5,
+      windowSeconds: 900, // 15 minutes
+    });
+
+    if (!rateLimitResult.success) {
+      return createRateLimitResponse(
+        rateLimitResult,
+        'Trop de tentatives d\'inscription. Veuillez réessayer dans quelques minutes.'
+      );
+    }
+
     const body = await request.json();
     const { name, phone, password } = body;
 

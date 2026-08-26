@@ -38,9 +38,12 @@ vi.mock('@/lib/prisma', () => {
   };
 });
 
+import { resetRateLimiter } from '@/lib/rate-limiter';
+
 describe('Authentication Registration & Verification API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetRateLimiter();
   });
 
   describe('POST /api/auth/register', () => {

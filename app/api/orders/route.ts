@@ -5,13 +5,72 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getSiteConfig } from '@/lib/config';
 
-interface RequestItem {
-  productId: string;
-  quantity: number;
+import crypto from 'crypto';
+
+/**
+ * Generates an atomic, collision-resistant order reference in format: ORD-YYYYMMDD-XXX
+ * Uses PostgreSQL sequence (nextval) when connected to Postgres, with a cryptographically
+ * collision-resistant fallback when sequences are unavailable or in test environments.
+ */
+export async function generateAtomicOrderReference(tx: any, date: Date = new Date()): Promise<string> {
+  const yyyy = date.getUTCFullYear();
+  const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(date.getUTCDate()).padStart(2, '0');
+  const datePrefix = `ORD-${yyyy}${mm}${dd}-`;
+
+  try {
+    const result = await tx.$queryRaw`SELECT nextval('order_reference_seq') as seq`;
+    if (result && Array.isArray(result) && result.length > 0) {
+      const rawVal = result[0]?.seq ?? result[0]?.nextval;
+      if (rawVal !== undefined && rawVal !== null) {
+        const seqNum = Number(rawVal);
+        if (!isNaN(seqNum)) {
+          const seqStr = String(((seqNum - 1) % 999) + 1).padStart(3, '0');
+          return `${datePrefix}${seqStr}`;
+        }
+      }
+    }
+  } catch (err: any) {
+    // If sequence does not exist in the database, attempt to create it once
+    try {
+      await tx.$executeRawUnsafe(`CREATE SEQUENCE IF NOT EXISTS order_reference_seq START 1`);
+      const retryResult = await tx.$queryRaw`SELECT nextval('order_reference_seq') as seq`;
+      if (retryResult && Array.isArray(retryResult) && retryResult.length > 0 && retryResult[0]?.seq !== undefined) {
+        const seqNum = Number(retryResult[0].seq);
+        const seqStr = String(((seqNum - 1) % 999) + 1).padStart(3, '0');
+        return `${datePrefix}${seqStr}`;
+      }
+    } catch {
+      // In SQLite / in-memory / mock test fallback: use cryptographically secure random bytes
+    }
+  }
+
+  // Cryptographically secure collision-resistant 4-hex-char suffix
+  const randomSuffix = crypto.randomBytes(2).toString('hex').toUpperCase();
+  return `${datePrefix}${randomSuffix}`;
 }
+
+import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    let userId = session?.user?.id || null;
+    const role = session?.user?.role || 'anonymous';
+    const clientIp = getClientIp(request);
+    const identifier = userId ? `user:${userId}` : `ip:${clientIp}`;
+
+    const limit = role === 'admin' ? 60 : userId ? 15 : 5;
+    const rateLimitResult = await checkRateLimit(identifier, {
+      keyPrefix: 'orders',
+      limit,
+      windowSeconds: 60,
+    });
+
+    if (!rateLimitResult.success) {
+      return createRateLimitResponse(rateLimitResult, 'Trop de commandes créées. Veuillez patienter avant de réessayer.');
+    }
+
     const storeEnabled = await getSiteConfig<boolean>('store_enabled');
     if (storeEnabled === false) {
       const storeMessage = await getSiteConfig<string>('store_message') || "Le magasin est temporairement fermé.";
@@ -37,20 +96,60 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 1. Fetch products from database to ensure pricing integrity
-    const typedItems = items as RequestItem[];
-    const productIds = typedItems.map((item) => item.productId);
+    // 1. Validate items payload structure and quantities
+    if (!Array.isArray(items) || items.length === 0 || items.length > 50) {
+      return NextResponse.json({ error: 'Le panier doit contenir entre 1 et 50 articles.' }, { status: 400 });
+    }
+
+    // Aggregate items by productId to handle duplicate entries securely and cleanly
+    const aggregatedItemsMap = new Map<string, number>();
+
+    for (const item of items) {
+      if (!item || typeof item !== 'object') {
+        return NextResponse.json({ error: "Format d'article invalide." }, { status: 400 });
+      }
+
+      const { productId, quantity } = item;
+
+      if (!productId || typeof productId !== 'string' || productId.trim() === '' || productId.length > 100) {
+        return NextResponse.json({ error: 'Identifiant de produit invalide.' }, { status: 400 });
+      }
+
+      if (
+        typeof quantity !== 'number' ||
+        !Number.isFinite(quantity) ||
+        !Number.isInteger(quantity) ||
+        quantity <= 0 ||
+        quantity > 100
+      ) {
+        return NextResponse.json({ error: 'La quantité doit être un entier positif entre 1 et 100.' }, { status: 400 });
+      }
+
+      const cleanProductId = productId.trim();
+      const currentQty = aggregatedItemsMap.get(cleanProductId) || 0;
+      const newQty = currentQty + quantity;
+
+      if (newQty > 100) {
+        return NextResponse.json({ error: 'La quantité totale cumulée pour un produit ne peut pas dépasser 100.' }, { status: 400 });
+      }
+
+      aggregatedItemsMap.set(cleanProductId, newQty);
+    }
+
+    const uniqueProductIds = Array.from(aggregatedItemsMap.keys());
+
+    // 2. Fetch products from database to ensure pricing integrity
     const dbProducts = await prisma.product.findMany({
-      where: { id: { in: productIds } },
+      where: { id: { in: uniqueProductIds } },
     });
 
-    if (dbProducts.length !== productIds.length) {
+    if (dbProducts.length !== uniqueProductIds.length) {
       return NextResponse.json({ error: 'One or more products in your cart could not be found' }, { status: 400 });
     }
 
     const productMap = new Map(dbProducts.map((p) => [p.id, p]));
 
-    // 2. Validate availability and calculate total amounts
+    // 3. Validate availability, purchase limits, and calculate total amounts authoritatively
     let totalAmount = 0;
     
     interface OrderItemData {
@@ -62,32 +161,43 @@ export async function POST(request: NextRequest) {
     
     const orderItemsData: OrderItemData[] = [];
 
-    for (const item of typedItems) {
-      const dbProduct = productMap.get(item.productId);
+    for (const [productId, quantity] of aggregatedItemsMap.entries()) {
+      const dbProduct = productMap.get(productId);
       if (!dbProduct) {
-        return NextResponse.json({ error: `Product ${item.productId} not found` }, { status: 400 });
+        return NextResponse.json({ error: `Product ${productId} not found` }, { status: 400 });
       }
 
       if (dbProduct.state === 'outofStock') {
         return NextResponse.json({ error: `Product "${dbProduct.title}" is out of stock` }, { status: 400 });
       }
 
+      if (dbProduct.limitBay !== null && dbProduct.limitBay !== undefined && dbProduct.limitBay > 0) {
+        if (quantity > dbProduct.limitBay) {
+          return NextResponse.json(
+            { error: `La quantité pour "${dbProduct.title}" dépasse la limite autorisée (${dbProduct.limitBay}).` },
+            { status: 400 }
+          );
+        }
+      }
+
       const numericPrice = parseFloat(dbProduct.price.replace(/[^0-9.]/g, ''));
-      const itemAmount = (isNaN(numericPrice) ? 0 : numericPrice) * item.quantity;
+      if (isNaN(numericPrice) || numericPrice < 0) {
+        return NextResponse.json({ error: 'Prix de produit invalide dans la base de données' }, { status: 500 });
+      }
+
+      const itemAmount = Math.round(numericPrice * quantity * 100) / 100;
       totalAmount += itemAmount;
 
       orderItemsData.push({
-        productId: item.productId,
-        quantity: item.quantity,
+        productId,
+        quantity,
         priceAtPurchase: dbProduct.price,
-        amountAtPurchase: isNaN(numericPrice) ? 0 : numericPrice,
+        amountAtPurchase: numericPrice,
       });
     }
 
+    totalAmount = Math.round(totalAmount * 100) / 100;
     const totalPrice = `$${totalAmount.toFixed(2)}`;
-
-    const session = await getServerSession(authOptions);
-    let userId = session?.user?.id || null;
 
     if (userId) {
       const userExists = await prisma.user.findUnique({
@@ -107,36 +217,7 @@ export async function POST(request: NextRequest) {
     while (attempts < maxAttempts) {
       try {
         transactionResult = await prisma.$transaction(async (tx) => {
-          // Generate reference code ORD-YYYYMMDD-XXX
-          const now = new Date();
-          const yyyy = now.getUTCFullYear();
-          const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
-          const dd = String(now.getUTCDate()).padStart(2, '0');
-          const todayStr = `${yyyy}${mm}${dd}`;
-          const prefix = `ORD-${todayStr}-`;
-
-          const lastOrderForToday = await tx.order.findFirst({
-            where: {
-              reference: {
-                startsWith: prefix
-              }
-            },
-            orderBy: {
-              reference: 'desc'
-            },
-            select: {
-              reference: true
-            }
-          });
-
-          let nextSeq = 1;
-          if (lastOrderForToday?.reference) {
-            const parts = lastOrderForToday.reference.split('-');
-            const lastSeq = parseInt(parts[2] || '0', 10);
-            nextSeq = lastSeq + 1;
-          }
-          const seqStr = String(nextSeq).padStart(3, '0');
-          const reference = `${prefix}${seqStr}`;
+          const reference = await generateAtomicOrderReference(tx);
 
           const order = await tx.order.create({
             data: {

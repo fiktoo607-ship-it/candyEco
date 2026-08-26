@@ -2,9 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
 
 export async function POST(request: NextRequest) {
   try {
+    const clientIp = getClientIp(request);
+    const rateLimitResult = await checkRateLimit(clientIp, {
+      keyPrefix: 'push-sub',
+      limit: 20,
+      windowSeconds: 300, // 5 minutes
+    });
+
+    if (!rateLimitResult.success) {
+      return createRateLimitResponse(
+        rateLimitResult,
+        'Trop de requêtes d\'abonnement aux notifications.'
+      );
+    }
+
     const body = await request.json();
     const { subscription, deviceToken } = body;
 

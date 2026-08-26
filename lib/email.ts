@@ -1,32 +1,33 @@
 import nodemailer from 'nodemailer';
 
-const getTransporter = () => {
+export const getTransporter = () => {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || '587');
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASSWORD;
 
-  // Use secure configuration for port 465, otherwise standard TLS
+  // Use direct SSL/TLS for port 465, STARTTLS for port 587
   const secure = port === 465;
 
   return nodemailer.createTransport({
     host,
     port,
     secure,
-    auth: {
+    auth: user && pass ? {
       user,
       pass,
-    },
-    // SSL options for reliability
+    } : undefined,
+    // Enforce strict TLS certificate validation at all times
     tls: {
-      rejectUnauthorized: false,
+      rejectUnauthorized: true,
+      minVersion: 'TLSv1.2',
     },
   });
 };
 
 export async function sendVerificationEmail(toEmail: string, token: string) {
   const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-  const verificationUrl = `${appUrl}/verify-email?token=${token}`;
+  const verificationUrl = `${appUrl}/verify-email?token=${encodeURIComponent(token)}`;
   const fromEmail = process.env.EMAIL_FROM || '"candyEco" <noreply@example.com>';
 
   const transporter = getTransporter();

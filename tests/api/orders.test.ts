@@ -54,12 +54,21 @@ vi.mock('@/lib/prisma', () => {
       })),
     },
     $queryRaw: vi.fn().mockImplementation((queryParts, ...values) => {
-      const queryStr = Array.isArray(queryParts) ? queryParts.join('') : '';
+      const queryStr = typeof queryParts === 'string'
+        ? queryParts
+        : Array.isArray(queryParts)
+          ? queryParts.join('')
+          : (queryParts?.raw ? queryParts.raw.join('') : (queryParts?.strings ? queryParts.strings.join('') : String(queryParts)));
       if (queryStr.includes('COUNT(*)')) {
         return Promise.resolve([{ count: 0 }]);
       }
+      if (queryStr.includes('nextval')) {
+        return Promise.resolve([{ seq: 1 }]);
+      }
       return Promise.resolve([]);
     }),
+    $executeRawUnsafe: vi.fn().mockResolvedValue(1),
+    $queryRawUnsafe: vi.fn().mockResolvedValue([{ seq: 1 }]),
     $transaction: vi.fn((arg) => {
       if (typeof arg === 'function') {
         return arg(mockPrisma);
@@ -75,9 +84,43 @@ vi.mock('@/lib/prisma', () => {
   };
 });
 
+import { resetRateLimiter } from '@/lib/rate-limiter';
+
 describe('Orders API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetRateLimiter();
+    vi.mocked(prisma.order.create).mockImplementation(((args: any) =>
+      Promise.resolve({
+        id: 'order-uuid-123',
+        reference: args?.data?.reference || 'ORD-20260709-001',
+        status: 'PENDING',
+        totalPrice: args?.data?.totalPrice || '$20.00',
+        totalAmount: args?.data?.totalAmount || 20.0,
+        customerName: args?.data?.customerName || 'John Doe',
+        customerPhone: args?.data?.customerPhone || '1234567890',
+        customerEmail: args?.data?.customerEmail || 'john@example.com',
+        shippingAddress: args?.data?.shippingAddress || '123 Main St',
+        userId: args?.data?.userId ?? null,
+        deliveryMethod: args?.data?.deliveryMethod ?? null,
+        items: [],
+      })
+    ) as any);
+    vi.mocked(prisma.product.findMany).mockReset();
+    vi.mocked(prisma.$queryRaw).mockImplementation(((queryParts: any) => {
+      const queryStr = typeof queryParts === 'string'
+        ? queryParts
+        : Array.isArray(queryParts)
+          ? queryParts.join('')
+          : (queryParts?.raw ? queryParts.raw.join('') : (queryParts?.strings ? queryParts.strings.join('') : String(queryParts)));
+      if (queryStr.includes('COUNT(*)')) {
+        return Promise.resolve([{ count: 0 }]);
+      }
+      if (queryStr.includes('nextval')) {
+        return Promise.resolve([{ seq: 1 }]);
+      }
+      return Promise.resolve([]);
+    }) as any);
   });
 
   describe('POST /api/orders (Guest Checkout)', () => {
@@ -288,10 +331,8 @@ describe('Orders API', () => {
       const dd = String(now.getUTCDate()).padStart(2, '0');
       const todayStr = `${yyyy}${mm}${dd}`;
 
-      // Mock that there's already an order with sequence 002
-      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce({
-        reference: `ORD-${todayStr}-002`,
-      } as any);
+      // Mock that the atomic sequence returns 3
+      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ seq: 3 }]);
 
       const expectedOrder = {
         id: 'order-uuid-123',
@@ -319,6 +360,60 @@ describe('Orders API', () => {
       expect(response.status).toBe(201);
       const data = await response.json();
       expect(data.reference).toBe(`ORD-${todayStr}-003`);
+    });
+
+    it('should handle highly concurrent order creations without duplicate references (SEC-07)', async () => {
+      const orderCount = 20;
+      let seqCounter = 1;
+
+      // Mock findMany for products across all concurrent calls
+      vi.mocked(prisma.product.findMany).mockResolvedValue(mockDbProducts as any);
+
+      // Atomic sequence generator yields strictly unique numbers concurrently
+      vi.mocked(prisma.$queryRaw).mockImplementation((async (queryParts: any) => {
+        const currentSeq = seqCounter++;
+        return [{ seq: currentSeq }];
+      }) as any);
+
+      vi.mocked(prisma.order.create).mockImplementation((async (args: any) => {
+        return {
+          id: `order-uuid-${args.data.reference}`,
+          reference: args.data.reference,
+          status: 'PENDING',
+          totalPrice: '$20.00',
+          totalAmount: 20.00,
+        };
+      }) as any);
+
+      const requests = Array.from({ length: orderCount }, (_, i) => {
+        const payload = {
+          ...validPayload,
+          sessionId: `session-concurrent-${i}`,
+        };
+        const req = new NextRequest('http://localhost/api/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-forwarded-for': `198.51.100.${i + 1}`,
+          },
+          body: JSON.stringify(payload),
+        });
+        return createOrder(req);
+      });
+
+      const responses = await Promise.all(requests);
+      const references: string[] = [];
+
+      for (const res of responses) {
+        expect(res.status).toBe(201);
+        const data = await res.json();
+        expect(data.reference).toMatch(/^ORD-\d{8}-[0-9A-F]{3,4}$/);
+        references.push(data.reference);
+      }
+
+      // Assert all references are completely unique without any collisions
+      const uniqueReferences = new Set(references);
+      expect(uniqueReferences.size).toBe(orderCount);
     });
 
     it('should return 400 when phone number format is invalid', async () => {
@@ -487,6 +582,214 @@ describe('Orders API', () => {
         })
       );
     });
+
+    it('should reject order with negative quantity (e.g. -1)', async () => {
+      const payload = {
+        ...validPayload,
+        items: [{ productId: 'prod-1', quantity: -1 }],
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('La quantité doit être un entier positif entre 1 et 100.');
+      expect(prisma.order.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject order with zero quantity (0)', async () => {
+      const payload = {
+        ...validPayload,
+        items: [{ productId: 'prod-1', quantity: 0 }],
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('La quantité doit être un entier positif entre 1 et 100.');
+      expect(prisma.order.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject order with decimal / float quantity (e.g. 1.5)', async () => {
+      const payload = {
+        ...validPayload,
+        items: [{ productId: 'prod-1', quantity: 1.5 }],
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('La quantité doit être un entier positif entre 1 et 100.');
+      expect(prisma.order.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject order with string / NaN / Infinity quantity', async () => {
+      const payload = {
+        ...validPayload,
+        items: [{ productId: 'prod-1', quantity: 'two' as any }],
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('La quantité doit être un entier positif entre 1 et 100.');
+    });
+
+    it('should reject order with excessively large quantity (> 100)', async () => {
+      const payload = {
+        ...validPayload,
+        items: [{ productId: 'prod-1', quantity: 9999 }],
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('La quantité doit être un entier positif entre 1 et 100.');
+    });
+
+    it('should reject order when quantity exceeds product limitBay', async () => {
+      const productsWithLimit = [
+        {
+          id: 'prod-limit',
+          title: 'Limited Edition Cake',
+          price: '$50.00',
+          state: 'exist',
+          limitBay: 2, // Maximum 2 per order
+        },
+      ];
+
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(productsWithLimit as any);
+
+      const payload = {
+        ...validPayload,
+        items: [{ productId: 'prod-limit', quantity: 3 }],
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('dépasse la limite autorisée (2)');
+      expect(prisma.order.create).not.toHaveBeenCalled();
+    });
+
+    it('should ignore client-provided manipulated prices and calculate authoritative total from database', async () => {
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
+      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(null);
+
+      // Attacker passes manipulated price and totalAmount
+      const tamperedPayload = {
+        ...validPayload,
+        totalAmount: 0.01,
+        totalPrice: '$0.01',
+        items: [
+          { productId: 'prod-1', quantity: 2, price: '$0.00', amount: 0.00 } as any,
+          { productId: 'prod-2', quantity: 1, price: '$0.01', amount: 0.01 } as any,
+        ],
+      };
+
+      const expectedOrder = {
+        id: 'order-uuid-123',
+        reference: 'ORD-20260709-001',
+        totalPrice: '$20.00',
+        totalAmount: 20.00,
+      };
+      vi.mocked(prisma.order.create).mockResolvedValueOnce(expectedOrder as any);
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tamperedPayload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(201);
+
+      // Assert server used authoritative DB prices: ($2.50 * 2) + ($15.00 * 1) = $20.00
+      expect(prisma.order.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            totalPrice: '$20.00',
+            totalAmount: 20.00,
+          }),
+        })
+      );
+    });
+
+    it('should aggregate duplicate product IDs and enforce combined quantity and price calculation', async () => {
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce([mockDbProducts[0]] as any);
+      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(null);
+
+      // Sending same prod-1 twice (2 + 3 = 5 items of prod-1)
+      const duplicateItemsPayload = {
+        ...validPayload,
+        items: [
+          { productId: 'prod-1', quantity: 2 },
+          { productId: 'prod-1', quantity: 3 },
+        ],
+      };
+
+      const expectedOrder = {
+        id: 'order-uuid-123',
+        reference: 'ORD-20260709-001',
+        totalPrice: '$12.50',
+        totalAmount: 12.50,
+      };
+      vi.mocked(prisma.order.create).mockResolvedValueOnce(expectedOrder as any);
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(duplicateItemsPayload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(201);
+
+      // Total for prod-1: 5 * $2.50 = $12.50
+      expect(prisma.order.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            totalPrice: '$12.50',
+            totalAmount: 12.50,
+          }),
+        })
+      );
+    });
   });
 
   describe('GET /api/orders', () => {
@@ -642,11 +945,29 @@ describe('Orders API', () => {
   describe('PUT /api/orders/[id]', () => {
     const mockOrder = {
       id: 'order-1',
+      userId: 'user-1',
       customerName: 'John',
       status: 'PENDING',
     };
+
+    it('should return 401 if request is unauthenticated', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(null);
+
+      const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+
+      const response = await updateOrder(req, { params: Promise.resolve({ id: mockOrder.id }) });
+      expect(response.status).toBe(401);
+      const data = await response.json();
+      expect(data).toEqual({ error: 'Unauthorized' });
+      expect(prisma.order.update).not.toHaveBeenCalled();
+    });
+
     it('should update the order status and convert status parameter to uppercase', async () => {
-      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { role: 'admin' } } as any);
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'admin-1', role: 'admin' } } as any);
       vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockOrder as any);
       vi.mocked(prisma.order.update).mockResolvedValueOnce({
         ...mockOrder,
@@ -673,6 +994,8 @@ describe('Orders API', () => {
     });
 
     it('should return 400 if status parameter is missing', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'admin-1', role: 'admin' } } as any);
+
       const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -688,6 +1011,7 @@ describe('Orders API', () => {
     });
 
     it('should return 404 if the order to update is not found', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'admin-1', role: 'admin' } } as any);
       vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(null);
 
       const req = new NextRequest(`http://localhost/api/orders/unknown-id`, {
@@ -705,7 +1029,7 @@ describe('Orders API', () => {
     });
 
     it('should return 500 when order update fails in database', async () => {
-      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { role: 'admin' } } as any);
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'admin-1', role: 'admin' } } as any);
       vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockOrder as any);
       vi.mocked(prisma.order.update).mockRejectedValueOnce(new Error('Update failed'));
 
@@ -719,17 +1043,19 @@ describe('Orders API', () => {
       expect(response.status).toBe(500);
 
       const data = await response.json();
-      expect(data).toEqual({ error: 'Update failed' });
+      expect(data).toEqual({ error: 'Failed to update order' });
     });
 
-    it('should allow customer to cancel order while status is PENDING', async () => {
-      vi.mocked(getServerSession).mockResolvedValueOnce(null); // Guest/Customer
+    it('should allow customer to cancel their own order while status is PENDING', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'user-1', role: 'user' } } as any);
       vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
         id: 'order-1',
+        userId: 'user-1',
         status: 'PENDING',
       } as any);
       vi.mocked(prisma.order.update).mockResolvedValueOnce({
         id: 'order-1',
+        userId: 'user-1',
         status: 'CANCELLED',
       } as any);
 
@@ -745,10 +1071,32 @@ describe('Orders API', () => {
       expect(data.status).toBe('CANCELLED');
     });
 
-    it('should NOT allow customer to update status to anything other than CANCELLED', async () => {
-      vi.mocked(getServerSession).mockResolvedValueOnce(null); // Guest/Customer
+    it('should NOT allow customer to cancel another customer order (403)', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'attacker-id', role: 'user' } } as any);
       vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
         id: 'order-1',
+        userId: 'victim-id',
+        status: 'PENDING',
+      } as any);
+
+      const req = new NextRequest('http://localhost/api/orders/order-1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+
+      const response = await updateOrder(req, { params: Promise.resolve({ id: 'order-1' }) });
+      expect(response.status).toBe(403);
+      const data = await response.json();
+      expect(data.error).toBe('Access denied');
+      expect(prisma.order.update).not.toHaveBeenCalled();
+    });
+
+    it('should NOT allow customer to update status to anything other than CANCELLED', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'user-1', role: 'user' } } as any);
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
+        id: 'order-1',
+        userId: 'user-1',
         status: 'PENDING',
       } as any);
 
@@ -765,9 +1113,10 @@ describe('Orders API', () => {
     });
 
     it('should NOT allow customer to cancel order if current status is not PENDING', async () => {
-      vi.mocked(getServerSession).mockResolvedValueOnce(null); // Guest/Customer
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'user-1', role: 'user' } } as any);
       vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
         id: 'order-1',
+        userId: 'user-1',
         status: 'ACCEPTED',
       } as any);
 
@@ -783,8 +1132,45 @@ describe('Orders API', () => {
       expect(data.error).toBe('Only pending orders can be cancelled');
     });
 
+    it('should return 400 if status parameter is an invalid enum value (e.g. SHIPPED)', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'admin-1', role: 'admin' } } as any);
+
+      const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'SHIPPED' }),
+      });
+
+      const response = await updateOrder(req, { params: Promise.resolve({ id: mockOrder.id }) });
+      expect(response.status).toBe(400);
+
+      const data = await response.json();
+      expect(data).toEqual({ error: 'Invalid status value' });
+      expect(prisma.order.update).not.toHaveBeenCalled();
+    });
+
+    it('should NOT allow admin to make invalid status transition (e.g. DELIVERED to PENDING)', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'admin-1', role: 'admin' } } as any);
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
+        id: 'order-1',
+        status: 'DELIVERED',
+      } as any);
+
+      const req = new NextRequest('http://localhost/api/orders/order-1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'PENDING' }),
+      });
+
+      const response = await updateOrder(req, { params: Promise.resolve({ id: 'order-1' }) });
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('Invalid status transition');
+      expect(prisma.order.update).not.toHaveBeenCalled();
+    });
+
     it('should NOT allow admin to cancel order if current status is ACCEPTED', async () => {
-      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { role: 'admin' } } as any);
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'admin-1', role: 'admin' } } as any);
       vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
         id: 'order-1',
         status: 'ACCEPTED',
@@ -803,7 +1189,7 @@ describe('Orders API', () => {
     });
 
     it('should allow admin to update order status to ACCEPTED from PENDING', async () => {
-      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { role: 'admin' } } as any);
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'admin-1', role: 'admin' } } as any);
       vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
         id: 'order-1',
         status: 'PENDING',
@@ -829,12 +1215,30 @@ describe('Orders API', () => {
   describe('GET /api/orders/[id]', () => {
     const mockOrder = {
       id: 'order-1',
+      userId: 'user-1',
       customerName: 'John',
       status: 'PENDING',
       items: [],
     };
 
-    it('should retrieve a single order by ID successfully', async () => {
+    it('should return 401 for unauthenticated request', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(null);
+
+      const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
+        method: 'GET',
+      });
+
+      const response = await getOrderDetail(req, { params: Promise.resolve({ id: mockOrder.id }) });
+      expect(response.status).toBe(401);
+      const data = await response.json();
+      expect(data).toEqual({ error: 'Unauthorized' });
+      expect(prisma.order.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('should allow customer to access their own order (200)', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({
+        user: { id: 'user-1', role: 'user' },
+      } as any);
       vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockOrder as any);
 
       const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
@@ -859,7 +1263,43 @@ describe('Orders API', () => {
       });
     });
 
+    it('should return 403 when customer tries to access another customer order', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({
+        user: { id: 'user-2', role: 'user' }, // Different user
+      } as any);
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockOrder as any);
+
+      const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
+        method: 'GET',
+      });
+
+      const response = await getOrderDetail(req, { params: Promise.resolve({ id: mockOrder.id }) });
+      expect(response.status).toBe(403);
+      const data = await response.json();
+      expect(data).toEqual({ error: 'Access denied' });
+    });
+
+    it('should allow admin to access another customer order (200)', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({
+        user: { id: 'admin-id', role: 'admin' },
+      } as any);
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockOrder as any);
+
+      const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
+        method: 'GET',
+      });
+
+      const response = await getOrderDetail(req, { params: Promise.resolve({ id: mockOrder.id }) });
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+      expect(data).toEqual(mockOrder);
+    });
+
     it('should return 404 if the order is not found', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({
+        user: { id: 'user-1', role: 'user' },
+      } as any);
       vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(null);
 
       const req = new NextRequest(`http://localhost/api/orders/unknown-id`, {
@@ -874,7 +1314,10 @@ describe('Orders API', () => {
     });
 
     it('should return 500 when fetching order fails in database', async () => {
-      vi.mocked(prisma.order.findUnique).mockRejectedValueOnce(new Error('Fetch failed'));
+      vi.mocked(getServerSession).mockResolvedValueOnce({
+        user: { id: 'user-1', role: 'user' },
+      } as any);
+      vi.mocked(prisma.order.findUnique).mockRejectedValueOnce(new Error('Database lock error'));
 
       const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
         method: 'GET',
@@ -884,7 +1327,7 @@ describe('Orders API', () => {
       expect(response.status).toBe(500);
 
       const data = await response.json();
-      expect(data).toEqual({ error: 'Fetch failed' });
+      expect(data).toEqual({ error: 'Failed to fetch order' });
     });
   });
 
