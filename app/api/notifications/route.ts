@@ -15,8 +15,21 @@ export async function GET(request: NextRequest) {
         createdAt: 'desc',
       },
       take: 50,
-      include: {
-        order: true,
+      select: {
+        id: true,
+        orderId: true,
+        read: true,
+        createdAt: true,
+        order: {
+          select: {
+            id: true,
+            reference: true,
+            customerName: true,
+            totalPrice: true,
+            status: true,
+            createdAt: true,
+          },
+        },
       },
     });
 

@@ -66,10 +66,38 @@ export async function PUT(
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: { status: targetStatus },
-      include: {
+      select: {
+        id: true,
+        reference: true,
+        sessionId: true,
+        status: true,
+        totalPrice: true,
+        totalAmount: true,
+        customerName: true,
+        customerPhone: true,
+        customerEmail: true,
+        shippingAddress: true,
+        deliveryMethod: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true,
         items: {
-          include: {
-            product: true,
+          select: {
+            id: true,
+            orderId: true,
+            productId: true,
+            quantity: true,
+            priceAtPurchase: true,
+            amountAtPurchase: true,
+            product: {
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                price: true,
+                imageUrl: true,
+              },
+            },
           },
         },
       },
@@ -96,10 +124,38 @@ export async function GET(
 
     const order = await prisma.order.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        reference: true,
+        sessionId: true,
+        status: true,
+        totalPrice: true,
+        totalAmount: true,
+        customerName: true,
+        customerPhone: true,
+        customerEmail: true,
+        shippingAddress: true,
+        deliveryMethod: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true,
         items: {
-          include: {
-            product: true,
+          select: {
+            id: true,
+            orderId: true,
+            productId: true,
+            quantity: true,
+            priceAtPurchase: true,
+            amountAtPurchase: true,
+            product: {
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                price: true,
+                imageUrl: true,
+              },
+            },
           },
         },
       },
@@ -122,3 +178,4 @@ export async function GET(
     return NextResponse.json({ error: 'Failed to fetch order' }, { status: 500 });
   }
 }
+

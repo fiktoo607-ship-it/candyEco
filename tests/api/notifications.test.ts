@@ -84,10 +84,26 @@ describe('Notifications API Tests', () => {
       expect(prisma.orderNotification.findMany).toHaveBeenCalledWith({
         orderBy: { createdAt: 'desc' },
         take: 50,
-        include: { order: true },
+        select: {
+          id: true,
+          orderId: true,
+          read: true,
+          createdAt: true,
+          order: {
+            select: {
+              id: true,
+              reference: true,
+              customerName: true,
+              totalPrice: true,
+              status: true,
+              createdAt: true,
+            },
+          },
+        },
       });
     });
   });
+
 
   describe('PATCH /api/notifications', () => {
     it('should return 401 if unauthorized', async () => {

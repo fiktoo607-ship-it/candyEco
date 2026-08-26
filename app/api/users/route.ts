@@ -20,7 +20,16 @@ export async function GET(request: NextRequest) {
           notIn: ['admin', 'ADMIN'],
         },
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        emailVerified: true,
+        createdAt: true,
+        trustScore: true,
+        status: true,
         orders: {
           select: {
             createdAt: true,

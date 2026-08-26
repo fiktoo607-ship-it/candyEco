@@ -854,7 +854,14 @@ describe('Orders API', () => {
       expect(prisma.$queryRaw).toHaveBeenCalled();
       expect(prisma.order.findMany).toHaveBeenCalledWith({
         where: { id: { in: mockOrders.map(o => o.id) } },
-        include: { items: { include: { product: true } } },
+        select: expect.objectContaining({
+          id: true,
+          items: expect.objectContaining({
+            select: expect.objectContaining({
+              product: expect.anything(),
+            }),
+          }),
+        }),
       });
     });
 
@@ -873,9 +880,17 @@ describe('Orders API', () => {
       expect(prisma.$queryRaw).toHaveBeenCalled();
       expect(prisma.order.findMany).toHaveBeenCalledWith({
         where: { id: { in: [mockOrders[1].id] } },
-        include: { items: { include: { product: true } } },
+        select: expect.objectContaining({
+          id: true,
+          items: expect.objectContaining({
+            select: expect.objectContaining({
+              product: expect.anything(),
+            }),
+          }),
+        }),
       });
     });
+
 
     it('should support sorting by status, customer trust score, and order count', async () => {
       // 1. Test sorting by status
@@ -989,8 +1004,16 @@ describe('Orders API', () => {
       expect(prisma.order.update).toHaveBeenCalledWith({
         where: { id: mockOrder.id },
         data: { status: 'ACCEPTED' }, // Converted to uppercase
-        include: { items: { include: { product: true } } },
+        select: expect.objectContaining({
+          id: true,
+          items: expect.objectContaining({
+            select: expect.objectContaining({
+              product: expect.anything(),
+            }),
+          }),
+        }),
       });
+
     });
 
     it('should return 400 if status parameter is missing', async () => {
@@ -1253,13 +1276,14 @@ describe('Orders API', () => {
 
       expect(prisma.order.findUnique).toHaveBeenCalledWith({
         where: { id: mockOrder.id },
-        include: {
-          items: {
-            include: {
-              product: true,
-            },
-          },
-        },
+        select: expect.objectContaining({
+          id: true,
+          items: expect.objectContaining({
+            select: expect.objectContaining({
+              product: expect.anything(),
+            }),
+          }),
+        }),
       });
     });
 

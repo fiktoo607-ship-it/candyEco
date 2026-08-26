@@ -438,15 +438,43 @@ export async function GET(request: NextRequest) {
 
       const paginatedIds = rawOrders.map(o => o.id);
 
-      // 3. Fetch fully populated orders for the current page
+      // 3. Fetch fully populated orders for the current page with selective fields
       const orders = paginatedIds.length > 0 ? await tx.order.findMany({
         where: {
           id: { in: paginatedIds },
         },
-        include: {
+        select: {
+          id: true,
+          reference: true,
+          sessionId: true,
+          status: true,
+          totalPrice: true,
+          totalAmount: true,
+          customerName: true,
+          customerPhone: true,
+          customerEmail: true,
+          shippingAddress: true,
+          deliveryMethod: true,
+          userId: true,
+          createdAt: true,
+          updatedAt: true,
           items: {
-            include: {
-              product: true,
+            select: {
+              id: true,
+              orderId: true,
+              productId: true,
+              quantity: true,
+              priceAtPurchase: true,
+              amountAtPurchase: true,
+              product: {
+                select: {
+                  id: true,
+                  title: true,
+                  slug: true,
+                  price: true,
+                  imageUrl: true,
+                },
+              },
             },
           },
         },

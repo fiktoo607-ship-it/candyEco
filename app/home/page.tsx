@@ -16,7 +16,20 @@ export default async function HomePage() {
         { visibility: 'desc' },
         { createdAt: 'desc' }
       ],
-      take: 5
+      take: 5,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        category: true,
+        price: true,
+        imageUrl: true,
+        description: true,
+        story: true,
+        limitBay: true,
+        state: true,
+        publishedAt: true,
+      },
     });
     if (dbFeatured && dbFeatured.length > 0) {
       displayFeatured = dbFeatured.map(p => ({
@@ -44,9 +57,24 @@ export default async function HomePage() {
       where: { state: 'exist' },
       orderBy: { createdAt: 'desc' },
       take: newProductsLimit,
-      include: {
-        tags: true
-      }
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        category: true,
+        price: true,
+        imageUrl: true,
+        description: true,
+        story: true,
+        limitBay: true,
+        state: true,
+        publishedAt: true,
+        tags: {
+          select: {
+            name: true,
+          },
+        },
+      },
     });
     if (dbNewProducts && dbNewProducts.length > 0) {
       displayNewProducts = dbNewProducts.map(p => ({
@@ -93,9 +121,24 @@ export default async function HomePage() {
           id: { in: orderedProductIds },
           state: 'exist'
         },
-        include: {
-          tags: true
-        }
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          category: true,
+          price: true,
+          imageUrl: true,
+          description: true,
+          story: true,
+          limitBay: true,
+          state: true,
+          publishedAt: true,
+          tags: {
+            select: {
+              name: true,
+            },
+          },
+        },
       });
       
       popularProducts = orderedProductIds
@@ -115,9 +158,24 @@ export default async function HomePage() {
           { createdAt: 'desc' }
         ],
         take: remainingCount,
-        include: {
-          tags: true
-        }
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          category: true,
+          price: true,
+          imageUrl: true,
+          description: true,
+          story: true,
+          limitBay: true,
+          state: true,
+          publishedAt: true,
+          tags: {
+            select: {
+              name: true,
+            },
+          },
+        },
       });
       popularProducts = [...popularProducts, ...fallbackProducts];
     }
@@ -141,6 +199,7 @@ export default async function HomePage() {
   } catch (err) {
     console.error('Failed to fetch popular products from database:', err);
   }
+
 
   let carouselSlides: any[] = [];
   let storyTitle = "";

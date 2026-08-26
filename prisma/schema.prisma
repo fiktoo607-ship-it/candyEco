@@ -58,15 +58,15 @@ model CartItem {
 
 model Order {
   id                 String              @id @default(uuid())
-  reference          String?             @unique
+  reference          String              @unique
   sessionId          String?
   status             String              @default("pending") // e.g. "pending", "processing", "completed", "cancelled"
   totalPrice         String              // Formatted price string (e.g. "$45.00")
   totalAmount        Float               // Numeric price for calculations and points
-  customerName       String?
-  customerPhone      String?
+  customerName       String
+  customerPhone      String
   customerEmail      String?
-  shippingAddress    String?             // Customer's location
+  shippingAddress    String              // Customer's location
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
