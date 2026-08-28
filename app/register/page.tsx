@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Toast from "@/components/Toast";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -123,13 +124,15 @@ export default function RegisterPage() {
               </button>
             </div>
           ) : (
-            <form onSubmit={handleRegister} className="mt-lg flex flex-col gap-md">
-              {errorMessage && (
-                <div className="rounded-xl bg-error-container/40 border border-error/20 p-sm text-center text-sm font-medium text-error flex items-start gap-xs">
-                  <span className="material-symbols-outlined text-base select-none shrink-0 mt-[2px]">error</span>
-                  <span>{errorMessage}</span>
-                </div>
-              )}
+            <>
+              {/* Error Toast Notification */}
+              <Toast
+                message={errorMessage || null}
+                type="error"
+                onClose={() => setErrorMessage("")}
+              />
+
+              <form onSubmit={handleRegister} className="mt-lg flex flex-col gap-md">
 
               {/* Name Field */}
               <div className="flex flex-col gap-xs">
@@ -243,7 +246,8 @@ export default function RegisterPage() {
                 </button>
               </div>
             </form>
-          )}
+          </>
+        )}
         </div>
       </div>
     </div>

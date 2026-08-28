@@ -39,6 +39,14 @@ export default function Sidebar() {
 
   const activeCollapsed = isCollapsed && isDesktop;
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/session/heartbeat', { method: 'DELETE' }).catch(() => {});
+    } finally {
+      signOut({ callbackUrl: '/home' });
+    }
+  };
+
   return (
     <aside className={`relative z-30 flex w-full flex-col bg-transparent desktop:min-h-screen ${activeCollapsed ? 'desktop:w-[72px]' : 'desktop:w-64'} transition-all duration-300`}>
       
@@ -107,7 +115,7 @@ export default function Sidebar() {
                     Gérer produits
                   </span>
                 </button>
-
+                
                 <button
                   onClick={() => setActiveTab("orders")}
                   className={`group flex items-center gap-0 hover:gap-xs px-2 py-2 rounded-xl text-left transition-all duration-300 font-semibold overflow-hidden max-w-[40px] hover:max-w-[200px] h-[40px] ${
@@ -184,7 +192,7 @@ export default function Sidebar() {
                 </button>
 
                 <button
-                  onClick={() => signOut({ callbackUrl: '/home' })}
+                  onClick={handleLogout}
                   className="group flex items-center gap-0 hover:gap-xs px-2 py-2 rounded-xl text-left transition-all duration-300 font-semibold overflow-hidden max-w-[40px] hover:max-w-[200px] h-[40px] text-on-surface-variant hover:text-error hover:bg-surface-container-low"
                   title="Déconnexion"
                 >
@@ -296,7 +304,10 @@ export default function Sidebar() {
             <div className={`mt-md border-t border-outline-variant/30 ${activeCollapsed ? 'p-xs' : 'p-md'} flex flex-col desktop:mt-auto`}>
               <button
                 className={`flex items-center ${activeCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'} rounded-xl text-left text-on-surface-variant transition-colors hover:text-error font-semibold w-full`}
-                onClick={() => { signOut({ callbackUrl: '/home' }); setIsOpen(false); }}
+                onClick={async () => {
+                  await handleLogout();
+                  setIsOpen(false);
+                }}
                 title={activeCollapsed ? "Déconnexion" : undefined}
               >
                 <span className="material-symbols-outlined text-xl select-none">logout</span>

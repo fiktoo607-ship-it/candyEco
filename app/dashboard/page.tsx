@@ -12,10 +12,12 @@ import DeleteModal from "@/components/dashbord/DeleteModal";
 import NotificationBell from "@/components/dashbord/NotificationBell";
 import { useDashboardStore } from "@/lib/dashboard-store";
 import { useEffect } from "react";
+import { useAdminHeartbeat } from "@/hooks/useAdminHeartbeat";
 
 const CATEGORIES = ["gâteau", "aliments traditionnel"];
 
 export default function DashboardPage() {
+  useAdminHeartbeat();
   const { activeTab, openCreate, toast, setToast } = useDashboardStore();
 
   useEffect(() => {

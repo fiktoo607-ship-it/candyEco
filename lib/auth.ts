@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { logAuthData } from "@/logs/featurs";
+import { acquireAdminLock } from "@/lib/admin-session";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -102,6 +103,18 @@ export const authOptions: NextAuthOptions = {
           throw new Error("InvalidCredentials");
         }
 
+        // If user is admin, verify exclusive active session
+        if (user.role === "admin") {
+          const lockResult = await acquireAdminLock(user.id, {
+            userName: user.name,
+            userEmail: user.email,
+          });
+
+          if (!lockResult.success) {
+            throw new Error("AdminSessionActive");
+          }
+        }
+
         return user;
       }
     }),
@@ -188,7 +201,23 @@ export const authOptions: NextAuthOptions = {
           // New user will be saved with role 'admin'
           (user as any).role = "admin";
         }
-      } catch (err) {
+
+        // Verify single active session lock for any admin login
+        const isUserAdmin = (user as any).role === "admin" || dbUser?.role === "admin" || shouldBeAdmin;
+        if (isUserAdmin) {
+          const lockResult = await acquireAdminLock(user.id, {
+            userName: user.name,
+            userEmail: email,
+          });
+
+          if (!lockResult.success) {
+            throw new Error("AdminSessionActive");
+          }
+        }
+      } catch (err: any) {
+        if (err?.message === "AdminSessionActive") {
+          throw err;
+        }
         console.error("Error in signIn callback:", err);
       }
 

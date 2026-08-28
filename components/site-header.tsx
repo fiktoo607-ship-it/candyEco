@@ -57,7 +57,6 @@ export default function SiteHeader() {
   const storeEnabled = config?.store_enabled !== false;
   const storeMessage = config?.store_message;
 
-  // Prevent SSR hydration mismatch on cart count
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -66,6 +65,16 @@ export default function SiteHeader() {
   useEffect(() => {
     closeMobileMenu();
   }, [pathname, closeMobileMenu]);
+
+  const handleLogout = async () => {
+    try {
+      if (session?.user?.role === 'admin') {
+        await fetch('/api/admin/session/heartbeat', { method: 'DELETE' }).catch(() => {});
+      }
+    } finally {
+      signOut({ callbackUrl: '/home' });
+    }
+  };
 
   return (
     <>
@@ -152,7 +161,7 @@ export default function SiteHeader() {
                   </span>
                 )}
                 <button
-                  onClick={() => signOut({ callbackUrl: '/home' })}
+                  onClick={handleLogout}
                   className="text-sm font-semibold text-on-surface-variant hover:text-error transition-colors px-sm py-sm"
                 >
                   Déconnecter
@@ -252,7 +261,7 @@ export default function SiteHeader() {
                     </span>
                   </div>
                   <button
-                    onClick={() => signOut({ callbackUrl: '/home' })}
+                    onClick={handleLogout}
                     className="text-sm font-semibold text-error hover:underline"
                   >
                     Déconnexion

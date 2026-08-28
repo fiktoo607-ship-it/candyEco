@@ -4,6 +4,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import Image from "next/image";
+import Toast from "@/components/Toast";
 
 function LoginContent() {
   const { data: session, status } = useSession();
@@ -31,7 +32,9 @@ function LoginContent() {
 
   useEffect(() => {
     if (errorType) {
-      if (errorType === "OAuthSignin" || errorType === "OAuthCallback") {
+      if (errorType === "AdminSessionActive") {
+        setErrorMessage("Un administrateur est actuellement connecté au panneau d'administration. Veuillez patienter jusqu'à sa déconnexion.");
+      } else if (errorType === "OAuthSignin" || errorType === "OAuthCallback") {
         setErrorMessage("Une erreur s'est produite lors de la connexion avec Google. Veuillez réessayer.");
       } else if (errorType === "OAuthCreateAccount") {
         setErrorMessage("Impossible de créer un compte avec cette adresse e-mail. Veuillez réessayer.");
@@ -67,7 +70,13 @@ function LoginContent() {
       });
 
       if (result?.error) {
-        setErrorMessage("Numéro de téléphone ou mot de passe incorrect.");
+        if (result.error === "AdminSessionActive") {
+          setErrorMessage("Un administrateur est actuellement connecté au panneau d'administration. Veuillez patienter jusqu'à sa déconnexion.");
+        } else if (result.error === "TooManyRequests") {
+          setErrorMessage("Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.");
+        } else {
+          setErrorMessage("Numéro de téléphone ou mot de passe incorrect.");
+        }
         setLoading(false);
       }
     } catch (err) {
@@ -126,13 +135,12 @@ function LoginContent() {
             </p>
           </div>
 
-          {/* Error Message */}
-          {errorMessage && (
-            <div className="mt-md rounded-xl bg-error-container/40 border border-error/20 p-sm text-center text-sm font-medium text-error flex items-start gap-xs">
-              <span className="material-symbols-outlined text-base select-none shrink-0 mt-[2px]">error</span>
-              <span>{errorMessage}</span>
-            </div>
-          )}
+          {/* Error Toast Notification */}
+          <Toast
+            message={errorMessage || null}
+            type="error"
+            onClose={() => setErrorMessage("")}
+          />
 
           {/* Credentials Form */}
           <form onSubmit={handleCredentialsLogin} className="mt-lg flex flex-col gap-md">
