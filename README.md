@@ -51,11 +51,26 @@ The project is engineered with a strict focus on:
 
 ## 🖼️ Project Screenshots
 
-| Storefront Catalog | Admin Command Center |
-| :---: | :---: |
-| ![Catalog Browser](public/logo.jpeg) | ![Dashboard Overview](public/logo.jpeg) |
+### 🛒 Customer Storefront Experience
 
-*(Replace with application screenshots representing the storefront and administrative views.)*
+| 🏠 Homepage & Hero Carousel | 🥐 Artisanal Catalog & Tag Filters |
+| :---: | :---: |
+| ![Homepage Showcase](screens/Screenshot_10-6-2026_1751_localhost.jpeg) | ![Artisanal Catalog](screens/Screenshot_10-6-2026_17515_localhost.jpeg) |
+| *Dynamic Hero banner carousel, "Créations Vedettes", and brand story showcase.* | *Category filters (Gâteaux, Aliments Traditionnels), live pricing & infinite product grid.* |
+
+| 🛍️ Shopping Cart & Delivery Checkout |
+| :---: |
+| ![Cart and Checkout](screens/Screenshot_10-6-2026_17540_localhost.jpeg) |
+| *Real-time cart quantity controls, live order calculation & delivery contact form.* |
+
+---
+
+### 🛡️ Administrative Command Center & CMS
+
+| 📦 Product Management & Inventory Table | ⚙️ Dynamic CMS & Store Configuration |
+| :---: | :---: |
+| ![Product Management Dashboard](screens/Screenshot_10-6-2026_1761_localhost.jpeg) | ![CMS Configuration Panel](screens/Screenshot_10-6-2026_17613_localhost.jpeg) |
+| *Product catalog management with thumbnail preview, categories, stock availability toggles, and instant edit/delete modals.* | *Live back-office CMS for homepage carousel selection, brand storytelling narratives, and social contact details.* |
 
 ---
 
@@ -113,6 +128,7 @@ candy_client/
 │   ├── sw.js                         # Custom Service Worker (cache-first + offline page)
 │   ├── notification.mp3              # Web Audio chime for incoming order notifications
 │   └── logo.jpeg                     # High-resolution brand & PWA application icon
+├── screens/                          # Application UI screenshots for documentation
 ├── scripts/                          # Maintenance & operational scripts
 │   └── ensure-tags.ts                # Automatic product keyword tag classification
 ├── tests/                            # Automated test suite (185 tests across 26 files)

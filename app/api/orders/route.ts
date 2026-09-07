@@ -12,14 +12,18 @@ import crypto from 'crypto';
  * Uses PostgreSQL sequence (nextval) when connected to Postgres, with a cryptographically
  * collision-resistant fallback when sequences are unavailable or in test environments.
  */
-export async function generateAtomicOrderReference(tx: any, date: Date = new Date()): Promise<string> {
+export async function generateAtomicOrderReference(client: any = prisma, date: Date = new Date()): Promise<string> {
   const yyyy = date.getUTCFullYear();
   const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
   const dd = String(date.getUTCDate()).padStart(2, '0');
   const datePrefix = `ORD-${yyyy}${mm}${dd}-`;
 
+  // Always use top-level prisma client (or provided standalone client) so that any
+  // initial sequence creation or fallback does NOT poison an active PostgreSQL transaction block.
+  const dbClient = (client && client !== prisma && typeof client.$transaction !== 'function') ? client : prisma;
+
   try {
-    const result = await tx.$queryRaw`SELECT nextval('order_reference_seq') as seq`;
+    const result = await dbClient.$queryRaw`SELECT nextval('order_reference_seq') as seq`;
     if (result && Array.isArray(result) && result.length > 0) {
       const rawVal = result[0]?.seq ?? result[0]?.nextval;
       if (rawVal !== undefined && rawVal !== null) {
@@ -31,10 +35,10 @@ export async function generateAtomicOrderReference(tx: any, date: Date = new Dat
       }
     }
   } catch (err: any) {
-    // If sequence does not exist in the database, attempt to create it once
+    // If sequence does not exist in the database, attempt to create it once on a clean connection
     try {
-      await tx.$executeRawUnsafe(`CREATE SEQUENCE IF NOT EXISTS order_reference_seq START 1`);
-      const retryResult = await tx.$queryRaw`SELECT nextval('order_reference_seq') as seq`;
+      await dbClient.$executeRawUnsafe(`CREATE SEQUENCE IF NOT EXISTS order_reference_seq START 1`);
+      const retryResult = await dbClient.$queryRaw`SELECT nextval('order_reference_seq') as seq`;
       if (retryResult && Array.isArray(retryResult) && retryResult.length > 0 && retryResult[0]?.seq !== undefined) {
         const seqNum = Number(retryResult[0].seq);
         const seqStr = String(((seqNum - 1) % 999) + 1).padStart(3, '0');
@@ -216,9 +220,9 @@ export async function POST(request: NextRequest) {
 
     while (attempts < maxAttempts) {
       try {
-        transactionResult = await prisma.$transaction(async (tx) => {
-          const reference = await generateAtomicOrderReference(tx);
+        const reference = await generateAtomicOrderReference(prisma);
 
+        transactionResult = await prisma.$transaction(async (tx) => {
           const order = await tx.order.create({
             data: {
               reference,
@@ -384,104 +388,99 @@ export async function GET(request: NextRequest) {
       customerOrderCount: number | bigint;
     }
 
-    // Wrap in a single transaction for consistent reads
-    const { total, rawOrders, orders } = await prisma.$transaction(async (tx) => {
-      // 1. Get total count
-      const countResult = await tx.$queryRaw<any[]>`
-        SELECT COUNT(*) as count
-        FROM "Order" o
-        ${whereClause}
-      `;
-      const total = Number(countResult[0]?.count || 0);
+    // 1. Get total count
+    const countResult = await prisma.$queryRaw<any[]>`
+      SELECT COUNT(*) as count
+      FROM "Order" o
+      ${whereClause}
+    `;
+    const total = Number(countResult[0]?.count || 0);
 
-      // 2. Fetch paginated orders with computed fields and sorting
-      const rawOrders = await tx.$queryRaw<RawOrderResult[]>`
-        SELECT
-          o.id,
-          FLOOR(COALESCE(
-            CASE
-              WHEN o."userId" IS NOT NULL THEN (
-                SELECT SUM(o2."totalAmount")
-                FROM "Order" o2
-                WHERE o2.status IN ('DELIVERED', 'COMPLETED') AND o2."userId" = o."userId"
-              )
-              WHEN o."customerPhone" IS NOT NULL THEN (
-                SELECT SUM(o2."totalAmount")
-                FROM "Order" o2
-                WHERE o2.status IN ('DELIVERED', 'COMPLETED') AND o2."customerPhone" = o."customerPhone"
-              )
-              ELSE 0
-            END,
-            0
-          )) AS "customerTrustScore",
-          COALESCE(
-            CASE
-              WHEN o."userId" IS NOT NULL THEN (
-                SELECT COUNT(*)
-                FROM "Order" o2
-                WHERE o2."userId" = o."userId"
-              )
-              WHEN o."customerPhone" IS NOT NULL THEN (
-                SELECT COUNT(*)
-                FROM "Order" o2
-                WHERE o2."customerPhone" = o."customerPhone"
-              )
-              ELSE 0
-            END,
-            0
-          ) AS "customerOrderCount"
-        FROM "Order" o
-        ${whereClause}
-        ${orderBySql}
-        LIMIT ${limit} OFFSET ${skip}
-      `;
+    // 2. Fetch paginated orders with computed fields and sorting
+    const rawOrders = await prisma.$queryRaw<RawOrderResult[]>`
+      SELECT
+        o.id,
+        FLOOR(COALESCE(
+          CASE
+            WHEN o."userId" IS NOT NULL THEN (
+              SELECT SUM(o2."totalAmount")
+              FROM "Order" o2
+              WHERE o2.status IN ('DELIVERED', 'COMPLETED') AND o2."userId" = o."userId"
+            )
+            WHEN o."customerPhone" IS NOT NULL THEN (
+              SELECT SUM(o2."totalAmount")
+              FROM "Order" o2
+              WHERE o2.status IN ('DELIVERED', 'COMPLETED') AND o2."customerPhone" = o."customerPhone"
+            )
+            ELSE 0
+          END,
+          0
+        )) AS "customerTrustScore",
+        COALESCE(
+          CASE
+            WHEN o."userId" IS NOT NULL THEN (
+              SELECT COUNT(*)
+              FROM "Order" o2
+              WHERE o2."userId" = o."userId"
+            )
+            WHEN o."customerPhone" IS NOT NULL THEN (
+              SELECT COUNT(*)
+              FROM "Order" o2
+              WHERE o2."customerPhone" = o."customerPhone"
+            )
+            ELSE 0
+          END,
+          0
+        ) AS "customerOrderCount"
+      FROM "Order" o
+      ${whereClause}
+      ${orderBySql}
+      LIMIT ${limit} OFFSET ${skip}
+    `;
 
-      const paginatedIds = rawOrders.map(o => o.id);
+    const paginatedIds = rawOrders.map(o => o.id);
 
-      // 3. Fetch fully populated orders for the current page with selective fields
-      const orders = paginatedIds.length > 0 ? await tx.order.findMany({
-        where: {
-          id: { in: paginatedIds },
-        },
-        select: {
-          id: true,
-          reference: true,
-          sessionId: true,
-          status: true,
-          totalPrice: true,
-          totalAmount: true,
-          customerName: true,
-          customerPhone: true,
-          customerEmail: true,
-          shippingAddress: true,
-          deliveryMethod: true,
-          userId: true,
-          createdAt: true,
-          updatedAt: true,
-          items: {
-            select: {
-              id: true,
-              orderId: true,
-              productId: true,
-              quantity: true,
-              priceAtPurchase: true,
-              amountAtPurchase: true,
-              product: {
-                select: {
-                  id: true,
-                  title: true,
-                  slug: true,
-                  price: true,
-                  imageUrl: true,
-                },
+    // 3. Fetch fully populated orders for the current page with selective fields
+    const orders = paginatedIds.length > 0 ? await prisma.order.findMany({
+      where: {
+        id: { in: paginatedIds },
+      },
+      select: {
+        id: true,
+        reference: true,
+        sessionId: true,
+        status: true,
+        totalPrice: true,
+        totalAmount: true,
+        customerName: true,
+        customerPhone: true,
+        customerEmail: true,
+        shippingAddress: true,
+        deliveryMethod: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true,
+        items: {
+          select: {
+            id: true,
+            orderId: true,
+            productId: true,
+            quantity: true,
+            priceAtPurchase: true,
+            amountAtPurchase: true,
+            product: {
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                price: true,
+                imageUrl: true,
               },
             },
           },
         },
-      }) : [];
-
-      return { total, rawOrders, orders };
-    });
+      },
+    }) : [];
 
     const totalPages = Math.ceil(total / limit) || 1;
 
