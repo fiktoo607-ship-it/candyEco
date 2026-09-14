@@ -69,7 +69,9 @@ export default function SiteHeader() {
   const handleLogout = async () => {
     try {
       if (session?.user?.role === 'admin') {
-        await fetch('/api/admin/session/heartbeat', { method: 'DELETE' }).catch(() => {});
+        const deviceId = typeof window !== 'undefined' ? localStorage.getItem('admin_device_id') : null;
+        const url = deviceId ? `/api/admin/session/heartbeat?deviceId=${encodeURIComponent(deviceId)}` : '/api/admin/session/heartbeat';
+        await fetch(url, { method: 'DELETE' }).catch(() => {});
       }
     } finally {
       signOut({ callbackUrl: '/home' });

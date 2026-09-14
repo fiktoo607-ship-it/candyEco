@@ -37,18 +37,20 @@ export default function Sidebar() {
     localStorage.setItem('sidebar-collapsed', String(nextState));
   };
 
-  const activeCollapsed = isCollapsed && isDesktop;
+  const activeCollapsed = isMounted && isCollapsed && isDesktop;
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/admin/session/heartbeat', { method: 'DELETE' }).catch(() => {});
+      const deviceId = typeof window !== 'undefined' ? localStorage.getItem('admin_device_id') : null;
+      const url = deviceId ? `/api/admin/session/heartbeat?deviceId=${encodeURIComponent(deviceId)}` : '/api/admin/session/heartbeat';
+      await fetch(url, { method: 'DELETE' }).catch(() => {});
     } finally {
       signOut({ callbackUrl: '/home' });
     }
   };
 
   return (
-    <aside className={`relative z-30 flex w-full flex-col bg-transparent desktop:min-h-screen ${activeCollapsed ? 'desktop:w-[72px]' : 'desktop:w-64'} transition-all duration-300`}>
+    <aside suppressHydrationWarning className={`relative z-30 flex w-full flex-col bg-transparent desktop:min-h-screen ${activeCollapsed ? 'desktop:w-[72px]' : 'desktop:w-64'} transition-all duration-300`}>
       
       {/* Desktop Fixed Wrapper: overflow-visible prevents toggle button clipping. Fixed to viewport so it never scrolls away */}
       <div className={`w-full h-full desktop:h-screen desktop:fixed desktop:top-0 desktop:left-0 desktop:bottom-0 ${activeCollapsed ? 'desktop:w-[72px]' : 'desktop:w-64'} transition-all duration-300 z-30 overflow-visible`}>
@@ -66,11 +68,12 @@ export default function Sidebar() {
 
         {/* Sidebar Inner content scroll container */}
         <div className="flex w-full h-full flex-col border-b border-outline-variant/30 bg-surface-container-lowest shadow-soft desktop:border-b-0 desktop:border-r border-outline-variant/30 overflow-y-auto overflow-x-hidden">
-          <div className={`flex items-center justify-between ${activeCollapsed ? 'p-md desktop:px-0 desktop:py-6 desktop:justify-center' : 'p-md desktop:p-lg desktop:justify-between'} relative`}>
-            <Link href="/home" className="hover:opacity-85 transition-opacity flex items-center justify-center">
+          <div suppressHydrationWarning className={`flex items-center justify-between ${activeCollapsed ? 'p-md desktop:px-0 desktop:py-6 desktop:justify-center' : 'p-md desktop:p-lg desktop:justify-between'} relative`}>
+            <Link href="/home" suppressHydrationWarning className="hover:opacity-85 transition-opacity flex items-center justify-center">
               {activeCollapsed ? (
                 <>
                   <Image
+                    suppressHydrationWarning
                     src="/logo-closed.png"
                     alt="Logo"
                     width={44}
@@ -78,6 +81,7 @@ export default function Sidebar() {
                     className="hidden desktop:block h-11 w-11 object-contain"
                   />
                   <Image
+                    suppressHydrationWarning
                     src="/logo-title.png"
                     alt="Délices d'Eva Logo"
                     width={280}
@@ -88,6 +92,7 @@ export default function Sidebar() {
                 </>
               ) : (
                 <Image
+                  suppressHydrationWarning
                   src="/logo-title.png"
                   alt="Délices d'Eva Logo"
                   width={280}
@@ -99,8 +104,8 @@ export default function Sidebar() {
             </Link>
             
             {/* Inline navbar for 1024px - 1300px */}
-            <div className="hidden lg:flex desktop:hidden items-center gap-xs mx-md">
-              <nav className="flex items-center gap-xs">
+            <div suppressHydrationWarning className="hidden lg:flex desktop:hidden items-center gap-xs mx-md">
+              <nav suppressHydrationWarning className="flex items-center gap-xs">
                 <button
                   onClick={() => setActiveTab("products")}
                   className={`group flex items-center gap-0 hover:gap-xs px-2 py-2 rounded-xl text-left transition-all duration-300 font-semibold overflow-hidden max-w-[40px] hover:max-w-[200px] h-[40px] ${
@@ -111,7 +116,7 @@ export default function Sidebar() {
                   title="Gérer produits"
                 >
                   <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">bakery_dining</span>
-                  <span className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                  <span suppressHydrationWarning className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
                     Gérer produits
                   </span>
                 </button>
@@ -126,7 +131,7 @@ export default function Sidebar() {
                   title="Commandes"
                 >
                   <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">shopping_bag</span>
-                  <span className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                  <span suppressHydrationWarning className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
                     Commandes
                   </span>
                 </button>
@@ -141,7 +146,7 @@ export default function Sidebar() {
                   title="Gestion contenu"
                 >
                   <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">auto_stories</span>
-                  <span className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                  <span suppressHydrationWarning className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
                     Gestion contenu
                   </span>
                 </button>
@@ -156,7 +161,7 @@ export default function Sidebar() {
                   title="Questions/Réponses"
                 >
                   <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">quiz</span>
-                  <span className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                  <span suppressHydrationWarning className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
                     Questions/Réponses
                   </span>
                 </button>
@@ -186,7 +191,7 @@ export default function Sidebar() {
                   title="Méthodes livraison"
                 >
                   <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">local_shipping</span>
-                  <span className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                  <span suppressHydrationWarning className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
                     Méthodes livraison
                   </span>
                 </button>
@@ -197,7 +202,7 @@ export default function Sidebar() {
                   title="Déconnexion"
                 >
                   <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">logout</span>
-                  <span className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                  <span suppressHydrationWarning className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
                     Déconnexion
                   </span>
                 </button>
@@ -205,7 +210,7 @@ export default function Sidebar() {
             </div>
 
             {/* Mobile Actions (Notification Bell next to Hamburger) */}
-            <div className="flex items-center gap-sm desktop:hidden">
+            <div suppressHydrationWarning className="flex items-center gap-sm desktop:hidden">
               <NotificationBell />
               <button
                 onClick={() => setIsOpen(!isOpen)}
@@ -220,8 +225,8 @@ export default function Sidebar() {
           </div>
 
           {/* Navigation container - hidden on mobile unless open */}
-          <div className={`${isOpen ? 'flex animate-fade-in' : 'hidden'} lg:hidden desktop:flex flex-col flex-1 pb-md desktop:pb-0`}>
-            <nav className={`flex flex-col gap-2 ${activeCollapsed ? 'px-2' : 'px-4'}`}>
+          <div suppressHydrationWarning className={`${isOpen ? 'flex animate-fade-in' : 'hidden'} lg:hidden desktop:flex flex-col flex-1 pb-md desktop:pb-0`}>
+            <nav suppressHydrationWarning className={`flex flex-col gap-2 ${activeCollapsed ? 'px-2' : 'px-4'}`}>
               <button
                 onClick={() => { setActiveTab("products"); setIsOpen(false); }}
                 className={`flex items-center ${activeCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'} rounded-xl text-left transition-all duration-200 font-semibold w-full ${
@@ -232,7 +237,7 @@ export default function Sidebar() {
                 title={activeCollapsed ? "Gérer produits" : undefined}
               >
                 <span className="material-symbols-outlined text-xl select-none">bakery_dining</span>
-                {!activeCollapsed && <span className="whitespace-nowrap">Gérer produits</span>}
+                {!activeCollapsed && <span suppressHydrationWarning className="whitespace-nowrap">Gérer produits</span>}
               </button>
               
               <button
@@ -245,7 +250,7 @@ export default function Sidebar() {
                 title={activeCollapsed ? "Commandes" : undefined}
               >
                 <span className="material-symbols-outlined text-xl select-none">shopping_bag</span>
-                {!activeCollapsed && <span className="whitespace-nowrap">Commandes</span>}
+                {!activeCollapsed && <span suppressHydrationWarning className="whitespace-nowrap">Commandes</span>}
               </button>
 
               <button
@@ -258,7 +263,7 @@ export default function Sidebar() {
                 title={activeCollapsed ? "Gestion contenu" : undefined}
               >
                 <span className="material-symbols-outlined text-xl select-none">auto_stories</span>
-                {!activeCollapsed && <span className="whitespace-nowrap">Gestion contenu</span>}
+                {!activeCollapsed && <span suppressHydrationWarning className="whitespace-nowrap">Gestion contenu</span>}
               </button>
 
               <button
@@ -271,7 +276,7 @@ export default function Sidebar() {
                 title={activeCollapsed ? "Questions/Réponses" : undefined}
               >
                 <span className="material-symbols-outlined text-xl select-none">quiz</span>
-                {!activeCollapsed && <span className="whitespace-nowrap">Questions/Réponses</span>}
+                {!activeCollapsed && <span suppressHydrationWarning className="whitespace-nowrap">Questions/Réponses</span>}
               </button>
 
               <button
@@ -297,7 +302,7 @@ export default function Sidebar() {
                 title={activeCollapsed ? "Méthodes livraison" : undefined}
               >
                 <span className="material-symbols-outlined text-xl select-none">local_shipping</span>
-                {!activeCollapsed && <span className="whitespace-nowrap">Méthodes livraison</span>}
+                {!activeCollapsed && <span suppressHydrationWarning className="whitespace-nowrap">Méthodes livraison</span>}
               </button>
             </nav>
 

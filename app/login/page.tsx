@@ -2,9 +2,41 @@
 
 import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useCallback } from "react";
 import Image from "next/image";
 import Toast from "@/components/Toast";
+import { getOrCreateAdminDeviceId } from "@/hooks/useAdminHeartbeat";
+
+interface ActiveAdminInfo {
+  sessionId: string;
+  userId: string;
+  userName: string;
+  userPhone: string;
+  userEmail?: string | null;
+  deviceInfo?: {
+    browser: string;
+    os: string;
+    deviceType: 'desktop' | 'mobile' | 'tablet';
+    label: string;
+  };
+  locationInfo?: {
+    ip: string;
+    city?: string;
+    country?: string;
+    label: string;
+  };
+  loginAt: number;
+  lastSeenAt: number;
+}
+
+function formatRelativeTime(timestamp: number): string {
+  const diffSec = Math.floor((Date.now() - timestamp) / 1000);
+  if (diffSec < 60) return "À l'instant";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `Il y a ${diffMin} min`;
+  const diffHours = Math.floor(diffMin / 60);
+  return `Il y a ${diffHours} h`;
+}
 
 function LoginContent() {
   const { data: session, status } = useSession();
@@ -15,10 +47,33 @@ function LoginContent() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showAdminsDetails, setShowAdminsDetails] = useState(false);
+  const [activeSessions, setActiveSessions] = useState<ActiveAdminInfo[]>([]);
+  const [slotsOccupied, setSlotsOccupied] = useState(0);
   const [formData, setFormData] = useState({
     phone: "",
     password: "",
   });
+
+  // Fetch active admin sessions info
+  const fetchActiveAdminSessions = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/session/active", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setActiveSessions(data.activeSessions || []);
+        setSlotsOccupied(data.slotsOccupied || 0);
+      }
+    } catch {
+      // Non-blocking background fetch
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchActiveAdminSessions();
+    const interval = setInterval(fetchActiveAdminSessions, 20000);
+    return () => clearInterval(interval);
+  }, [fetchActiveAdminSessions]);
 
   useEffect(() => {
     if (status === "authenticated" && session) {
@@ -32,8 +87,12 @@ function LoginContent() {
 
   useEffect(() => {
     if (errorType) {
-      if (errorType === "AdminSessionActive") {
-        setErrorMessage("Un administrateur est actuellement connecté au panneau d'administration. Veuillez patienter jusqu'à sa déconnexion.");
+      if (errorType === "SameAccountAnotherDevice") {
+        setErrorMessage("Ce compte administrateur est déjà connecté sur un autre appareil. La connexion simultanée d'un même compte n'est pas autorisée.");
+        setShowAdminsDetails(true);
+      } else if (errorType === "AdminSessionActive" || errorType === "MaxAdminsReached") {
+        setErrorMessage("La limite de 2 administrateurs connectés simultanément a été atteinte. Veuillez patienter qu'une session se libère.");
+        setShowAdminsDetails(true);
       } else if (errorType === "OAuthSignin" || errorType === "OAuthCallback") {
         setErrorMessage("Une erreur s'est produite lors de la connexion avec Google. Veuillez réessayer.");
       } else if (errorType === "OAuthCreateAccount") {
@@ -63,15 +122,24 @@ function LoginContent() {
     setLoading(true);
 
     try {
+      const deviceId = getOrCreateAdminDeviceId();
       const result = await signIn("credentials", {
         phone: formData.phone,
         password: formData.password,
+        deviceId,
         redirect: false,
       });
 
       if (result?.error) {
-        if (result.error === "AdminSessionActive") {
-          setErrorMessage("Un administrateur est actuellement connecté au panneau d'administration. Veuillez patienter jusqu'à sa déconnexion.");
+        // Refresh active admin list to show updated status
+        await fetchActiveAdminSessions();
+
+        if (result.error === "SameAccountAnotherDevice") {
+          setErrorMessage("Ce compte administrateur est déjà connecté sur un autre appareil. La connexion simultanée d'un même compte n'est pas autorisée.");
+          setShowAdminsDetails(true);
+        } else if (result.error === "AdminSessionActive" || result.error === "MaxAdminsReached") {
+          setErrorMessage("La limite de 2 administrateurs connectés simultanément est atteinte. Veuillez patienter qu'une session se libère.");
+          setShowAdminsDetails(true);
         } else if (result.error === "TooManyRequests") {
           setErrorMessage("Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.");
         } else {
@@ -108,12 +176,12 @@ function LoginContent() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface text-on-surface">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface text-on-surface py-lg px-md">
       {/* Decorative background shapes */}
       <div className="absolute -left-20 -top-20 h-80 w-80 rounded-full bg-primary/10 blur-3xl"></div>
       <div className="absolute -right-20 -bottom-20 h-80 w-80 rounded-full bg-tertiary/10 blur-3xl"></div>
 
-      <div className="w-full max-w-md p-md">
+      <div className="w-full max-w-md">
         <div className="animate-fade-in rounded-2xl border border-outline-variant/30 bg-surface-container-lowest/80 p-lg shadow-soft backdrop-blur-md">
           {/* Brand Logo & Title */}
           <div className="flex flex-col items-center text-center">
@@ -135,15 +203,94 @@ function LoginContent() {
             </p>
           </div>
 
+          {/* Active Admin Indicator & Transparency Widget */}
+          <div className="mt-md rounded-xl border border-outline-variant/30 bg-surface-container-low/60 p-sm transition-all">
+            <div className="flex items-center justify-between gap-sm">
+              <div className="flex items-center gap-xs">
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${
+                    slotsOccupied === 0
+                      ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"
+                      : slotsOccupied === 1
+                      ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"
+                      : "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse"
+                  }`}
+                />
+                <span className="text-xs font-semibold text-on-surface">
+                  Admins connectés : <strong className="text-primary">{slotsOccupied} / 2</strong>
+                </span>
+              </div>
+
+              {slotsOccupied > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAdminsDetails((prev) => !prev)}
+                  className="flex items-center gap-0.5 text-xs font-semibold text-primary hover:underline"
+                >
+                  <span>{showAdminsDetails ? "Masquer" : "Voir qui est en ligne"}</span>
+                  <span className="material-symbols-outlined text-sm">
+                    {showAdminsDetails ? "expand_less" : "expand_more"}
+                  </span>
+                </button>
+              )}
+            </div>
+
+            {/* Expanded Active Admins Details */}
+            {showAdminsDetails && activeSessions.length > 0 && (
+              <div className="mt-sm flex flex-col gap-xs border-t border-outline-variant/20 pt-sm animate-fade-in">
+                <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
+                  Sessions Administrateur Actives :
+                </p>
+                {activeSessions.map((admin, idx) => (
+                  <div
+                    key={admin.sessionId || idx}
+                    className="flex flex-col gap-1 rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-2 text-xs shadow-xs"
+                  >
+                    <div className="flex items-center justify-between font-bold text-on-surface">
+                      <span className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm text-primary">person</span>
+                        {admin.userName}
+                      </span>
+                      <span className="text-[10px] font-normal text-on-surface-variant">
+                        {formatRelativeTime(admin.loginAt)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-on-surface-variant">
+                      <span className="material-symbols-outlined text-sm text-emerald-600">call</span>
+                      <a href={`tel:${admin.userPhone}`} className="hover:underline font-mono">
+                        {admin.userPhone}
+                      </a>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-on-surface-variant">
+                      <span className="material-symbols-outlined text-sm text-sky-600">
+                        {admin.deviceInfo?.deviceType === 'mobile' ? 'smartphone' : admin.deviceInfo?.deviceType === 'tablet' ? 'tablet' : 'desktop_windows'}
+                      </span>
+                      <span className="truncate">{admin.deviceInfo?.label || 'Appareil inconnu'}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-on-surface-variant">
+                      <span className="material-symbols-outlined text-sm text-amber-600">location_on</span>
+                      <span className="truncate">{admin.locationInfo?.label || 'Localisation inconnue'}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Error Toast Notification */}
-          <Toast
-            message={errorMessage || null}
-            type="error"
-            onClose={() => setErrorMessage("")}
-          />
+          <div className="mt-sm">
+            <Toast
+              message={errorMessage || null}
+              type="error"
+              onClose={() => setErrorMessage("")}
+            />
+          </div>
 
           {/* Credentials Form */}
-          <form onSubmit={handleCredentialsLogin} className="mt-lg flex flex-col gap-md">
+          <form onSubmit={handleCredentialsLogin} className="mt-md flex flex-col gap-md">
             <div className="flex flex-col gap-xs">
               <label htmlFor="phone" className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
                 Numéro de Téléphone

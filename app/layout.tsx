@@ -47,11 +47,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" dir="ltr" className={`${outfit.variable} ${fredoka.variable}`}>
+    <html lang="fr" dir="ltr" suppressHydrationWarning className={`${outfit.variable} ${fredoka.variable}`}>
       <head>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <Providers>
           <TabVisibilityNotifier />
           <PwaRegister />

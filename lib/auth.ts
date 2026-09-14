@@ -62,7 +62,8 @@ export const authOptions: NextAuthOptions = {
       name: "Credentials",
       credentials: {
         phone: { label: "Phone Number", type: "text" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        deviceId: { label: "Device ID", type: "text" },
       },
       async authorize(credentials, req) {
         if (!credentials?.phone || !credentials?.password) {
@@ -103,14 +104,24 @@ export const authOptions: NextAuthOptions = {
           throw new Error("InvalidCredentials");
         }
 
-        // If user is admin, verify exclusive active session
+        // If user is admin, verify active session lock & single-device per account
         if (user.role === "admin") {
+          const deviceId = (credentials as any)?.deviceId || (req?.headers as any)?.['x-device-id'] || 'default_device';
+          const userAgent = (req?.headers as any)?.['user-agent'] || null;
+
           const lockResult = await acquireAdminLock(user.id, {
+            deviceId,
             userName: user.name,
             userEmail: user.email,
+            userPhone: user.phone,
+            userAgent,
+            headers: req?.headers as any,
           });
 
           if (!lockResult.success) {
+            if (lockResult.error === 'SameAccountAnotherDevice') {
+              throw new Error("SameAccountAnotherDevice");
+            }
             throw new Error("AdminSessionActive");
           }
         }
@@ -202,20 +213,24 @@ export const authOptions: NextAuthOptions = {
           (user as any).role = "admin";
         }
 
-        // Verify single active session lock for any admin login
+        // Verify active session lock for any admin login
         const isUserAdmin = (user as any).role === "admin" || dbUser?.role === "admin" || shouldBeAdmin;
         if (isUserAdmin) {
           const lockResult = await acquireAdminLock(user.id, {
             userName: user.name,
             userEmail: email,
+            userPhone: (user as any).phone || dbUser?.phone,
           });
 
           if (!lockResult.success) {
+            if (lockResult.error === 'SameAccountAnotherDevice') {
+              throw new Error("SameAccountAnotherDevice");
+            }
             throw new Error("AdminSessionActive");
           }
         }
       } catch (err: any) {
-        if (err?.message === "AdminSessionActive") {
+        if (err?.message === "AdminSessionActive" || err?.message === "SameAccountAnotherDevice") {
           throw err;
         }
         console.error("Error in signIn callback:", err);

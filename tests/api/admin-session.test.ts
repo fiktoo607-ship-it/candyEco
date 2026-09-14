@@ -4,13 +4,16 @@ import {
   refreshAdminLock,
   releaseAdminLock,
   getActiveAdminSession,
+  getActiveAdminSessions,
   _resetInMemoryAdminSession,
+  MAX_CONCURRENT_ADMINS,
 } from '@/lib/admin-session';
 import {
   GET as getSessionHeartbeat,
   POST as postSessionHeartbeat,
   DELETE as deleteSessionHeartbeat,
 } from '@/app/api/admin/session/heartbeat/route';
+import { GET as getActiveSessionsRoute } from '@/app/api/admin/session/active/route';
 import { getServerSession } from 'next-auth';
 
 vi.mock('next-auth', () => ({
@@ -22,133 +25,184 @@ vi.mock('@/lib/redis', () => ({
   redisSub: null,
 }));
 
-describe('Admin Session Concurrency & Lock Management', () => {
+describe('Admin Multi-Device & 2-Admin Concurrency Management', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     _resetInMemoryAdminSession();
   });
 
-  describe('Core Lock Logic (lib/admin-session.ts)', () => {
-    it('allows first admin to acquire the lock', async () => {
+  describe('Core Multi-Admin & Device Lock Logic (lib/admin-session.ts)', () => {
+    it('allows first admin to acquire the lock with device and geo info', async () => {
       const result = await acquireAdminLock('admin-1', {
-        userName: 'Admin One',
-        userEmail: 'admin1@example.com',
+        deviceId: 'device-1',
+        userName: 'Karim Admin',
+        userEmail: 'karim@example.com',
+        userPhone: '+213 555 12 34 56',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       });
 
       expect(result.success).toBe(true);
       expect(result.activeSession).toBeDefined();
       expect(result.activeSession?.userId).toBe('admin-1');
-      expect(result.activeSession?.userName).toBe('Admin One');
+      expect(result.activeSession?.userName).toBe('Karim Admin');
+      expect(result.activeSession?.userPhone).toBe('+213 555 12 34 56');
+      expect(result.activeSession?.deviceInfo.browser).toBe('Chrome');
+      expect(result.activeSession?.deviceInfo.os).toBe('Windows 10/11');
+      expect(result.activeSession?.deviceInfo.deviceType).toBe('desktop');
     });
 
-    it('allows same admin to re-acquire / keep lock', async () => {
-      await acquireAdminLock('admin-1', { userName: 'Admin One' });
-      const result2 = await acquireAdminLock('admin-1', { userName: 'Admin One' });
+    it('allows a second distinct admin to acquire the lock concurrently (up to 2 admins)', async () => {
+      await acquireAdminLock('admin-1', { deviceId: 'dev-1', userName: 'Admin One' });
+
+      const result2 = await acquireAdminLock('admin-2', {
+        deviceId: 'dev-2',
+        userName: 'Admin Two',
+        userPhone: '+213 666 98 76 54',
+      });
 
       expect(result2.success).toBe(true);
-      expect(result2.activeSession?.userId).toBe('admin-1');
+      expect(result2.activeSession?.userId).toBe('admin-2');
+
+      const allActive = await getActiveAdminSessions();
+      expect(allActive.length).toBe(2);
+      expect(MAX_CONCURRENT_ADMINS).toBe(2);
     });
 
-    it('blocks second admin when first admin is actively holding the lock', async () => {
-      await acquireAdminLock('admin-1', { userName: 'Admin One' });
-      
-      const result2 = await acquireAdminLock('admin-2', { userName: 'Admin Two' });
+    it('blocks a third admin when 2 admins are already actively holding sessions', async () => {
+      await acquireAdminLock('admin-1', { deviceId: 'dev-1', userName: 'Admin One' });
+      await acquireAdminLock('admin-2', { deviceId: 'dev-2', userName: 'Admin Two' });
 
-      expect(result2.success).toBe(false);
-      expect(result2.activeSession?.userId).toBe('admin-1');
+      const result3 = await acquireAdminLock('admin-3', {
+        deviceId: 'dev-3',
+        userName: 'Admin Three',
+      });
+
+      expect(result3.success).toBe(false);
+      expect(result3.error).toBe('MaxAdminsReached');
+      expect(result3.activeSessions.length).toBe(2);
     });
 
-    it('refreshes heartbeat for current active admin', async () => {
-      await acquireAdminLock('admin-1', { userName: 'Admin One' });
+    it('blocks the SAME admin from logging in on a DIFFERENT device (Single device per account)', async () => {
+      await acquireAdminLock('admin-1', { deviceId: 'device-laptop', userName: 'Admin One' });
 
-      const refreshed = await refreshAdminLock('admin-1');
+      // Admin 1 attempts to log in from a mobile phone
+      const resultSameAdminNewDevice = await acquireAdminLock('admin-1', {
+        deviceId: 'device-mobile',
+        userName: 'Admin One',
+      });
+
+      expect(resultSameAdminNewDevice.success).toBe(false);
+      expect(resultSameAdminNewDevice.error).toBe('SameAccountAnotherDevice');
+    });
+
+    it('allows the same admin on the SAME device to refresh without occupying another slot', async () => {
+      await acquireAdminLock('admin-1', { deviceId: 'dev-1', userName: 'Admin One' });
+
+      const refreshResult = await acquireAdminLock('admin-1', {
+        deviceId: 'dev-1',
+        userName: 'Admin One Updated',
+      });
+
+      expect(refreshResult.success).toBe(true);
+      const allActive = await getActiveAdminSessions();
+      expect(allActive.length).toBe(1);
+      expect(allActive[0].userName).toBe('Admin One Updated');
+    });
+
+    it('refreshes heartbeat for active admin on matching device', async () => {
+      await acquireAdminLock('admin-1', { deviceId: 'dev-1' });
+
+      const refreshed = await refreshAdminLock('admin-1', 'dev-1');
       expect(refreshed).toBe(true);
 
-      const refreshedOther = await refreshAdminLock('admin-2');
+      const refreshedOther = await refreshAdminLock('admin-unknown', 'dev-1');
       expect(refreshedOther).toBe(false);
     });
 
-    it('releases lock and allows second admin to acquire it afterwards', async () => {
-      await acquireAdminLock('admin-1', { userName: 'Admin One' });
-      
-      // Admin 1 releases lock
-      await releaseAdminLock('admin-1');
+    it('releases lock for admin-1 and allows admin-3 to join', async () => {
+      await acquireAdminLock('admin-1', { deviceId: 'dev-1' });
+      await acquireAdminLock('admin-2', { deviceId: 'dev-2' });
 
-      const activeAfterRelease = await getActiveAdminSession();
-      expect(activeAfterRelease).toBeNull();
+      // Release Admin 1
+      await releaseAdminLock('admin-1', 'dev-1');
 
-      // Now Admin 2 can acquire
-      const result2 = await acquireAdminLock('admin-2', { userName: 'Admin Two' });
-      expect(result2.success).toBe(true);
-      expect(result2.activeSession?.userId).toBe('admin-2');
-    });
+      let active = await getActiveAdminSessions();
+      expect(active.length).toBe(1);
+      expect(active[0].userId).toBe('admin-2');
 
-    it('does not allow non-holder admin to release someone elses lock', async () => {
-      await acquireAdminLock('admin-1', { userName: 'Admin One' });
-      
-      // Admin 2 tries to release Admin 1's lock
-      await releaseAdminLock('admin-2');
+      // Now Admin 3 can acquire
+      const result3 = await acquireAdminLock('admin-3', { deviceId: 'dev-3' });
+      expect(result3.success).toBe(true);
 
-      // Admin 1's lock should still be active
-      const activeSession = await getActiveAdminSession();
-      expect(activeSession?.userId).toBe('admin-1');
+      active = await getActiveAdminSessions();
+      expect(active.length).toBe(2);
     });
   });
 
-  describe('Heartbeat API Routes (/api/admin/session/heartbeat)', () => {
-    it('returns 401 on GET if unauthenticated or not admin', async () => {
+  describe('Heartbeat & Active Sessions API Routes', () => {
+    it('returns 401 on GET heartbeat if unauthenticated or not admin', async () => {
       vi.mocked(getServerSession).mockResolvedValue(null);
-      const res = await getSessionHeartbeat();
+      const res = await getSessionHeartbeat({} as any);
       expect(res.status).toBe(401);
     });
 
-    it('returns 401 on POST if unauthenticated', async () => {
-      vi.mocked(getServerSession).mockResolvedValue(null);
-      const res = await postSessionHeartbeat();
-      expect(res.status).toBe(401);
+    it('returns public list of active sessions with device & location details for logged-out admins', async () => {
+      await acquireAdminLock('admin-1', {
+        deviceId: 'dev-phone',
+        userName: 'Sara Admin',
+        userPhone: '+33 6 12 34 56 78',
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+      });
+
+      const res = await getActiveSessionsRoute();
+      expect(res.status).toBe(200);
+      const data = await res.json();
+
+      expect(data.slotsOccupied).toBe(1);
+      expect(data.maxSlots).toBe(2);
+      expect(data.isFull).toBe(false);
+      expect(data.activeSessions.length).toBe(1);
+      expect(data.activeSessions[0].userName).toBe('Sara Admin');
+      expect(data.activeSessions[0].userPhone).toBe('+33 6 12 34 56 78');
+      expect(data.activeSessions[0].deviceInfo.os).toBe('iOS (iPhone)');
+      expect(data.activeSessions[0].deviceInfo.deviceType).toBe('mobile');
     });
 
-    it('successfully processes POST heartbeat for authenticated admin', async () => {
+    it('returns 409 conflict when 3rd admin tries to heartbeat without a slot', async () => {
+      await acquireAdminLock('admin-1', { deviceId: 'dev-1' });
+      await acquireAdminLock('admin-2', { deviceId: 'dev-2' });
+
+      vi.mocked(getServerSession).mockResolvedValue({
+        user: { id: 'admin-3', role: 'admin', name: 'Admin Three' },
+      } as any);
+
+      const req = {
+        json: vi.fn().mockResolvedValue({ deviceId: 'dev-3' }),
+        headers: { get: vi.fn() },
+      } as any;
+
+      const res = await postSessionHeartbeat(req);
+      expect(res.status).toBe(409);
+      const data = await res.json();
+      expect(data.error).toBe('MaxAdminsReached');
+    });
+
+    it('returns 409 conflict when same admin tries to heartbeat from another device', async () => {
+      await acquireAdminLock('admin-1', { deviceId: 'dev-1' });
+
       vi.mocked(getServerSession).mockResolvedValue({
         user: { id: 'admin-1', role: 'admin', name: 'Admin One' },
       } as any);
 
-      const res = await postSessionHeartbeat();
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data.success).toBe(true);
+      const req = {
+        json: vi.fn().mockResolvedValue({ deviceId: 'dev-2-new-phone' }),
+        headers: { get: vi.fn() },
+      } as any;
 
-      const active = await getActiveAdminSession();
-      expect(active?.userId).toBe('admin-1');
-    });
-
-    it('returns 409 conflict if POST heartbeat called by admin when another is active', async () => {
-      // First acquire lock for admin-1
-      await acquireAdminLock('admin-1', { userName: 'Admin One' });
-
-      // Admin 2 attempts heartbeat
-      vi.mocked(getServerSession).mockResolvedValue({
-        user: { id: 'admin-2', role: 'admin', name: 'Admin Two' },
-      } as any);
-
-      const res = await postSessionHeartbeat();
+      const res = await postSessionHeartbeat(req);
       expect(res.status).toBe(409);
       const data = await res.json();
-      expect(data.error).toBe('AdminSessionActive');
-    });
-
-    it('releases session on DELETE request from holding admin', async () => {
-      await acquireAdminLock('admin-1', { userName: 'Admin One' });
-
-      vi.mocked(getServerSession).mockResolvedValue({
-        user: { id: 'admin-1', role: 'admin' },
-      } as any);
-
-      const res = await deleteSessionHeartbeat();
-      expect(res.status).toBe(200);
-
-      const active = await getActiveAdminSession();
-      expect(active).toBeNull();
+      expect(data.error).toBe('SameAccountAnotherDevice');
     });
   });
 });

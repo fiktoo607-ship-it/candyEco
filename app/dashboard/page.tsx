@@ -10,6 +10,7 @@ import DeliverySection from "@/components/dashbord/DeliverySection";
 import ProductModal from "@/components/dashbord/ProductModal";
 import DeleteModal from "@/components/dashbord/DeleteModal";
 import NotificationBell from "@/components/dashbord/NotificationBell";
+import AdminProfileMenu from "@/components/dashbord/AdminProfileMenu";
 import { useDashboardStore } from "@/lib/dashboard-store";
 import { useEffect } from "react";
 import { useAdminHeartbeat } from "@/hooks/useAdminHeartbeat";
@@ -56,10 +57,11 @@ export default function DashboardPage() {
                       : "Méthodes de livraison"}
           </h1>
           {/* flex-shrink-0 ensures the action buttons area is never compressed */}
-          <div className="flex items-center gap-md flex-shrink-0">
+          <div className="flex items-center gap-sm flex-shrink-0">
             <div className="hidden desktop:block">
               <NotificationBell />
             </div>
+            <AdminProfileMenu />
           </div>
         </header>
 
