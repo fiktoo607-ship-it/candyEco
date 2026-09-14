@@ -204,6 +204,7 @@ export default async function HomePage() {
   let carouselSlides: any[] = [];
   let storyTitle = "";
   let storyDescription = "";
+  let storyImage = "";
 
   try {
     const selectedSlugs = dictionary.cms?.carousel_products || [];
@@ -245,6 +246,7 @@ export default async function HomePage() {
 
     storyTitle = dictionary.home?.story?.title || "";
     storyDescription = dictionary.home?.story?.description || "";
+    storyImage = dictionary.home?.story?.image || "";
   } catch (err) {
     console.error('Failed to fetch carousel slides/stories from database:', err);
   }
@@ -273,6 +275,7 @@ export default async function HomePage() {
           initialPopularProducts={displayPopularProducts}
           storyTitle={storyTitle}
           storyDescription={storyDescription}
+          storyImageUrl={storyImage}
           carouselSlides={carouselSlides}
           initialFaqs={displayFaqs}
         />

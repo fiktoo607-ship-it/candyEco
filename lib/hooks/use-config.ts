@@ -8,6 +8,7 @@ export interface SiteConfigs {
   new_products_limit: number;
   homepage_story_title: string;
   homepage_story_description: string;
+  homepage_story_image: string;
   
   about_hero_title: string;
   about_hero_description: string;

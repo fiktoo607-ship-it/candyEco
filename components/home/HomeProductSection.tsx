@@ -18,6 +18,7 @@ interface HomeProductSectionProps {
   initialPopularProducts: any[];
   storyTitle: string;
   storyDescription: string;
+  storyImageUrl?: string;
   carouselSlides: any[];
   initialFaqs: any[];
 }
@@ -28,6 +29,7 @@ export default function HomeProductSection({
   initialPopularProducts,
   storyTitle,
   storyDescription,
+  storyImageUrl,
   carouselSlides,
   initialFaqs = [],
 }: HomeProductSectionProps) {
@@ -67,7 +69,7 @@ export default function HomeProductSection({
           <NewProductsSection products={initialNewProducts} />
           <PopularProductsSection products={initialPopularProducts} />
           <FeaturedProducts products={initialFeaturedProducts} />
-          <StorySection title={storyTitle} description={storyDescription} />
+          <StorySection title={storyTitle} description={storyDescription} imageUrl={storyImageUrl} />
           <FaqSection faqs={initialFaqs} />
         </>
       ) : (

@@ -19,6 +19,7 @@ interface FormValues {
   new_products_limit: number;
   homepage_story_title: string;
   homepage_story_description: string;
+  homepage_story_image: string;
   
   about_hero_title: string;
   about_hero_description: string;
@@ -95,6 +96,46 @@ export function useCmsSection() {
       setAboutUploadError(msg);
     } finally {
       setIsAboutUploading(false);
+    }
+  };
+
+  // Homepage story image upload state
+  const [isStoryUploading, setIsStoryUploading] = useState(false);
+  const [storyUploadError, setStoryUploadError] = useState<string | null>(null);
+
+  const handleStoryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setStoryUploadError(null);
+    setIsStoryUploading(true);
+
+    try {
+      const webpBlob = await convertToWebP(file);
+      const originalName = file.name;
+      const dotIndex = originalName.lastIndexOf(".");
+      const baseName = dotIndex !== -1 ? originalName.substring(0, dotIndex) : originalName;
+      const webpFileName = `${baseName}.webp`;
+      const webpFile = new File([webpBlob], webpFileName, { type: "image/webp" });
+
+      if (webpFile.size > 10 * 1024 * 1024) {
+        setStoryUploadError("La taille de l'image doit être inférieure à 10 Mo");
+        setIsStoryUploading(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", webpFile);
+
+      const data = await uploadImageMutation.mutateAsync(formData);
+      setValue('homepage_story_image', data.url, { shouldDirty: true });
+      showToast("Photo importée avec succès !", "success");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Échec du chargement de l'image";
+      console.error(msg);
+      setStoryUploadError(msg);
+    } finally {
+      setIsStoryUploading(false);
     }
   };
 
@@ -332,6 +373,9 @@ export function useCmsSection() {
     setVisibleCount,
     isAboutUploading,
     aboutUploadError,
-    handleAboutImageUpload
+    handleAboutImageUpload,
+    isStoryUploading,
+    storyUploadError,
+    handleStoryImageUpload
   };
 }

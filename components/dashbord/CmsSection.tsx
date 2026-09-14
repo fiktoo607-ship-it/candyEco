@@ -51,7 +51,10 @@ export default function CmsSection() {
     setVisibleCount,
     isAboutUploading,
     aboutUploadError,
-    handleAboutImageUpload
+    handleAboutImageUpload,
+    isStoryUploading,
+    storyUploadError,
+    handleStoryImageUpload
   } = useCmsSection();
 
   if (isConfigLoading) {
@@ -128,7 +131,14 @@ export default function CmsSection() {
         />
 
         {/* SECTION 2: Slogan & Story de l'accueil */}
-        <HomepageStorySection register={register} />
+        <HomepageStorySection 
+          register={register} 
+          watch={watch}
+          setValue={setValue}
+          isStoryUploading={isStoryUploading}
+          storyUploadError={storyUploadError}
+          handleStoryImageUpload={handleStoryImageUpload}
+        />
 
         {/* SECTION 3: Page Notre Histoire */}
         <AboutHistorySection 

@@ -33,6 +33,7 @@ export const DEFAULT_CONFIGS: Record<string, any> = {
   new_products_limit: 4,
   homepage_story_title: "Fait Main, sans Raccourci",
   homepage_story_description: "Nous cuisons avec la rigueur de l'artisanat : fermentation lente, ingrédients d'exception et cuisson précise. Le résultat ? Des créations authentiques au goût incomparable.",
+  homepage_story_image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAQ9D8JLa_bfz2-LqILaPS5Y5BNwRA_3_bfuzgyv-_AiSHUdnRMTf5_AZb6INTxhlP88O8s1X6XR4AHvNDEXK2EDRRgpY4cna0MCbdHkCPv5-jz00MwRuChHhuklDPaHhX_dCvMy5Dv9urTEaOek3gFOHeGFvTCbs0nYdUqQJqghQfUlyn25b0pdgqrw3irttdyHjTFncU2Z5NssW_4gRAVVey6EbOYqQdOcZJoP5395MAXo8JM1qL2SqWTp83OEnG2GDgZVOXJyyo",
   
   about_hero_title: "Un voyage ancré dans la passion et la tradition",
   about_hero_description: "Tout a commencé dans un petit atelier fariné où l'air embaumait constamment la levure et le beurre caramélisé. Nous croyons que le véritable artisanat demande du temps.",
@@ -60,6 +61,7 @@ export const CMS_MAP: Record<string, string> = {
   new_products_limit: 'cms.new_products_limit',
   homepage_story_title: 'home.story.title',
   homepage_story_description: 'home.story.description',
+  homepage_story_image: 'home.story.image',
   about_hero_title: 'about.hero.title',
   about_hero_description: 'about.hero.description',
   about_heritage_image: 'about.heritage.image',

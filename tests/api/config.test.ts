@@ -23,6 +23,7 @@ describe('Config API', () => {
     carousel_max_slides: 5,
     new_products_limit: 4,
     homepage_story_title: "Histoire",
+    homepage_story_image: "https://example.com/image.webp",
   };
 
   beforeEach(() => {
@@ -49,6 +50,7 @@ describe('Config API', () => {
           carousel_max_slides: 6,
           new_products_limit: 8,
           homepage_story_title: 'Updated title',
+          homepage_story_image: 'https://example.com/new-image.webp',
           store_enabled: false,
           store_message: 'Fermé pour vacances',
         }),
@@ -62,6 +64,7 @@ describe('Config API', () => {
       expect(saveSiteConfig).toHaveBeenCalledWith('carousel_max_slides', 6);
       expect(saveSiteConfig).toHaveBeenCalledWith('new_products_limit', 8);
       expect(saveSiteConfig).toHaveBeenCalledWith('homepage_story_title', 'Updated title');
+      expect(saveSiteConfig).toHaveBeenCalledWith('homepage_story_image', 'https://example.com/new-image.webp');
       expect(saveSiteConfig).toHaveBeenCalledWith('store_enabled', false);
       expect(saveSiteConfig).toHaveBeenCalledWith('store_message', 'Fermé pour vacances');
     });
