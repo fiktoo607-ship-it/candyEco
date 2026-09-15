@@ -6,6 +6,7 @@ import { useEffect, useState, Suspense, useCallback } from "react";
 import Image from "next/image";
 import Toast from "@/components/Toast";
 import { getOrCreateAdminDeviceId } from "@/hooks/useAdminHeartbeat";
+import { useClientDevice } from "@/hooks/useClientDevice";
 
 interface ActiveAdminInfo {
   sessionId: string;
@@ -42,6 +43,7 @@ function LoginContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { deviceInfo: clientDevice } = useClientDevice();
   const errorType = searchParams.get("error");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -319,18 +321,19 @@ function LoginContent() {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1 text-on-surface-variant">
+                      <div className="flex items-center gap-1 text-on-surface-variant font-mono">
                         <span className="material-symbols-outlined text-sm text-emerald-600">call</span>
-                        <a href={`tel:${admin.userPhone}`} className="hover:underline font-mono">
+                        <a href={`tel:${admin.userPhone}`} className="hover:underline">
                           {admin.userPhone}
                         </a>
                       </div>
 
-                      <div className="flex items-center gap-1 text-on-surface-variant">
-                        <span className="material-symbols-outlined text-sm text-sky-600">
+                      <div className="flex items-center gap-1.5 rounded-md bg-sky-50/70 border border-sky-200/50 px-2 py-1 text-xs text-sky-900">
+                        <span className="material-symbols-outlined text-sm text-sky-600 select-none">
                           {admin.deviceInfo?.deviceType === 'mobile' ? 'smartphone' : admin.deviceInfo?.deviceType === 'tablet' ? 'tablet' : 'desktop_windows'}
                         </span>
-                        <span className="truncate">{admin.deviceInfo?.label || 'Appareil inconnu'}</span>
+                        <span className="text-[10px] font-bold uppercase text-sky-700">Appareil :</span>
+                        <span className="font-semibold truncate">{admin.deviceInfo?.label || 'Appareil inconnu'}</span>
                       </div>
 
                       <div className="flex items-center gap-1 text-on-surface-variant">
@@ -352,6 +355,23 @@ function LoginContent() {
               onClose={() => setErrorMessage("")}
             />
           </div>
+
+          {/* Current Device Detection Banner */}
+          {clientDevice && (
+            <div className="mt-sm flex items-center gap-2.5 rounded-xl bg-sky-50/70 border border-sky-200/60 p-2.5 text-xs text-sky-900 shadow-2xs">
+              <span className="material-symbols-outlined text-base text-sky-600 flex-shrink-0 select-none">
+                {clientDevice.deviceType === "mobile"
+                  ? "smartphone"
+                  : clientDevice.deviceType === "tablet"
+                  ? "tablet"
+                  : "desktop_windows"}
+              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-sky-700">Votre appareil :</span>
+                <span className="font-semibold">{clientDevice.label}</span>
+              </div>
+            </div>
+          )}
 
           {/* Credentials Form */}
           <form onSubmit={handleCredentialsLogin} className="mt-md flex flex-col gap-md">

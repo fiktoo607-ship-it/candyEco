@@ -2,9 +2,16 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter, usePathname } from "next/navigation";
+import { useDashboardStore } from "@/lib/dashboard-store";
+import { useClientDevice } from "@/hooks/useClientDevice";
 import Image from "next/image";
 
 export default function AdminProfileMenu() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { setActiveTab } = useDashboardStore();
+  const { deviceInfo: clientDevice } = useClientDevice();
   const { data: session, update: updateSession } = useSession();
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -173,6 +180,44 @@ export default function AdminProfileMenu() {
               </h3>
             </div>
           </div>
+
+          {/* Quick Access to Full Profile Page */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(false);
+              setActiveTab("profile");
+              if (pathname !== "/dashboard") {
+                router.push("/dashboard/profile");
+              }
+            }}
+            className="flex items-center justify-between gap-2 rounded-xl bg-primary/10 hover:bg-primary/15 text-primary p-2.5 text-xs font-bold transition-all shadow-xs group"
+          >
+            <span className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-base">manage_accounts</span>
+              <span>Voir le profil complet & Historique</span>
+            </span>
+            <span className="material-symbols-outlined text-sm group-hover:translate-x-0.5 transition-transform">
+              arrow_forward
+            </span>
+          </button>
+
+          {/* Current Device Highlight */}
+          {clientDevice && (
+            <div className="flex items-center gap-2 rounded-xl bg-sky-50/80 border border-sky-200/60 p-2 text-xs text-sky-900">
+              <span className="material-symbols-outlined text-base text-sky-600 flex-shrink-0">
+                {clientDevice.deviceType === "mobile"
+                  ? "smartphone"
+                  : clientDevice.deviceType === "tablet"
+                  ? "tablet"
+                  : "desktop_windows"}
+              </span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-sky-700">Votre Appareil</span>
+                <span className="font-semibold truncate text-[11px]">{clientDevice.label}</span>
+              </div>
+            </div>
+          )}
 
           {/* Feedback messages */}
           {feedback && (

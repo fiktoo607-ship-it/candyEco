@@ -175,6 +175,7 @@ model User {
   createdAt     DateTime  @default(now())
   orders        Order[]
   pushSubscriptions PushSubscription[]
+  loginHistories LoginHistory[]
 }
 
 model VerificationToken {
@@ -224,5 +225,30 @@ model PushSubscription {
 
   @@index([userId])
   @@index([deviceToken])
+}
+
+model LoginHistory {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userName    String?
+  userPhone   String?
+  userEmail   String?
+  role        String?  @default("user")
+
+  deviceType  String?  // 'desktop' | 'mobile' | 'tablet'
+  browser     String?
+  os          String?
+  deviceLabel String?  // e.g. 'Chrome sur Windows 10/11 (PC)'
+  ip          String?
+  location    String?
+  userAgent   String?  @db.Text
+
+  status      String   @default("success") // 'success' | 'failed'
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([role, createdAt])
+  @@index([createdAt])
 }
 

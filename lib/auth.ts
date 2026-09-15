@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { logAuthData } from "@/logs/featurs";
 import { acquireAdminLock } from "@/lib/admin-session";
+import { recordLoginHistory } from "@/lib/login-history";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -126,6 +127,18 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
+        const userAgent = (req?.headers as any)?.['user-agent'] || null;
+        await recordLoginHistory({
+          userId: user.id,
+          userName: user.name,
+          userPhone: user.phone,
+          userEmail: user.email,
+          role: user.role,
+          userAgent,
+          headers: req?.headers as any,
+          status: 'success',
+        });
+
         return user;
       }
     }),
@@ -234,6 +247,17 @@ export const authOptions: NextAuthOptions = {
           throw err;
         }
         console.error("Error in signIn callback:", err);
+      }
+
+      if (account?.provider !== "credentials") {
+        await recordLoginHistory({
+          userId: user.id,
+          userName: user.name,
+          userPhone: (user as any).phone || dbUser?.phone,
+          userEmail: email,
+          role: (user as any).role || dbUser?.role || "user",
+          status: "success",
+        });
       }
 
       return true;

@@ -7,6 +7,7 @@ import CmsSection from "@/components/dashbord/CmsSection";
 import QnaSection from "@/components/dashbord/QnaSection";
 import UsersSection from "@/components/dashbord/UsersSection";
 import DeliverySection from "@/components/dashbord/DeliverySection";
+import ProfileSection from "@/components/dashbord/ProfileSection";
 import ProductModal from "@/components/dashbord/ProductModal";
 import DeleteModal from "@/components/dashbord/DeleteModal";
 import NotificationBell from "@/components/dashbord/NotificationBell";
@@ -54,7 +55,9 @@ export default function DashboardPage() {
                     ? "Questions & Réponses"
                     : activeTab === "users"
                       ? "Gestion des clients"
-                      : "Méthodes de livraison"}
+                      : activeTab === "profile"
+                        ? "Profil Administrateur & Historique"
+                        : "Méthodes de livraison"}
           </h1>
           {/* flex-shrink-0 ensures the action buttons area is never compressed */}
           <div className="flex items-center gap-sm flex-shrink-0">
@@ -78,6 +81,8 @@ export default function DashboardPage() {
             <UsersSection />
           ) : activeTab === "delivery-methods" ? (
             <DeliverySection />
+          ) : activeTab === "profile" ? (
+            <ProfileSection />
           ) : (
             <div className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-xl text-center shadow-soft">
               <span className="material-symbols-outlined text-4xl text-on-surface-variant/40 mb-sm">

@@ -3,15 +3,25 @@ import { signOut } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import NotificationBell from './NotificationBell';
 import dictionary from '@/lib/copy-dictionary.json';
 
 export default function Sidebar() {
+  const router = useRouter();
+  const pathname = usePathname();
   const { activeTab, setActiveTab } = useDashboardStore();
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+
+  const navigateToTab = (tab: 'products' | 'orders' | 'cms' | 'qna' | 'users' | 'delivery-methods' | 'profile') => {
+    setActiveTab(tab);
+    if (pathname !== '/dashboard') {
+      router.push('/dashboard');
+    }
+  };
 
   useEffect(() => {
     setIsMounted(true);
@@ -197,6 +207,21 @@ export default function Sidebar() {
                 </button>
 
                 <button
+                  onClick={() => navigateToTab("profile")}
+                  className={`group flex items-center gap-0 hover:gap-xs px-2 py-2 rounded-xl text-left transition-all duration-300 font-semibold overflow-hidden max-w-[40px] hover:max-w-[200px] h-[40px] ${
+                    activeTab === "profile"
+                      ? "bg-primary-container/10 text-primary"
+                      : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+                  }`}
+                  title="Profil Admin"
+                >
+                  <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">account_circle</span>
+                  <span suppressHydrationWarning className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                    Profil Admin
+                  </span>
+                </button>
+
+                <button
                   onClick={handleLogout}
                   className="group flex items-center gap-0 hover:gap-xs px-2 py-2 rounded-xl text-left transition-all duration-300 font-semibold overflow-hidden max-w-[40px] hover:max-w-[200px] h-[40px] text-on-surface-variant hover:text-error hover:bg-surface-container-low"
                   title="Déconnexion"
@@ -303,6 +328,19 @@ export default function Sidebar() {
               >
                 <span className="material-symbols-outlined text-xl select-none">local_shipping</span>
                 {!activeCollapsed && <span suppressHydrationWarning className="whitespace-nowrap">Méthodes livraison</span>}
+              </button>
+
+              <button
+                onClick={() => { navigateToTab("profile"); setIsOpen(false); }}
+                className={`flex items-center ${activeCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'} rounded-xl text-left transition-all duration-200 font-semibold w-full ${
+                  activeTab === "profile"
+                    ? "bg-primary-container/10 text-primary"
+                    : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+                }`}
+                title={activeCollapsed ? "Profil & Historique" : undefined}
+              >
+                <span className="material-symbols-outlined text-xl select-none">account_circle</span>
+                {!activeCollapsed && <span suppressHydrationWarning className="whitespace-nowrap">Profil & Historique</span>}
               </button>
             </nav>
 
