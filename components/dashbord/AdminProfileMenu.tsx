@@ -12,6 +12,7 @@ export default function AdminProfileMenu() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [activeSessions, setActiveSessions] = useState<any[]>([]);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -26,7 +27,7 @@ export default function AdminProfileMenu() {
     }
   }, [session?.user?.name]);
 
-  // Fetch full details when opened if needed
+  // Fetch full details and active admin sessions when opened
   useEffect(() => {
     if (isOpen) {
       setFeedback(null);
@@ -35,6 +36,15 @@ export default function AdminProfileMenu() {
         .then((data) => {
           if (data?.user?.name) {
             setName(data.user.name);
+          }
+        })
+        .catch(() => {});
+
+      fetch("/api/admin/session/active")
+        .then((res) => res.ok ? res.json() : null)
+        .then((data) => {
+          if (data?.activeSessions) {
+            setActiveSessions(data.activeSessions);
           }
         })
         .catch(() => {});
@@ -260,6 +270,78 @@ export default function AdminProfileMenu() {
               <p className="font-semibold text-on-surface truncate">
                 {displayEmail}
               </p>
+            </div>
+
+            {/* Active Admin Sessions Section */}
+            <div className="rounded-xl bg-surface-container-low/60 p-sm border border-outline-variant/30 flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
+                  Admins connectés ({activeSessions.length} / 2)
+                </span>
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+              </div>
+
+              {activeSessions.length === 0 ? (
+                <p className="text-[11px] text-on-surface-variant italic">Chargement des sessions...</p>
+              ) : (
+                <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-0.5">
+                  {activeSessions.map((admin, idx) => {
+                    const isCurrent = admin.userId === session?.user?.id;
+                    const diffSec = Math.floor((Date.now() - admin.loginAt) / 1000);
+                    const timeLabel = diffSec < 60 ? "À l'instant" : diffSec < 3600 ? `Il y a ${Math.floor(diffSec / 60)} min` : `Il y a ${Math.floor(diffSec / 3600)} h`;
+
+                    return (
+                      <div
+                        key={admin.sessionId || idx}
+                        className={`flex flex-col gap-1 rounded-lg border p-2 text-[11px] shadow-xs ${
+                          isCurrent
+                            ? "border-primary/40 bg-primary/5"
+                            : "border-outline-variant/30 bg-surface-container-lowest"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between font-bold text-on-surface">
+                          <span className="flex items-center gap-1">
+                            <span className="material-symbols-outlined text-xs text-primary">person</span>
+                            <span className="truncate max-w-[120px]">{admin.userName}</span>
+                            {isCurrent && (
+                              <span className="text-[9px] px-1 py-0.5 bg-primary text-white rounded font-medium">
+                                Vous
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-[10px] font-normal text-on-surface-variant">
+                            {timeLabel}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1 text-on-surface-variant font-mono text-[10px]">
+                          <span className="material-symbols-outlined text-xs text-emerald-600">call</span>
+                          <span>{admin.userPhone}</span>
+                        </div>
+
+                        {admin.deviceInfo && (
+                          <div className="flex items-center gap-1 text-on-surface-variant text-[10px]">
+                            <span className="material-symbols-outlined text-xs text-sky-600">
+                              {admin.deviceInfo.deviceType === "mobile" ? "smartphone" : admin.deviceInfo.deviceType === "tablet" ? "tablet" : "desktop_windows"}
+                            </span>
+                            <span className="truncate">{admin.deviceInfo.label}</span>
+                          </div>
+                        )}
+
+                        {admin.locationInfo?.label && (
+                          <div className="flex items-center gap-1 text-on-surface-variant text-[10px]">
+                            <span className="material-symbols-outlined text-xs text-amber-600">location_on</span>
+                            <span className="truncate">{admin.locationInfo.label}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>

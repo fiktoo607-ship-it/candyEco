@@ -48,6 +48,7 @@ function LoginContent() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showAdminsDetails, setShowAdminsDetails] = useState(false);
+  const [canViewDetails, setCanViewDetails] = useState(false);
   const [activeSessions, setActiveSessions] = useState<ActiveAdminInfo[]>([]);
   const [slotsOccupied, setSlotsOccupied] = useState(0);
   const [formData, setFormData] = useState({
@@ -56,22 +57,36 @@ function LoginContent() {
   });
 
   // Fetch active admin sessions info
-  const fetchActiveAdminSessions = useCallback(async () => {
+  const fetchActiveAdminSessions = useCallback(async (creds?: { phone: string; password: string }) => {
     try {
-      const res = await fetch("/api/admin/session/active", { cache: "no-store" });
+      let res: Response;
+      if (creds?.phone && creds?.password) {
+        res = await fetch("/api/admin/session/active", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(creds),
+          cache: "no-store",
+        });
+      } else {
+        res = await fetch("/api/admin/session/active", { cache: "no-store" });
+      }
+
       if (res.ok) {
         const data = await res.json();
-        setActiveSessions(data.activeSessions || []);
-        setSlotsOccupied(data.slotsOccupied || 0);
+        const sessions = data.activeSessions || [];
+        setActiveSessions(sessions);
+        setSlotsOccupied(data.slotsOccupied || sessions.length || 0);
+        return sessions;
       }
     } catch {
       // Non-blocking background fetch
     }
+    return [];
   }, []);
 
   useEffect(() => {
     fetchActiveAdminSessions();
-    const interval = setInterval(fetchActiveAdminSessions, 20000);
+    const interval = setInterval(fetchActiveAdminSessions, 10000);
     return () => clearInterval(interval);
   }, [fetchActiveAdminSessions]);
 
@@ -89,27 +104,45 @@ function LoginContent() {
     if (errorType) {
       if (errorType === "SameAccountAnotherDevice") {
         setErrorMessage("Ce compte administrateur est déjà connecté sur un autre appareil. La connexion simultanée d'un même compte n'est pas autorisée.");
+        fetchActiveAdminSessions();
+        setCanViewDetails(true);
         setShowAdminsDetails(true);
       } else if (errorType === "AdminSessionActive" || errorType === "MaxAdminsReached") {
         setErrorMessage("La limite de 2 administrateurs connectés simultanément a été atteinte. Veuillez patienter qu'une session se libère.");
+        fetchActiveAdminSessions();
+        setCanViewDetails(true);
         setShowAdminsDetails(true);
       } else if (errorType === "OAuthSignin" || errorType === "OAuthCallback") {
         setErrorMessage("Une erreur s'est produite lors de la connexion avec Google. Veuillez réessayer.");
+        setCanViewDetails(false);
+        setShowAdminsDetails(false);
       } else if (errorType === "OAuthCreateAccount") {
         setErrorMessage("Impossible de créer un compte avec cette adresse e-mail. Veuillez réessayer.");
+        setCanViewDetails(false);
+        setShowAdminsDetails(false);
       } else if (errorType === "Callback") {
         setErrorMessage("La connexion a été refusée. Assurez-vous d'utiliser un compte autorisé.");
+        setCanViewDetails(false);
+        setShowAdminsDetails(false);
       } else if (errorType === "EmailNotVerified") {
         setErrorMessage("Votre adresse e-mail n'a pas encore été vérifiée. Veuillez vérifier votre boîte de réception.");
+        setCanViewDetails(false);
+        setShowAdminsDetails(false);
       } else if (errorType === "OAuthAccountNotLinked") {
         setErrorMessage("Cette adresse e-mail est déjà associée à un compte existant. Veuillez vous connecter avec votre mot de passe.");
+        setCanViewDetails(false);
+        setShowAdminsDetails(false);
       } else if (errorType === "CredentialsSignin") {
         setErrorMessage("Numéro de téléphone ou mot de passe incorrect.");
+        setCanViewDetails(false);
+        setShowAdminsDetails(false);
       } else {
         setErrorMessage("Une erreur inattendue s'est produite. Veuillez réessayer.");
+        setCanViewDetails(false);
+        setShowAdminsDetails(false);
       }
     }
-  }, [errorType]);
+  }, [errorType, fetchActiveAdminSessions]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -119,36 +152,55 @@ function LoginContent() {
   const handleCredentialsLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
+    setShowAdminsDetails(false);
+    setCanViewDetails(false);
+    setActiveSessions([]);
     setLoading(true);
+
+    const currentPhone = formData.phone;
+    const currentPassword = formData.password;
 
     try {
       const deviceId = getOrCreateAdminDeviceId();
       const result = await signIn("credentials", {
-        phone: formData.phone,
-        password: formData.password,
+        phone: currentPhone,
+        password: currentPassword,
         deviceId,
         redirect: false,
       });
 
       if (result?.error) {
-        // Refresh active admin list to show updated status
-        await fetchActiveAdminSessions();
-
         if (result.error === "SameAccountAnotherDevice") {
+          await fetchActiveAdminSessions({ phone: currentPhone, password: currentPassword });
           setErrorMessage("Ce compte administrateur est déjà connecté sur un autre appareil. La connexion simultanée d'un même compte n'est pas autorisée.");
+          setCanViewDetails(true);
           setShowAdminsDetails(true);
         } else if (result.error === "AdminSessionActive" || result.error === "MaxAdminsReached") {
+          await fetchActiveAdminSessions({ phone: currentPhone, password: currentPassword });
           setErrorMessage("La limite de 2 administrateurs connectés simultanément est atteinte. Veuillez patienter qu'une session se libère.");
+          setCanViewDetails(true);
           setShowAdminsDetails(true);
         } else if (result.error === "TooManyRequests") {
           setErrorMessage("Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.");
+          setCanViewDetails(false);
+          setShowAdminsDetails(false);
         } else {
+          // Normal error when credentials are not valid (wrong phone or password)
           setErrorMessage("Numéro de téléphone ou mot de passe incorrect.");
+          setCanViewDetails(false);
+          setShowAdminsDetails(false);
+          setActiveSessions([]);
         }
         setLoading(false);
+      } else if (result?.ok) {
+        // Direct login succeeded
+        router.refresh();
       }
     } catch (err) {
       setErrorMessage("Une erreur réseau s'est produite. Veuillez réessayer.");
+      setCanViewDetails(false);
+      setShowAdminsDetails(false);
+      setActiveSessions([]);
       setLoading(false);
     }
   };
@@ -224,58 +276,70 @@ function LoginContent() {
               {slotsOccupied > 0 && (
                 <button
                   type="button"
-                  onClick={() => setShowAdminsDetails((prev) => !prev)}
-                  className="flex items-center gap-0.5 text-xs font-semibold text-primary hover:underline"
+                  disabled={!canViewDetails}
+                  onClick={() => {
+                    if (canViewDetails) {
+                      setShowAdminsDetails((prev) => !prev);
+                    }
+                  }}
+                  className={`flex items-center gap-0.5 text-xs font-semibold transition-all ${
+                    canViewDetails
+                      ? "text-primary hover:underline cursor-pointer"
+                      : "text-on-surface-variant/40 cursor-not-allowed opacity-60 select-none"
+                  }`}
+                  title={canViewDetails ? "" : "Identifiez-vous pour voir les détails"}
                 >
-                  <span>{showAdminsDetails ? "Masquer" : "Voir qui est en ligne"}</span>
-                  <span className="material-symbols-outlined text-sm">
-                    {showAdminsDetails ? "expand_less" : "expand_more"}
+                  <span>{canViewDetails && showAdminsDetails ? "Masquer" : "Voir qui est en ligne"}</span>
+                  <span className="material-symbols-outlined text-sm select-none">
+                    {!canViewDetails ? "lock" : showAdminsDetails ? "expand_less" : "expand_more"}
                   </span>
                 </button>
               )}
             </div>
 
-            {/* Expanded Active Admins Details */}
-            {showAdminsDetails && activeSessions.length > 0 && (
+            {/* Expanded Active Admins Details - Only visible when authorized AND toggled */}
+            {canViewDetails && showAdminsDetails && activeSessions.length > 0 && (
               <div className="mt-sm flex flex-col gap-xs border-t border-outline-variant/20 pt-sm animate-fade-in">
                 <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
                   Sessions Administrateur Actives :
                 </p>
-                {activeSessions.map((admin, idx) => (
-                  <div
-                    key={admin.sessionId || idx}
-                    className="flex flex-col gap-1 rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-2 text-xs shadow-xs"
-                  >
-                    <div className="flex items-center justify-between font-bold text-on-surface">
-                      <span className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-sm text-primary">person</span>
-                        {admin.userName}
-                      </span>
-                      <span className="text-[10px] font-normal text-on-surface-variant">
-                        {formatRelativeTime(admin.loginAt)}
-                      </span>
-                    </div>
+                <div className="flex flex-col gap-xs pt-xs">
+                  {activeSessions.map((admin, idx) => (
+                    <div
+                      key={admin.sessionId || idx}
+                      className="flex flex-col gap-1 rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-2 text-xs shadow-xs"
+                    >
+                      <div className="flex items-center justify-between font-bold text-on-surface">
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm text-primary">person</span>
+                          {admin.userName}
+                        </span>
+                        <span className="text-[10px] font-normal text-on-surface-variant">
+                          {formatRelativeTime(admin.loginAt)}
+                        </span>
+                      </div>
 
-                    <div className="flex items-center gap-1 text-on-surface-variant">
-                      <span className="material-symbols-outlined text-sm text-emerald-600">call</span>
-                      <a href={`tel:${admin.userPhone}`} className="hover:underline font-mono">
-                        {admin.userPhone}
-                      </a>
-                    </div>
+                      <div className="flex items-center gap-1 text-on-surface-variant">
+                        <span className="material-symbols-outlined text-sm text-emerald-600">call</span>
+                        <a href={`tel:${admin.userPhone}`} className="hover:underline font-mono">
+                          {admin.userPhone}
+                        </a>
+                      </div>
 
-                    <div className="flex items-center gap-1 text-on-surface-variant">
-                      <span className="material-symbols-outlined text-sm text-sky-600">
-                        {admin.deviceInfo?.deviceType === 'mobile' ? 'smartphone' : admin.deviceInfo?.deviceType === 'tablet' ? 'tablet' : 'desktop_windows'}
-                      </span>
-                      <span className="truncate">{admin.deviceInfo?.label || 'Appareil inconnu'}</span>
-                    </div>
+                      <div className="flex items-center gap-1 text-on-surface-variant">
+                        <span className="material-symbols-outlined text-sm text-sky-600">
+                          {admin.deviceInfo?.deviceType === 'mobile' ? 'smartphone' : admin.deviceInfo?.deviceType === 'tablet' ? 'tablet' : 'desktop_windows'}
+                        </span>
+                        <span className="truncate">{admin.deviceInfo?.label || 'Appareil inconnu'}</span>
+                      </div>
 
-                    <div className="flex items-center gap-1 text-on-surface-variant">
-                      <span className="material-symbols-outlined text-sm text-amber-600">location_on</span>
-                      <span className="truncate">{admin.locationInfo?.label || 'Localisation inconnue'}</span>
+                      <div className="flex items-center gap-1 text-on-surface-variant">
+                        <span className="material-symbols-outlined text-sm text-amber-600">location_on</span>
+                        <span className="truncate">{admin.locationInfo?.label || 'Localisation inconnue'}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>

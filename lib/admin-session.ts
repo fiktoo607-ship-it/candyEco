@@ -18,7 +18,24 @@ export const MAX_CONCURRENT_ADMINS = 2;
 const ADMIN_SESSIONS_KEY = 'admin:active_sessions';
 const SESSION_TTL_SECONDS = 180; // 3 minutes timeout if inactive
 
-let inMemoryActiveSessions: ActiveAdminSession[] = [];
+const globalForAdminSessions = globalThis as unknown as {
+  inMemoryActiveSessions?: ActiveAdminSession[];
+};
+
+if (!globalForAdminSessions.inMemoryActiveSessions) {
+  globalForAdminSessions.inMemoryActiveSessions = [];
+}
+
+function getInMemorySessions(): ActiveAdminSession[] {
+  if (!globalForAdminSessions.inMemoryActiveSessions) {
+    globalForAdminSessions.inMemoryActiveSessions = [];
+  }
+  return globalForAdminSessions.inMemoryActiveSessions;
+}
+
+function setInMemorySessions(sessions: ActiveAdminSession[]): void {
+  globalForAdminSessions.inMemoryActiveSessions = sessions;
+}
 
 /**
  * Filters out expired sessions based on SESSION_TTL_SECONDS.
@@ -54,8 +71,9 @@ export async function getActiveAdminSessions(): Promise<ActiveAdminSession[]> {
     }
   }
 
-  inMemoryActiveSessions = filterActiveSessions(inMemoryActiveSessions);
-  return inMemoryActiveSessions;
+  const valid = filterActiveSessions(getInMemorySessions());
+  setInMemorySessions(valid);
+  return valid;
 }
 
 /**
@@ -63,7 +81,7 @@ export async function getActiveAdminSessions(): Promise<ActiveAdminSession[]> {
  */
 async function saveActiveAdminSessions(sessions: ActiveAdminSession[]): Promise<void> {
   const valid = filterActiveSessions(sessions);
-  inMemoryActiveSessions = valid;
+  setInMemorySessions(valid);
 
   if (redisPub) {
     try {
@@ -234,5 +252,5 @@ export async function releaseAdminLock(userId?: string, deviceId?: string): Prom
 
 // Utility function for tests to clear state
 export function _resetInMemoryAdminSession(): void {
-  inMemoryActiveSessions = [];
+  setInMemorySessions([]);
 }

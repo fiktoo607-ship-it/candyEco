@@ -23,3 +23,5 @@ if (process.env.NODE_ENV !== 'production') {
     log: ['query', 'error', 'warn'],
   });
 }
+
+export default prisma;

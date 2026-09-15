@@ -13,11 +13,30 @@ import {
   POST as postSessionHeartbeat,
   DELETE as deleteSessionHeartbeat,
 } from '@/app/api/admin/session/heartbeat/route';
-import { GET as getActiveSessionsRoute } from '@/app/api/admin/session/active/route';
+import {
+  GET as getActiveSessionsRoute,
+  POST as postActiveSessionsRoute,
+} from '@/app/api/admin/session/active/route';
 import { getServerSession } from 'next-auth';
+import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
 
 vi.mock('next-auth', () => ({
   getServerSession: vi.fn(),
+}));
+
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    user: {
+      findFirst: vi.fn(),
+    },
+  },
+}));
+
+vi.mock('bcryptjs', () => ({
+  default: {
+    compare: vi.fn(),
+  },
 }));
 
 vi.mock('@/lib/redis', () => ({
@@ -203,6 +222,45 @@ describe('Admin Multi-Device & 2-Admin Concurrency Management', () => {
       expect(res.status).toBe(409);
       const data = await res.json();
       expect(data.error).toBe('SameAccountAnotherDevice');
+    });
+
+    it('rejects POST /api/admin/session/active when credentials are invalid', async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+
+      const req = {
+        json: vi.fn().mockResolvedValue({ phone: '0123456789', password: 'wrong' }),
+      } as any;
+
+      const res = await postActiveSessionsRoute(req);
+      expect(res.status).toBe(401);
+      const data = await res.json();
+      expect(data.error).toBe('InvalidCredentials');
+    });
+
+    it('returns active sessions on POST /api/admin/session/active when admin credentials are valid', async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue({
+        id: 'admin-1',
+        phone: '04545454',
+        password: 'hashed-password',
+        role: 'admin',
+      } as any);
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as any);
+
+      await acquireAdminLock('admin-2', {
+        deviceId: 'dev-win',
+        userName: 'Admin 2',
+        userPhone: '04545454',
+      });
+
+      const req = {
+        json: vi.fn().mockResolvedValue({ phone: '04545454', password: 'correct-password' }),
+      } as any;
+
+      const res = await postActiveSessionsRoute(req);
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.activeSessions.length).toBe(1);
+      expect(data.activeSessions[0].userName).toBe('Admin 2');
     });
   });
 });
