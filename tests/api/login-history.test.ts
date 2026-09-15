@@ -79,7 +79,24 @@ describe('Login History & Device Tracking', () => {
       expect(callArgs?.data?.deviceType).toBe('mobile');
       expect(callArgs?.data?.browser).toBe('Safari');
       expect(callArgs?.data?.os).toBe('iOS (iPhone)');
-      expect(callArgs?.data?.deviceLabel).toContain('Safari sur iOS (iPhone) (Mobile)');
+      expect(callArgs?.data?.deviceLabel).toBe('iPhone • Safari (Mobile)');
+    });
+
+    it('accurately parses and formats Google Pixel 7 Pro device name', async () => {
+      vi.mocked(prisma.loginHistory.create).mockResolvedValue({ id: 'hist-pixel' } as any);
+
+      await recordLoginHistory({
+        userId: 'admin-eva',
+        userName: 'Admin Eva',
+        role: 'admin',
+        userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 7 Pro Build/UQ1A.240205.002) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+        deviceName: 'Pixel 7 Pro',
+      });
+
+      const callArgs = vi.mocked(prisma.loginHistory.create).mock.calls[0][0] as any;
+      expect(callArgs?.data?.deviceType).toBe('mobile');
+      expect(callArgs?.data?.browser).toBe('Chrome');
+      expect(callArgs?.data?.deviceLabel).toBe('Google Pixel 7 Pro • Chrome (Mobile)');
     });
   });
 

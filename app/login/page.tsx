@@ -61,16 +61,27 @@ function LoginContent() {
   // Fetch active admin sessions info
   const fetchActiveAdminSessions = useCallback(async (creds?: { phone: string; password: string }) => {
     try {
+      let cachedModel: string | null = null;
+      if (typeof window !== "undefined") {
+        cachedModel = localStorage.getItem("admin_device_model");
+      }
+
       let res: Response;
       if (creds?.phone && creds?.password) {
         res = await fetch("/api/admin/session/active", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(creds),
+          headers: {
+            "Content-Type": "application/json",
+            ...(cachedModel ? { "x-device-name": cachedModel } : {}),
+          },
+          body: JSON.stringify({ ...creds, deviceName: cachedModel }),
           cache: "no-store",
         });
       } else {
-        res = await fetch("/api/admin/session/active", { cache: "no-store" });
+        res = await fetch("/api/admin/session/active", {
+          headers: cachedModel ? { "x-device-name": cachedModel } : undefined,
+          cache: "no-store",
+        });
       }
 
       if (res.ok) {
@@ -164,10 +175,17 @@ function LoginContent() {
 
     try {
       const deviceId = getOrCreateAdminDeviceId();
+      let deviceModel: string | undefined = clientDevice?.model;
+      if (!deviceModel && typeof window !== "undefined") {
+        const stored = localStorage.getItem("admin_device_model");
+        if (stored) deviceModel = stored;
+      }
+
       const result = await signIn("credentials", {
         phone: currentPhone,
         password: currentPassword,
         deviceId,
+        deviceName: deviceModel || clientDevice?.label || undefined,
         redirect: false,
       });
 

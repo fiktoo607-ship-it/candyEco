@@ -1,5 +1,5 @@
 import { redisPub } from './redis';
-import { DeviceInfo, LocationInfo, parseDeviceInfo, extractLocationInfo } from './device-geo';
+import { DeviceInfo, LocationInfo, parseDeviceInfo, extractLocationInfo, extractDeviceModelFromHeaders } from './device-geo';
 
 export interface ActiveAdminSession {
   sessionId: string;
@@ -113,6 +113,7 @@ export async function getActiveAdminSession(userId?: string): Promise<ActiveAdmi
 
 export interface AcquireAdminLockOptions {
   deviceId?: string;
+  deviceName?: string | null;
   userName?: string | null;
   userEmail?: string | null;
   userPhone?: string | null;
@@ -140,6 +141,7 @@ export async function acquireAdminLock(
 ): Promise<AcquireAdminLockResult> {
   const activeSessions = await getActiveAdminSessions();
   const normalizedDeviceId = options?.deviceId?.trim() || 'default_device';
+  const effectiveModel = options?.deviceName || extractDeviceModelFromHeaders(options?.headers);
 
   // Check if this user already has an active session
   const existingUserSession = activeSessions.find((s) => s.userId === userId);
@@ -166,7 +168,9 @@ export async function acquireAdminLock(
     if (options?.userName) existingUserSession.userName = options.userName;
     if (options?.userEmail) existingUserSession.userEmail = options.userEmail;
     if (options?.userPhone) existingUserSession.userPhone = options.userPhone;
-    if (options?.userAgent) existingUserSession.deviceInfo = parseDeviceInfo(options.userAgent);
+    if (options?.userAgent || effectiveModel) {
+      existingUserSession.deviceInfo = parseDeviceInfo(options?.userAgent, effectiveModel || existingUserSession.deviceInfo?.model);
+    }
     if (options?.headers) existingUserSession.locationInfo = extractLocationInfo(options.headers);
 
     await saveActiveAdminSessions(activeSessions);
@@ -195,7 +199,7 @@ export async function acquireAdminLock(
     userName: options?.userName ?? null,
     userEmail: options?.userEmail ?? null,
     userPhone: options?.userPhone ?? null,
-    deviceInfo: parseDeviceInfo(options?.userAgent),
+    deviceInfo: parseDeviceInfo(options?.userAgent, effectiveModel),
     locationInfo: extractLocationInfo(options?.headers),
     loginAt: Date.now(),
     lastSeenAt: Date.now(),
@@ -214,7 +218,11 @@ export async function acquireAdminLock(
 /**
  * Refreshes an active session for the specified user and device.
  */
-export async function refreshAdminLock(userId: string, deviceId?: string): Promise<boolean> {
+export async function refreshAdminLock(
+  userId: string,
+  deviceId?: string,
+  options?: { deviceName?: string | null; userAgent?: string | null; headers?: any }
+): Promise<boolean> {
   const activeSessions = await getActiveAdminSessions();
   const session = activeSessions.find(
     (s) => s.userId === userId && (!deviceId || s.deviceId === 'default_device' || s.deviceId === deviceId)
@@ -225,6 +233,10 @@ export async function refreshAdminLock(userId: string, deviceId?: string): Promi
   }
 
   session.lastSeenAt = Date.now();
+  const effectiveModel = options?.deviceName || extractDeviceModelFromHeaders(options?.headers);
+  if (effectiveModel || (options?.userAgent && !session.deviceInfo?.model)) {
+    session.deviceInfo = parseDeviceInfo(options?.userAgent, effectiveModel || session.deviceInfo?.model);
+  }
   await saveActiveAdminSessions(activeSessions);
   return true;
 }

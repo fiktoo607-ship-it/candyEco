@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { parseDeviceInfo, extractLocationInfo } from './device-geo';
+import { parseDeviceInfo, extractLocationInfo, extractDeviceModelFromHeaders } from './device-geo';
 
 export interface RecordLoginHistoryParams {
   userId?: string | null;
@@ -8,6 +8,7 @@ export interface RecordLoginHistoryParams {
   userEmail?: string | null;
   role?: string | null;
   userAgent?: string | null;
+  deviceName?: string | null;
   headers?: Headers | Record<string, string | string[] | undefined>;
   status?: 'success' | 'failed';
 }
@@ -17,7 +18,8 @@ export interface RecordLoginHistoryParams {
  */
 export async function recordLoginHistory(params: RecordLoginHistoryParams) {
   try {
-    const deviceInfo = parseDeviceInfo(params.userAgent);
+    const model = params.deviceName || extractDeviceModelFromHeaders(params.headers);
+    const deviceInfo = parseDeviceInfo(params.userAgent, model);
     const locationInfo = extractLocationInfo(params.headers);
 
     const record = await prisma.loginHistory.create({

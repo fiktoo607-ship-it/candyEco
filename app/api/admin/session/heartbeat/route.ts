@@ -52,12 +52,24 @@ export async function POST(req: NextRequest) {
       req.headers.get('x-device-id') ||
       'default_device';
 
+    const deviceName =
+      body?.deviceName ||
+      req.headers.get('x-device-name') ||
+      req.headers.get('x-device-model') ||
+      req.headers.get('sec-ch-ua-model') ||
+      null;
+
     const userId = session.user.id;
     // Attempt refresh first; if not existing, try to acquire
-    const refreshed = await refreshAdminLock(userId, deviceId);
+    const refreshed = await refreshAdminLock(userId, deviceId, {
+      deviceName,
+      userAgent: req.headers.get('user-agent'),
+      headers: req.headers,
+    });
     if (!refreshed) {
       const lockResult = await acquireAdminLock(userId, {
         deviceId,
+        deviceName,
         userName: session.user.name,
         userEmail: session.user.email,
         userPhone: (session.user as any).phone,

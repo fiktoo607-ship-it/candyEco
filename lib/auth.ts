@@ -65,6 +65,7 @@ export const authOptions: NextAuthOptions = {
         phone: { label: "Phone Number", type: "text" },
         password: { label: "Password", type: "password" },
         deviceId: { label: "Device ID", type: "text" },
+        deviceName: { label: "Device Name", type: "text" },
       },
       async authorize(credentials, req) {
         if (!credentials?.phone || !credentials?.password) {
@@ -105,6 +106,13 @@ export const authOptions: NextAuthOptions = {
           throw new Error("InvalidCredentials");
         }
 
+        const deviceName =
+          (credentials as any)?.deviceName ||
+          (req?.headers as any)?.['x-device-name'] ||
+          (req?.headers as any)?.['x-device-model'] ||
+          (req?.headers as any)?.['sec-ch-ua-model'] ||
+          null;
+
         // If user is admin, verify active session lock & single-device per account
         if (user.role === "admin") {
           const deviceId = (credentials as any)?.deviceId || (req?.headers as any)?.['x-device-id'] || 'default_device';
@@ -112,6 +120,7 @@ export const authOptions: NextAuthOptions = {
 
           const lockResult = await acquireAdminLock(user.id, {
             deviceId,
+            deviceName,
             userName: user.name,
             userEmail: user.email,
             userPhone: user.phone,
@@ -135,6 +144,7 @@ export const authOptions: NextAuthOptions = {
           userEmail: user.email,
           role: user.role,
           userAgent,
+          deviceName,
           headers: req?.headers as any,
           status: 'success',
         });

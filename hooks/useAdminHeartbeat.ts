@@ -25,13 +25,15 @@ export function useAdminHeartbeat() {
     if (!isAdmin) return;
     try {
       const deviceId = getOrCreateAdminDeviceId();
+      const deviceModel = typeof window !== 'undefined' ? localStorage.getItem('admin_device_model') : null;
       await fetch('/api/admin/session/heartbeat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-device-id': deviceId,
+          ...(deviceModel ? { 'x-device-name': deviceModel } : {}),
         },
-        body: JSON.stringify({ deviceId }),
+        body: JSON.stringify({ deviceId, deviceName: deviceModel }),
       });
     } catch (err) {
       console.warn('[AdminHeartbeat] Failed to send heartbeat:', err);

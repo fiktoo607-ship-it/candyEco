@@ -2,6 +2,7 @@ export interface DeviceInfo {
   browser: string;
   os: string;
   deviceType: 'desktop' | 'mobile' | 'tablet';
+  model?: string;
   label: string;
 }
 
@@ -13,10 +14,82 @@ export interface LocationInfo {
 }
 
 /**
- * Parses user-agent header into structured device information.
+ * Cleans and standardizes raw device model strings.
+ * e.g. "Pixel 7 Pro" -> "Google Pixel 7 Pro"
  */
-export function parseDeviceInfo(userAgent: string | null | undefined): DeviceInfo {
-  if (!userAgent) {
+export function formatDeviceModel(rawModel: string): string {
+  let model = rawModel.trim();
+  if (!model || model.toLowerCase() === 'k' || model.toLowerCase() === 'unknown') {
+    return '';
+  }
+
+  // Remove surrounding quotes if header was sent quoted (e.g. '"Pixel 7 Pro"')
+  model = model.replace(/^["']+|["']+$/g, '').trim();
+
+  // Google Pixel models
+  if (/^pixel/i.test(model)) {
+    return `Google ${model.replace(/^pixel\s*/i, 'Pixel ')}`;
+  }
+  if (/google\s*pixel/i.test(model)) {
+    return model;
+  }
+
+  // Samsung models
+  if (/^sm-[a-z0-9]+/i.test(model)) {
+    return `Samsung Galaxy (${model})`;
+  }
+  if (/samsung/i.test(model) && !/galaxy/i.test(model)) {
+    return `Samsung Galaxy ${model.replace(/samsung\s*/i, '')}`;
+  }
+
+  // Apple devices
+  if (/iphone/i.test(model)) return 'iPhone';
+  if (/ipad/i.test(model)) return 'iPad';
+  if (/macintosh|macbook/i.test(model)) return 'Mac';
+
+  // Xiaomi / Redmi
+  if (/^2[0-9]{3}[0-9a-z]+/i.test(model) || /^m2[0-9]+/i.test(model)) {
+    return `Xiaomi (${model})`;
+  }
+
+  return model;
+}
+
+/**
+ * Extracts device model from incoming HTTP headers (sec-ch-ua-model, x-device-name, etc.)
+ */
+export function extractDeviceModelFromHeaders(
+  headers: Headers | Record<string, string | string[] | undefined> | undefined
+): string | undefined {
+  if (!headers) return undefined;
+
+  const getHeader = (name: string): string | undefined => {
+    if (headers instanceof Headers) {
+      return headers.get(name) || undefined;
+    }
+    const val = headers[name] ?? headers[name.toLowerCase()];
+    if (Array.isArray(val)) return val[0];
+    return val;
+  };
+
+  const raw =
+    getHeader('x-device-name') ||
+    getHeader('x-device-model') ||
+    getHeader('sec-ch-ua-model');
+
+  if (!raw) return undefined;
+  const formatted = formatDeviceModel(raw);
+  return formatted || undefined;
+}
+
+/**
+ * Parses user-agent header and optional explicit model into structured device information.
+ */
+export function parseDeviceInfo(
+  userAgent: string | null | undefined,
+  explicitModel?: string | null
+): DeviceInfo {
+  if (!userAgent && !explicitModel) {
     return {
       browser: 'Inconnu',
       os: 'Inconnu',
@@ -25,7 +98,7 @@ export function parseDeviceInfo(userAgent: string | null | undefined): DeviceInf
     };
   }
 
-  const ua = userAgent.toLowerCase();
+  const ua = (userAgent || '').toLowerCase();
 
   // Detect OS
   let os = 'Inconnu';
@@ -54,13 +127,56 @@ export function parseDeviceInfo(userAgent: string | null | undefined): DeviceInf
   else if (ua.includes('firefox/')) browser = 'Firefox';
   else if (ua.includes('opr/') || ua.includes('opera/')) browser = 'Opera';
 
+  // Detect Device Model
+  let model: string | undefined = undefined;
+
+  if (explicitModel && explicitModel.trim()) {
+    const formatted = formatDeviceModel(explicitModel);
+    if (formatted) model = formatted;
+  }
+
+  if (!model && userAgent) {
+    // 1. Check for Android device pattern in UA: (Linux; Android 14; Pixel 7 Pro Build/...)
+    const androidMatch = userAgent.match(/android\s+[\d.]+;\s*([^;()]+?)(?:\s+build|\s*;|\))/i);
+    if (androidMatch && androidMatch[1]) {
+      const candidate = androidMatch[1].trim();
+      if (candidate.toLowerCase() !== 'k') {
+        const formatted = formatDeviceModel(candidate);
+        if (formatted) model = formatted;
+      }
+    }
+
+    // 2. Look for Pixel in UA if not caught
+    if (!model) {
+      const pixelMatch = userAgent.match(/(?:google\s+)?(pixel\s+[\w\s]+?)(?:\s+build|\s*;|\/|\))/i);
+      if (pixelMatch && pixelMatch[1]) {
+        model = formatDeviceModel(pixelMatch[1]);
+      }
+    }
+
+    // 3. Apple devices
+    if (!model && ua.includes('iphone')) {
+      model = 'iPhone';
+    } else if (!model && ua.includes('ipad')) {
+      model = 'iPad';
+    }
+  }
+
   const typeLabel = deviceType === 'mobile' ? 'Mobile' : deviceType === 'tablet' ? 'Tablette' : 'PC';
-  const label = `${browser} sur ${os} (${typeLabel})`;
+
+  // Build clean and prominent label
+  let label: string;
+  if (model) {
+    label = `${model} • ${browser} (${typeLabel})`;
+  } else {
+    label = `${browser} sur ${os} (${typeLabel})`;
+  }
 
   return {
     browser,
     os,
     deviceType,
+    model,
     label,
   };
 }
