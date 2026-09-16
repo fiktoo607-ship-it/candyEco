@@ -33,7 +33,7 @@ export default function Toast({
       : "bg-rose-600/95 border-rose-400/40 text-white shadow-rose-950/30";
 
   return (
-    <div className="fixed top-6 right-6 left-6 sm:left-auto sm:max-w-md z-[9999] animate-fade-in pointer-events-auto">
+    <div className="fixed top-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-[9999] pointer-events-auto">
       <div
         className={`flex items-center gap-3 rounded-2xl border px-4 py-3.5 shadow-xl backdrop-blur-md transition-all ${bgStyles}`}
       >

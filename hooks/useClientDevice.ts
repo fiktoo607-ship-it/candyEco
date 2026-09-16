@@ -9,3 +9,5 @@ export function useClientDevice() {
   const { deviceInfo, isMounted } = useAdminSession();
   return { deviceInfo, isMounted };
 }
+
+export default useClientDevice;

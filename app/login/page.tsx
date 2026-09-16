@@ -365,13 +365,11 @@ function LoginContent() {
           </div>
 
           {/* Error Toast Notification */}
-          <div className="mt-sm">
-            <Toast
-              message={errorMessage || null}
-              type="error"
-              onClose={() => setErrorMessage("")}
-            />
-          </div>
+          <Toast
+            message={errorMessage || null}
+            type="error"
+            onClose={() => setErrorMessage("")}
+          />
 
           {/* Current Device Detection Banner */}
           {clientDevice && (

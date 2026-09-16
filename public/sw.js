@@ -1,4 +1,4 @@
-const CACHE_NAME = 'candy-eco-v1';
+const CACHE_NAME = 'candy-eco-v2';
 const OFFLINE_URL = '/offline';
 
 const STATIC_ASSETS = [
@@ -45,6 +45,20 @@ self.addEventListener('fetch', (event) => {
 
   // 2. Only GET requests
   if (request.method !== 'GET') {
+    return;
+  }
+
+  // Exclude webpack HMR, hot updates, and dev server internals
+  if (
+    url.pathname.startsWith('/_next/static/webpack/') ||
+    url.pathname.includes('hot-update')
+  ) {
+    return;
+  }
+
+  // Do not intercept or cache _next/ assets on localhost/dev
+  const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+  if (isLocalhost && url.pathname.startsWith('/_next/')) {
     return;
   }
 
