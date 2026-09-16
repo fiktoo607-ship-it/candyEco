@@ -750,7 +750,7 @@ export default function ProfileSection() {
                         </span>
                       ) : (
                         <span className="inline-flex items-center rounded-full bg-surface-container px-2.5 py-1 text-[11px] font-medium text-on-surface-variant">
-                          Connecté
+                          Déconnecté
                         </span>
                       )}
                     </td>
