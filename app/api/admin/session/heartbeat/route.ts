@@ -6,6 +6,7 @@ import {
   refreshAdminLock,
   releaseAdminLock,
   getActiveAdminSessions,
+  setAdminTabActive,
   MAX_CONCURRENT_ADMINS,
 } from '@/lib/admin-session';
 
@@ -59,13 +60,20 @@ export async function POST(req: NextRequest) {
       req.headers.get('sec-ch-ua-model') ||
       null;
 
+    const isVisible = typeof body?.isVisible === 'boolean' ? body.isVisible : true;
+
     const userId = session.user.id;
+
+    // Update tab visibility for notifications
+    await setAdminTabActive(userId, isVisible);
+
     // Attempt refresh first; if not existing, try to acquire
     const refreshed = await refreshAdminLock(userId, deviceId, {
       deviceName,
       userAgent: req.headers.get('user-agent'),
       headers: req.headers,
     });
+
     if (!refreshed) {
       const lockResult = await acquireAdminLock(userId, {
         deviceId,
@@ -92,7 +100,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, isVisible });
   } catch (error) {
     console.error('[AdminSession API] Error updating heartbeat:', error);
     return NextResponse.json({ error: 'Failed to update heartbeat' }, { status: 500 });
@@ -112,6 +120,8 @@ export async function DELETE(req: NextRequest) {
     }
 
     await releaseAdminLock(session.user.id, deviceId || undefined);
+    await setAdminTabActive(session.user.id, false);
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[AdminSession API] Error releasing session:', error);

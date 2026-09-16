@@ -14,12 +14,12 @@ import NotificationBell from "@/components/dashbord/NotificationBell";
 import AdminProfileMenu from "@/components/dashbord/AdminProfileMenu";
 import { useDashboardStore } from "@/lib/dashboard-store";
 import { useEffect } from "react";
-import { useAdminHeartbeat } from "@/hooks/useAdminHeartbeat";
+import { useAdminSession } from "@/hooks/useAdminSession";
 
 const CATEGORIES = ["gâteau", "aliments traditionnel"];
 
 export default function DashboardPage() {
-  useAdminHeartbeat();
+  useAdminSession();
   const { activeTab, openCreate, toast, setToast } = useDashboardStore();
 
   useEffect(() => {

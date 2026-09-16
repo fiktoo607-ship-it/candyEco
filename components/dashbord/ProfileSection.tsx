@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useClientDevice } from "@/hooks/useClientDevice";
+import { useAdminSession } from "@/hooks/useAdminSession";
 
 interface HistoryRecord {
   id: string;
@@ -75,7 +75,7 @@ function formatFullDate(dateStr: string): string {
 
 export default function ProfileSection() {
   const { data: session, update: updateSession } = useSession();
-  const { deviceInfo: clientDevice, isMounted } = useClientDevice();
+  const { deviceInfo: clientDevice, isMounted } = useAdminSession();
 
   // Profile edit state
   const [name, setName] = useState("");
@@ -163,7 +163,11 @@ export default function ProfileSection() {
 
   useEffect(() => {
     fetchActiveSessions();
-    const interval = setInterval(fetchActiveSessions, 15000);
+    const interval = setInterval(() => {
+      if (typeof document === "undefined" || document.visibilityState === "visible") {
+        fetchActiveSessions();
+      }
+    }, 15000);
     return () => clearInterval(interval);
   }, [fetchActiveSessions]);
 

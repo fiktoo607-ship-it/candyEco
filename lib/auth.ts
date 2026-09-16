@@ -6,8 +6,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { logAuthData } from "@/logs/featurs";
-import { acquireAdminLock } from "@/lib/admin-session";
-import { recordLoginHistory } from "@/lib/login-history";
+import { acquireAdminLock, recordLoginHistory } from "@/lib/admin-session";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,

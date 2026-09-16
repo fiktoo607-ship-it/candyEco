@@ -4,12 +4,12 @@ import Sidebar from "@/components/dashbord/Sidebar";
 import ProfileSection from "@/components/dashbord/ProfileSection";
 import NotificationBell from "@/components/dashbord/NotificationBell";
 import AdminProfileMenu from "@/components/dashbord/AdminProfileMenu";
-import { useAdminHeartbeat } from "@/hooks/useAdminHeartbeat";
+import { useAdminSession } from "@/hooks/useAdminSession";
 import { useDashboardStore } from "@/lib/dashboard-store";
 import { useEffect } from "react";
 
 export default function AdminProfilePage() {
-  useAdminHeartbeat();
+  useAdminSession();
   const { setActiveTab } = useDashboardStore();
 
   useEffect(() => {

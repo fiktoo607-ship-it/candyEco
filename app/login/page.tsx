@@ -5,8 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense, useCallback } from "react";
 import Image from "next/image";
 import Toast from "@/components/Toast";
-import { getOrCreateAdminDeviceId } from "@/hooks/useAdminHeartbeat";
-import { useClientDevice } from "@/hooks/useClientDevice";
+import { getOrCreateAdminDeviceId, useAdminSession } from "@/hooks/useAdminSession";
 
 interface ActiveAdminInfo {
   sessionId: string;
@@ -43,7 +42,7 @@ function LoginContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { deviceInfo: clientDevice } = useClientDevice();
+  const { deviceInfo: clientDevice } = useAdminSession();
   const errorType = searchParams.get("error");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);

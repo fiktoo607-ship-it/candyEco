@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { setAdminTabActive } from '@/lib/presence';
+import { setAdminTabActive } from '@/lib/admin-session';
 
+/**
+ * @deprecated Tab presence is now automatically reported in /api/admin/session/heartbeat.
+ * Kept for backward compatibility with existing clients.
+ */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

@@ -47,41 +47,6 @@ export function useNotificationBell() {
     }
   };
 
-  // Tab visibility status reporter for Web Push deduplication
-  useEffect(() => {
-    function reportPresence() {
-      const isVisible = typeof document !== 'undefined' && document.visibilityState === 'visible';
-      fetch('/api/notifications/presence', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isVisible }),
-      }).catch(() => {});
-    }
-
-    reportPresence();
-
-    const handleVisibilityChange = () => {
-      reportPresence();
-    };
-
-    if (typeof document !== 'undefined') {
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-    }
-
-    const heartbeat = setInterval(() => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        reportPresence();
-      }
-    }, 20000);
-
-    return () => {
-      if (typeof document !== 'undefined') {
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-      }
-      clearInterval(heartbeat);
-    };
-  }, []);
-
   // Setup Server-Sent Events for real-time notification updates
   useEffect(() => {
     let eventSource: EventSource | null = null;
