@@ -45,6 +45,8 @@ next-env.d.ts
 /context
 /candy_html
 /.md
+/md/
+/docs/
 /candy_items
 /scripts
 
