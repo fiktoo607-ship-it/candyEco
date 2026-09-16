@@ -67,25 +67,8 @@ export function useAdminHeartbeat() {
     // Ping every 45 seconds to keep session active
     const interval = setInterval(sendHeartbeat, 45000);
 
-    const handleBeforeUnload = () => {
-      // Release session on tab close / reload
-      const deviceId = getOrCreateAdminDeviceId();
-      fetch(`/api/admin/session/heartbeat?deviceId=${encodeURIComponent(deviceId)}`, {
-        method: 'DELETE',
-        headers: {
-          'x-device-id': deviceId,
-        },
-        keepalive: true,
-      }).catch(() => {});
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('pagehide', handleBeforeUnload);
-
     return () => {
       clearInterval(interval);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('pagehide', handleBeforeUnload);
     };
   }, [status, isAdmin, sendHeartbeat]);
 

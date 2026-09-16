@@ -50,27 +50,51 @@ export async function GET(request: NextRequest) {
       getActiveAdminSessions().catch(() => []),
     ]);
 
-    const activeUserIds = new Set(activeSessions.map((s) => s.userId));
+    // Match each active admin session to at most ONE corresponding latest login record
+    const claimedSessionIds = new Set<string>();
 
-    const history = records.map((record) => ({
-      id: record.id,
-      userId: record.userId,
-      userName: record.userName || 'Utilisateur inconnu',
-      userPhone: record.userPhone || 'Non renseigné',
-      userEmail: record.userEmail || null,
-      role: record.role || 'user',
-      deviceInfo: {
-        deviceType: record.deviceType || 'desktop',
-        browser: record.browser || 'Inconnu',
-        os: record.os || 'Inconnu',
-        label: record.deviceLabel || 'Appareil inconnu',
-      },
-      ip: record.ip || '127.0.0.1',
-      location: record.location || 'Localisation inconnue',
-      status: record.status || 'success',
-      createdAt: record.createdAt,
-      isActiveNow: record.userId ? activeUserIds.has(record.userId) : false,
-    }));
+    const history = records.map((record) => {
+      let isActiveNow = false;
+
+      if (record.role === 'admin' && record.userId && record.status === 'success') {
+        const matchingSession = activeSessions.find((s) => {
+          if (claimedSessionIds.has(s.sessionId)) return false;
+          if (s.userId !== record.userId) return false;
+
+          // If deviceType is available on both, verify match
+          if (record.deviceType && s.deviceInfo?.deviceType) {
+            if (record.deviceType !== s.deviceInfo.deviceType) return false;
+          }
+
+          return true;
+        });
+
+        if (matchingSession) {
+          isActiveNow = true;
+          claimedSessionIds.add(matchingSession.sessionId);
+        }
+      }
+
+      return {
+        id: record.id,
+        userId: record.userId,
+        userName: record.userName || 'Utilisateur inconnu',
+        userPhone: record.userPhone || 'Non renseigné',
+        userEmail: record.userEmail || null,
+        role: record.role || 'user',
+        deviceInfo: {
+          deviceType: record.deviceType || 'desktop',
+          browser: record.browser || 'Inconnu',
+          os: record.os || 'Inconnu',
+          label: record.deviceLabel || 'Appareil inconnu',
+        },
+        ip: record.ip || '127.0.0.1',
+        location: record.location || 'Localisation inconnue',
+        status: record.status || 'success',
+        createdAt: record.createdAt,
+        isActiveNow,
+      };
+    });
 
     return NextResponse.json({
       history,
