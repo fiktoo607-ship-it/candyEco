@@ -30,6 +30,11 @@ export default function NotificationBell() {
     isStandalone,
   } = usePushNotifications();
 
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <div className="relative inline-block text-left">
       {/* Bell Trigger Button */}
@@ -41,7 +46,7 @@ export default function NotificationBell() {
         <span className="material-symbols-outlined text-2xl">
           notifications
         </span>
-        {unreadCount > 0 && (
+        {mounted && unreadCount > 0 && (
           <span className="absolute -top-xs -right-xs flex h-5 w-5 items-center justify-center rounded-full bg-error text-[10px] font-bold text-white shadow-soft animate-pulse">
             {unreadCount}
           </span>
