@@ -66,12 +66,13 @@ export function useLogin() {
     return [];
   }, []);
 
-  // Poll for active admin sessions
+  // Poll for active admin sessions only when verified/authorized
   useEffect(() => {
+    if (!canViewDetails) return;
     fetchActiveAdminSessions();
     const interval = setInterval(fetchActiveAdminSessions, 10000);
     return () => clearInterval(interval);
-  }, [fetchActiveAdminSessions]);
+  }, [canViewDetails, fetchActiveAdminSessions]);
 
   // Handle redirects on authenticated session
   useEffect(() => {
@@ -89,14 +90,12 @@ export function useLogin() {
     if (errorType) {
       if (errorType === "SameAccountAnotherDevice") {
         setErrorMessage("Ce compte administrateur est déjà connecté sur un autre appareil. La connexion simultanée d'un même compte n'est pas autorisée.");
-        fetchActiveAdminSessions();
-        setCanViewDetails(true);
-        setShowAdminsDetails(true);
+        setCanViewDetails(false);
+        setShowAdminsDetails(false);
       } else if (errorType === "AdminSessionActive" || errorType === "MaxAdminsReached") {
         setErrorMessage("La limite de 2 administrateurs connectés simultanément a été atteinte. Veuillez patienter qu'une session se libère.");
-        fetchActiveAdminSessions();
-        setCanViewDetails(true);
-        setShowAdminsDetails(true);
+        setCanViewDetails(false);
+        setShowAdminsDetails(false);
       } else if (errorType === "OAuthSignin" || errorType === "OAuthCallback") {
         setErrorMessage("Une erreur s'est produite lors de la connexion avec Google. Veuillez réessayer.");
         setCanViewDetails(false);

@@ -68,14 +68,16 @@ function LoginContent() {
             </p>
           </div>
 
-          {/* Active Admin Indicator & Transparency Widget */}
-          <ActiveAdminsWidget
-            slotsOccupied={slotsOccupied}
-            canViewDetails={canViewDetails}
-            showAdminsDetails={showAdminsDetails}
-            activeSessions={activeSessions}
-            onToggleDetails={toggleShowAdminsDetails}
-          />
+          {/* Active Admin Indicator & Transparency Widget - Only visible when admin credentials in DB are verified */}
+          {canViewDetails && (
+            <ActiveAdminsWidget
+              slotsOccupied={slotsOccupied}
+              canViewDetails={canViewDetails}
+              showAdminsDetails={showAdminsDetails}
+              activeSessions={activeSessions}
+              onToggleDetails={toggleShowAdminsDetails}
+            />
+          )}
 
           {/* Error Toast Notification */}
           <Toast
@@ -84,8 +86,8 @@ function LoginContent() {
             onClose={() => setErrorMessage("")}
           />
 
-          {/* Current Device Detection Banner */}
-          {clientDevice && (
+          {/* Current Device Detection Banner - Only visible when admin credentials in DB are verified */}
+          {canViewDetails && clientDevice && (
             <div className="mt-sm flex items-center gap-2.5 rounded-xl bg-sky-50/70 border border-sky-200/60 p-2.5 text-xs text-sky-900 shadow-2xs">
               <span className="material-symbols-outlined text-base text-sky-600 flex-shrink-0 select-none">
                 {clientDevice.deviceType === "mobile"

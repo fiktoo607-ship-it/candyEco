@@ -48,6 +48,10 @@ export default function ActiveAdminsWidget({
   activeSessions,
   onToggleDetails,
 }: ActiveAdminsWidgetProps) {
+  if (!canViewDetails) {
+    return null;
+  }
+
   return (
     <div className="mt-md rounded-xl border border-outline-variant/30 bg-surface-container-low/60 p-sm transition-all">
       <div className="flex items-center justify-between gap-sm">
