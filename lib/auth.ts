@@ -271,6 +271,19 @@ export const authOptions: NextAuthOptions = {
 
       return true;
     },
+    async redirect({ url, baseUrl }) {
+      const canonicalBase = (process.env.NEXTAUTH_URL || baseUrl || "https://candyeco-production.up.railway.app").replace(/\/$/, "");
+      if (url.startsWith("/")) {
+        return `${canonicalBase}${url}`;
+      }
+      try {
+        const parsed = new URL(url);
+        if (parsed.origin === new URL(canonicalBase).origin) {
+          return url;
+        }
+      } catch {}
+      return `${canonicalBase}/home`;
+    },
   },
   pages: {
     signIn: "/login",

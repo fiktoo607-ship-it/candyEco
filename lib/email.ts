@@ -26,7 +26,7 @@ export const getTransporter = () => {
 };
 
 export async function sendVerificationEmail(toEmail: string, token: string) {
-  const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const appUrl = (process.env.NEXTAUTH_URL || 'https://candyeco-production.up.railway.app').replace(/\/$/, '');
   const verificationUrl = `${appUrl}/verify-email?token=${encodeURIComponent(token)}`;
   const fromEmail = process.env.EMAIL_FROM || '"candyEco" <noreply@example.com>';
 
