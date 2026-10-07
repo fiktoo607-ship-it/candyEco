@@ -34,6 +34,9 @@ vi.mock('@/lib/prisma', () => {
         create: vi.fn(),
         delete: vi.fn(),
       },
+      order: {
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+      },
     },
   };
 });
@@ -112,6 +115,29 @@ describe('Authentication Registration & Verification API', () => {
       const data = await response.json();
       expect(data.success).toBe(true);
       expect(prisma.user.create).toHaveBeenCalled();
+    });
+
+    it('should claim prior guest orders with matching phone number upon successful registration', async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.user.count).mockResolvedValue(1);
+      vi.mocked(prisma.user.create).mockResolvedValue({ id: 'claimed-user-id', phone: '+1234567890' } as any);
+
+      const req = new NextRequest('http://localhost/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ name: 'Guest User', phone: '+1234567890', password: 'password123' }),
+      });
+
+      const response = await registerUser(req);
+      expect(response.status).toBe(201);
+      expect(prisma.order.updateMany).toHaveBeenCalledWith({
+        where: {
+          customerPhone: '+1234567890',
+          userId: null,
+        },
+        data: {
+          userId: 'claimed-user-id',
+        },
+      });
     });
   });
 

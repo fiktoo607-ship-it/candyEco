@@ -63,6 +63,31 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid status transition' }, { status: 400 });
     }
 
+    // Optional client expected status check
+    const clientExpectedStatus = body.expectedStatus || body.currentStatus;
+    if (clientExpectedStatus && String(clientExpectedStatus).trim().toUpperCase() !== currentStatus) {
+      return NextResponse.json(
+        { error: 'Conflit : le statut actuel de la commande ne correspond pas au statut attendu.' },
+        { status: 409 }
+      );
+    }
+
+    // Optimistic locking / conditional status update to solve TOCTOU race conditions (Issue #59)
+    const updateResult = await prisma.order.updateMany({
+      where: {
+        id,
+        status: existingOrder.status,
+      },
+      data: { status: targetStatus },
+    });
+
+    if (updateResult.count === 0) {
+      return NextResponse.json(
+        { error: 'Conflit de concurrence : le statut de la commande a été modifié par une autre opération.' },
+        { status: 409 }
+      );
+    }
+
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: { status: targetStatus },
