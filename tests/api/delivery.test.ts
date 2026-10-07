@@ -17,6 +17,7 @@ vi.mock('@/lib/prisma', () => {
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       delete: vi.fn(),
     },
     order: {
@@ -92,6 +93,20 @@ describe('Delivery Method Selection API Tests', () => {
         where: {},
         orderBy: { name: 'asc' },
       });
+    });
+
+    it('should clean leftover test delivery labels such as "yalidin test test test" to "Yalidine Express"', async () => {
+      vi.mocked(getServerSession).mockResolvedValue(null);
+      vi.mocked(prisma.deliveryMethod.findMany).mockResolvedValue([
+        { id: 'y-1', name: 'yalidin test test test', price: 7, active: true },
+      ] as any);
+
+      const response = await getMethods();
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+      expect(data).toHaveLength(1);
+      expect(data[0].name).toBe('Yalidine Express');
     });
   });
 

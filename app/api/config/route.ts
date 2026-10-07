@@ -66,6 +66,49 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Validate fidelity thresholds if present in config update
+    const rawVip = body.fidelity_vip_threshold !== undefined ? body.fidelity_vip_threshold : body.vipThreshold;
+    const rawFidele = body.fidelity_fidele_threshold !== undefined ? body.fidelity_fidele_threshold : body.fideleThreshold;
+
+    if (rawVip !== undefined || rawFidele !== undefined) {
+      const currentConfig = await getAllSiteConfigs();
+      const currentVip = currentConfig.fidelity_vip_threshold !== undefined
+        ? parseInt(String(currentConfig.fidelity_vip_threshold), 10)
+        : (currentConfig.vipThreshold !== undefined ? parseInt(String(currentConfig.vipThreshold), 10) : 500);
+      const currentFidele = currentConfig.fidelity_fidele_threshold !== undefined
+        ? parseInt(String(currentConfig.fidelity_fidele_threshold), 10)
+        : (currentConfig.fideleThreshold !== undefined ? parseInt(String(currentConfig.fideleThreshold), 10) : 100);
+
+      let parsedVip = currentVip;
+      if (rawVip !== undefined) {
+        parsedVip = Number(rawVip);
+        if (isNaN(parsedVip) || !Number.isFinite(parsedVip) || parsedVip <= 0 || !Number.isInteger(parsedVip)) {
+          return NextResponse.json(
+            { error: 'Le seuil VIP doit être un entier strictement positif.' },
+            { status: 400 }
+          );
+        }
+      }
+
+      let parsedFidele = currentFidele;
+      if (rawFidele !== undefined) {
+        parsedFidele = Number(rawFidele);
+        if (isNaN(parsedFidele) || !Number.isFinite(parsedFidele) || parsedFidele <= 0 || !Number.isInteger(parsedFidele)) {
+          return NextResponse.json(
+            { error: 'Le seuil Fidèle doit être un entier strictement positif.' },
+            { status: 400 }
+          );
+        }
+      }
+
+      if (parsedVip <= parsedFidele) {
+        return NextResponse.json(
+          { error: 'Le seuil VIP doit être strictement supérieur au seuil Fidèle.' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Save configurations
     for (const key of Object.keys(body)) {
       await saveSiteConfig(key, body[key]);

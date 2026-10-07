@@ -15,13 +15,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   if (!product) {
     return {
-      title: `${dictionary.productDetails.notFound.title} | ${THEME_CONFIG.brand.name}`,
+      title: dictionary.productDetails.notFound.title,
       description: dictionary.productDetails.notFound.description,
     };
   }
 
   return {
-    title: `${product.title} | ${THEME_CONFIG.brand.name}`,
+    title: product.title,
     description: product.description,
   };
 }

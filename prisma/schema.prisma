@@ -27,6 +27,7 @@ model Product {
 
   cartItems   CartItem[]
   orderItems  OrderItem[]
+  ratings     Rating[]
 
   @@index([category])
   @@index([visibility, createdAt])
@@ -176,6 +177,20 @@ model User {
   orders        Order[]
   pushSubscriptions PushSubscription[]
   loginHistories LoginHistory[]
+  ratings       Rating[]
+}
+
+model Rating {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  rating    Float
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([userId])
 }
 
 model VerificationToken {

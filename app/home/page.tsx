@@ -1,9 +1,15 @@
+import type { Metadata } from 'next';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import HomeProductSection from '@/components/home/HomeProductSection';
 import { getHomePageData } from '@/lib/services/home.service';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Accueil',
+  description: 'Découvrez notre sélection de pâtisseries artisanales, bio et gourmandes.',
+};
 
 export default async function HomePage() {
   const {

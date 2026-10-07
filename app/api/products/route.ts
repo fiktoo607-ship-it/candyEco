@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { normalizePrice } from "@/lib/utils/currency";
 
 export async function GET(request?: NextRequest) {
   try {
@@ -136,11 +137,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    let normalizedPrice: string;
+    try {
+      normalizedPrice = normalizePrice(price);
+    } catch {
+      return NextResponse.json({ error: 'Le prix doit être un nombre positif valide.' }, { status: 400 });
+    }
+
     const newProduct = await prisma.product.create({
       data: {
         title,
         slug,
-        price,
+        price: normalizedPrice,
         category,
         imageUrl,
         description,

@@ -44,6 +44,10 @@ vi.mock('@/lib/prisma', () => {
       update: vi.fn(),
       findFirst: vi.fn(),
     },
+    rating: {
+      create: vi.fn(),
+      aggregate: vi.fn(),
+    },
     $transaction: vi.fn((arg) => {
       if (typeof arg === 'function') {
         return arg(mockPrisma);
@@ -210,7 +214,7 @@ describe('Products API', () => {
         data: {
           title: validBody.title,
           slug: validBody.slug,
-          price: validBody.price,
+          price: '15.00',
           category: validBody.category,
           imageUrl: validBody.imageUrl,
           description: validBody.description,
@@ -257,7 +261,7 @@ describe('Products API', () => {
         data: {
           title: validBody.title,
           slug: validBody.slug,
-          price: validBody.price,
+          price: '15.00',
           category: validBody.category,
           imageUrl: validBody.imageUrl,
           description: validBody.description,
@@ -329,7 +333,7 @@ describe('Products API', () => {
         data: {
           title: bodyWithDefaults.title,
           slug: bodyWithDefaults.slug,
-          price: bodyWithDefaults.price,
+          price: '5.00',
           category: bodyWithDefaults.category,
           imageUrl: bodyWithDefaults.imageUrl,
           description: bodyWithDefaults.description,
@@ -445,7 +449,7 @@ describe('Products API', () => {
         price: '$12.00',
       };
 
-      const expectedUpdated = { ...mockProduct, ...updateData };
+      const expectedUpdated = { ...mockProduct, ...updateData, price: '12.00' };
       const expectedUpdatedJson = JSON.parse(JSON.stringify(expectedUpdated));
       vi.mocked(prisma.product.update).mockResolvedValueOnce(expectedUpdated);
 
@@ -467,7 +471,7 @@ describe('Products API', () => {
           title: updateData.title,
           slug: mockProduct.slug,
           category: mockProduct.category,
-          price: updateData.price,
+          price: '12.00',
           imageUrl: mockProduct.imageUrl,
           description: mockProduct.description,
           story: mockProduct.story,
@@ -589,8 +593,13 @@ describe('Products API', () => {
     it('should successfully submit a rating and calculate running average', async () => {
       vi.mocked(prisma.order.findFirst).mockResolvedValueOnce({ id: 'order-1' } as any);
       vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(mockProduct);
+      vi.mocked(prisma.rating.create).mockResolvedValueOnce({ id: 'rating-1', rating: 3.0, productId: mockProduct.id } as any);
+      vi.mocked(prisma.rating.aggregate).mockResolvedValueOnce({
+        _avg: { rating: 4.0 },
+        _count: 3,
+      } as any);
 
-      const newRatingValue = 3.0; // ((4.5 * 2) + 3.0) / 3 = 12 / 3 = 4.0
+      const newRatingValue = 3.0;
       const expectedUpdated = {
         ...mockProduct,
         rating: 4.0,
@@ -613,6 +622,20 @@ describe('Products API', () => {
         message: 'Rating submitted successfully',
         rating: 4.0,
         ratingCount: 3,
+      });
+
+      expect(prisma.rating.create).toHaveBeenCalledWith({
+        data: {
+          productId: mockProduct.id,
+          rating: newRatingValue,
+          userId: 'admin-uuid',
+        },
+      });
+
+      expect(prisma.rating.aggregate).toHaveBeenCalledWith({
+        where: { productId: mockProduct.id },
+        _avg: { rating: true },
+        _count: true,
       });
 
       expect(prisma.product.update).toHaveBeenCalledWith({
@@ -663,6 +686,11 @@ describe('Products API', () => {
 
       vi.mocked(prisma.order.findFirst).mockResolvedValueOnce({ id: 'order-1' } as any);
       vi.mocked(prisma.product.findUnique).mockResolvedValueOnce(mockProduct);
+      vi.mocked(prisma.rating.create).mockResolvedValueOnce({ id: 'rating-2', rating: 5, productId: mockProduct.id } as any);
+      vi.mocked(prisma.rating.aggregate).mockResolvedValueOnce({
+        _avg: { rating: 4.5 },
+        _count: 1,
+      } as any);
       vi.mocked(prisma.product.update).mockResolvedValueOnce({ ...mockProduct, rating: 4.5, ratingCount: 1 });
 
       const req = new NextRequest(`http://localhost/api/products/${mockProduct.id}`, {

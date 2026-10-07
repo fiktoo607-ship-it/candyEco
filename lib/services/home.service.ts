@@ -50,6 +50,7 @@ export interface HomePageData {
 async function getFeaturedProducts(): Promise<HomeProductItem[]> {
   try {
     const dbFeatured = await prisma.product.findMany({
+      where: { state: 'exist' },
       orderBy: [
         { visibility: 'desc' },
         { createdAt: 'desc' }
@@ -258,6 +259,7 @@ async function getCarouselSlides(
       const selectedProducts = await prisma.product.findMany({
         where: {
           slug: { in: selectedSlugs },
+          state: 'exist',
         },
       });
 

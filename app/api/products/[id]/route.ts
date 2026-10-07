@@ -4,6 +4,7 @@ import { deleteImage } from '@/lib/cloudinary';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
+import { normalizePrice } from '@/lib/utils/currency';
 
 export async function GET(
   request: NextRequest,
@@ -65,6 +66,15 @@ export async function PUT(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
+    let normalizedPrice: string | undefined = undefined;
+    if (price !== undefined) {
+      try {
+        normalizedPrice = normalizePrice(price);
+      } catch {
+        return NextResponse.json({ error: 'Le prix doit être un nombre positif valide.' }, { status: 400 });
+      }
+    }
+
     const updatedProduct = await prisma.$transaction(async (tx) => {
       return await tx.product.update({
         where: { id },
@@ -72,7 +82,7 @@ export async function PUT(
           title: title !== undefined ? title : existingProduct.title,
           slug: slug !== undefined ? slug : existingProduct.slug,
           category: category !== undefined ? category : existingProduct.category,
-          price: price !== undefined ? price : existingProduct.price,
+          price: normalizedPrice !== undefined ? normalizedPrice : existingProduct.price,
           imageUrl: imageUrl !== undefined ? imageUrl : existingProduct.imageUrl,
           description: description !== undefined ? description : existingProduct.description,
           story: story !== undefined ? story : existingProduct.story,
@@ -220,26 +230,46 @@ export async function POST(
       return NextResponse.json({ error: 'Vous ne pouvez évaluer que les produits qui vous ont été livrés.' }, { status: 403 });
     }
 
-    const product = await prisma.product.findUnique({
-      where: { id }
+    const updatedProduct = await prisma.$transaction(async (tx) => {
+      const product = await tx.product.findUnique({
+        where: { id }
+      });
+
+      if (!product) {
+        return null;
+      }
+
+      await tx.rating.create({
+        data: {
+          productId: id,
+          rating,
+          userId: user?.id || null,
+        }
+      });
+
+      const aggregation = await tx.rating.aggregate({
+        where: { productId: id },
+        _avg: { rating: true },
+        _count: true,
+      });
+
+      const newAvg = aggregation._avg.rating !== null
+        ? parseFloat(aggregation._avg.rating.toFixed(2))
+        : rating;
+      const newCount = aggregation._count;
+
+      return await tx.product.update({
+        where: { id },
+        data: {
+          rating: newAvg,
+          ratingCount: newCount,
+        }
+      });
     });
 
-    if (!product) {
+    if (!updatedProduct) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
-
-    const currentRating = product.rating ?? 0.0;
-    const currentCount = product.ratingCount ?? 0;
-    const newCount = currentCount + 1;
-    const newRating = ((currentRating * currentCount) + rating) / newCount;
-
-    const updatedProduct = await prisma.product.update({
-      where: { id },
-      data: {
-        rating: parseFloat(newRating.toFixed(2)),
-        ratingCount: newCount
-      }
-    });
 
     return NextResponse.json({
       message: 'Rating submitted successfully',

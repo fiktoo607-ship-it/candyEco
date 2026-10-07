@@ -47,8 +47,8 @@ export const THEME_CONFIG: ThemeConfig = {
     description: "Une Délices d’Eva de tradition, bio et engagée.",
     contact: {
       phone: "+33695049833",
-      address: "124 Rue Baker, Quartier des Artisans, New York, NY 10001",
-      email: "contact@boulangerie-artisanale.fr",
+      address: "15 Rue de la Paix, 75002 Paris, France",
+      email: "contact@lesdelicesdeva.fr",
       hours: "Lundi - Samedi : 7h00 - 18h00 | Dimanche : Fermé",
       socialLinks: [
         {

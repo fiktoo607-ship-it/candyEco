@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useCartStore } from '@/lib/cart-store';
 import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
+import PriceDisplay from '@/components/PriceDisplay';
 
 interface ProductData {
   id: string;
@@ -64,7 +65,7 @@ export default function ProductDetailsClient({ product }: { product: ProductData
             {product.title}
           </h1>
           <p className="mt-md text-2xl font-bold text-primary">
-            {product.price}
+            <PriceDisplay price={product.price} />
           </p>
         </div>
 
