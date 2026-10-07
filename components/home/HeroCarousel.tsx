@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { containsArabic } from '@/lib/a11y';
 
 export interface CarouselSlide {
   id: string;
@@ -139,6 +140,8 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
           return (
             <div
               key={index}
+              aria-hidden={!isActive ? true : undefined}
+              inert={!isActive ? true : undefined}
               className={`absolute inset-0 h-full w-full transition-all duration-1000 ease-in-out ${
                 isActive
                   ? "opacity-100 scale-100 z-10"
@@ -163,13 +166,31 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
                   className="w-full max-w-2xl text-left text-white rounded-3xl p-sm xs:p-md md:p-12 transition-all duration-500 hover:border-white/20"
                   dir="ltr"
                 >
-                  {/* Elegant Typography */}
-                  <h1 className="mt-sm sm:mt-md font-display text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-white drop-shadow-md max-w-[15ch] md:max-w-[18ch]">
-                    {slide.title}
-                  </h1>
+                  {/* Elegant Typography - Single H1 for primary slide, H2 for subsequent slides */}
+                  {index === 0 ? (
+                    <h1 className="mt-sm sm:mt-md font-display text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-white drop-shadow-md max-w-[15ch] md:max-w-[18ch]">
+                      {containsArabic(slide.title) ? (
+                        <span lang="ar" dir="rtl">{slide.title}</span>
+                      ) : (
+                        slide.title
+                      )}
+                    </h1>
+                  ) : (
+                    <h2 className="mt-sm sm:mt-md font-display text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-white drop-shadow-md max-w-[15ch] md:max-w-[18ch]">
+                      {containsArabic(slide.title) ? (
+                        <span lang="ar" dir="rtl">{slide.title}</span>
+                      ) : (
+                        slide.title
+                      )}
+                    </h2>
+                  )}
 
                   <p className="mt-xs sm:mt-md max-w-xl text-xs xs:text-sm sm:text-lg md:text-2xl leading-relaxed text-neutral-300 font-medium line-clamp-3 sm:line-clamp-4 lg:line-clamp-none">
-                    {slide.description}
+                    {containsArabic(slide.description) ? (
+                      <span lang="ar" dir="rtl">{slide.description}</span>
+                    ) : (
+                      slide.description
+                    )}
                   </p>
 
                   {/* Action Buttons */}
@@ -200,7 +221,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
       {displaySlides.length > 1 && (
         <button
           onClick={handlePrev}
-          className="absolute left-6 top-1/2 -translate-y-1/2 z-30 hidden md:flex h-12 w-12 items-center justify-center text-white opacity-60 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300"
+          className="absolute left-6 top-1/2 -translate-y-1/2 z-30 hidden md:flex h-12 w-12 items-center justify-center text-white opacity-60 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           aria-label="Previous Slide"
         >
           <svg
@@ -224,7 +245,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
       {displaySlides.length > 1 && (
         <button
           onClick={handleNext}
-          className="absolute right-6 top-1/2 -translate-y-1/2 z-30 hidden md:flex h-12 w-12 items-center justify-center text-white opacity-60 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300"
+          className="absolute right-6 top-1/2 -translate-y-1/2 z-30 hidden md:flex h-12 w-12 items-center justify-center text-white opacity-60 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           aria-label="Next Slide"
         >
           <svg
@@ -253,12 +274,13 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
               <button
                 key={index}
                 onClick={() => handleDotClick(index)}
-                className={`h-3 transition-all duration-300 ease-out rounded-full ${
+                className={`h-3 transition-all duration-300 ease-out rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   isActive
                     ? "w-12 bg-[#2a1082] shadow-md shadow-[#2a1082]/50"
                     : "w-3 bg-white/40 hover:bg-white/70 hover:scale-110"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
+                aria-current={isActive ? "true" : undefined}
               />
             );
           })}

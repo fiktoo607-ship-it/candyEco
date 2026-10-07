@@ -6,14 +6,8 @@ import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
 import ProductCard from '@/components/ProductCard';
 import SearchBar from '@/components/SearchBar';
 import { useBakeryStore } from '@/lib/store';
-import dictionary from '@/lib/copy-dictionary.json';
 import { containsArabic } from '@/lib/a11y';
-
-const filters = [
-  { value: 'all', label: dictionary.productBrowser.filters.all },
-  { value: 'gâteau', label: dictionary.productBrowser.filters.gateau },
-  { value: 'aliments traditionnel', label: dictionary.productBrowser.filters.traditional }
-] as const;
+import CategoryFilter from '@/components/category-filter';
 
 function ProductCardSkeleton() {
   return (
@@ -240,9 +234,11 @@ export default function ProductBrowser() {
               <button
                 type="button"
                 onClick={() => setIsFilterModalOpen(true)}
-                className="w-full h-12 rounded-full border border-outline-variant bg-surface-container-low text-xs sm:text-sm font-semibold text-primary hover:bg-surface-container-high transition-colors flex items-center justify-center gap-xs"
+                aria-expanded={isFilterModalOpen}
+                aria-haspopup="dialog"
+                className="w-full h-12 rounded-full border border-outline-variant bg-surface-container-low text-xs sm:text-sm font-semibold text-primary hover:bg-surface-container-high transition-colors flex items-center justify-center gap-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
-                <span className="material-symbols-outlined text-lg">filter_alt</span>
+                <span className="material-symbols-outlined text-lg" aria-hidden="true">filter_alt</span>
                 Catégories
               </button>
             </div>
@@ -297,27 +293,11 @@ export default function ProductBrowser() {
             <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
               Catégorie
             </label>
-            <div className="flex flex-col gap-xs w-full">
-              {filters.map((filter) => {
-                const active = activeCategory === filter.value;
-                return (
-                  <button
-                    key={filter.value}
-                    type="button"
-                    onClick={() => {
-                      setActiveCategory(filter.value as typeof activeCategory);
-                    }}
-                    className={`text-left rounded-lg px-md py-xs text-sm font-semibold transition-all whitespace-nowrap ${
-                      active 
-                        ? 'bg-primary-container text-on-primary-container border-l-4 border-primary pl-3' 
-                        : 'text-on-surface-variant hover:bg-surface-variant/40 hover:text-primary'
-                    }`}
-                  >
-                    {filter.label}
-                  </button>
-                );
-              })}
-            </div>
+            <CategoryFilter
+              activeCategory={activeCategory}
+              onSelectCategory={(cat) => setActiveCategory(cat as typeof activeCategory)}
+              variant="vertical"
+            />
           </div>
         </aside>
 
@@ -368,40 +348,27 @@ export default function ProductBrowser() {
           <div className="w-full max-w-sm rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-lg space-y-md animate-scale-up">
             <header className="flex items-center justify-between border-b border-outline-variant/20 pb-xs">
               <h3 className="font-display text-lg font-bold text-on-surface flex items-center gap-xs">
-                <span className="material-symbols-outlined text-primary">filter_alt</span>
+                <span className="material-symbols-outlined text-primary" aria-hidden="true">filter_alt</span>
                 Filtrer par catégorie
               </h3>
               <button
                 type="button"
                 onClick={() => setIsFilterModalOpen(false)}
-                className="rounded-full p-xs text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                className="rounded-full p-xs text-on-surface-variant hover:bg-surface-container-low transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                aria-label="Fermer la boîte de sélection des catégories"
               >
-                <span className="material-symbols-outlined text-lg select-none">close</span>
+                <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">close</span>
               </button>
             </header>
             
-            <div className="flex flex-col gap-sm py-xs">
-              {filters.map((filter) => {
-                const active = activeCategory === filter.value;
-                return (
-                  <button
-                    key={filter.value}
-                    type="button"
-                    onClick={() => {
-                      setActiveCategory(filter.value as typeof activeCategory);
-                      setIsFilterModalOpen(false);
-                    }}
-                    className={`text-left rounded-lg px-md py-sm text-sm font-semibold transition-all ${
-                      active 
-                        ? 'bg-primary text-white border-l-4 border-secondary pl-3 shadow-soft' 
-                        : 'text-on-surface-variant bg-surface-container-low hover:bg-surface-container-high hover:text-primary'
-                    }`}
-                  >
-                    {filter.label}
-                  </button>
-                );
-              })}
-            </div>
+            <CategoryFilter
+              activeCategory={activeCategory}
+              onSelectCategory={(cat) => {
+                setActiveCategory(cat as typeof activeCategory);
+                setIsFilterModalOpen(false);
+              }}
+              variant="modal"
+            />
           </div>
         </div>
       )}
