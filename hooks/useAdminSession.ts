@@ -8,12 +8,32 @@ const DEVICE_ID_KEY = 'admin_device_id';
 const DEVICE_MODEL_KEY = 'admin_device_model';
 const HEARTBEAT_INTERVAL_MS = 45000;
 
+/**
+ * Cryptographically secure random device identifier generator (CSPRNG).
+ * Uses crypto.randomUUID() when supported, or Web Crypto API
+ * crypto.getRandomValues(new Uint8Array(16)) formatted as hexadecimal string.
+ * Strictly avoids insecure Math.random().
+ */
+export function generateSecureDeviceId(): string {
+  if (typeof crypto !== 'undefined') {
+    if (typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    if (typeof crypto.getRandomValues === 'function') {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+    }
+  }
+  throw new Error('CSPRNG unavailable for secure device ID generation');
+}
+
 export function getOrCreateAdminDeviceId(): string {
   if (typeof window === 'undefined') return 'default_device';
   try {
     let id = localStorage.getItem(DEVICE_ID_KEY);
     if (!id) {
-      id = 'dev_' + (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36));
+      id = 'dev_' + generateSecureDeviceId();
       localStorage.setItem(DEVICE_ID_KEY, id);
     }
     return id;
