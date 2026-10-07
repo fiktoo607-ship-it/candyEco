@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import AboutHero from '@/components/about/AboutHero';
@@ -6,6 +7,11 @@ import ValuesSection from '@/components/about/ValuesSection';
 import { getDictionaryWithDbOverrides } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'À Propos',
+  description: 'Découvrez notre histoire, nos valeurs et nos engagements artisanaux.',
+};
 
 export default async function AboutPage() {
   const dictionary = await getDictionaryWithDbOverrides();

@@ -19,7 +19,10 @@ const fredoka = Fredoka({
 });
 
 export const metadata: Metadata = {
-  title: THEME_CONFIG.brand.name,
+  title: {
+    default: 'Candy Eco',
+    template: '%s | Candy Eco',
+  },
   description: THEME_CONFIG.brand.description,
   applicationName: THEME_CONFIG.brand.name,
   appleWebApp: {

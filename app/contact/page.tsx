@@ -1,8 +1,14 @@
+import type { Metadata } from 'next';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ContactHero from '@/components/contact/ContactHero';
 import ContactLinksCard from '@/components/contact/ContactLinksCard';
 import BakeryVisitCard from '@/components/contact/BakeryVisitCard';
+
+export const metadata: Metadata = {
+  title: 'Contact',
+  description: 'Contactez Candy Eco ou visitez notre boutique artisanale.',
+};
 
 export default function ContactPage() {
   return (
