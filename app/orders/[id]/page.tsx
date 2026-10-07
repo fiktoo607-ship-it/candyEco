@@ -8,6 +8,7 @@ import SiteFooter from '@/components/site-footer';
 import { Order } from '@/lib/hooks/use-orders';
 import PriceDisplay from '@/components/PriceDisplay';
 import { ORDER_STATUS_CONFIG, isValidStatusTransition } from '@/types/orderStatusConfig';
+import { containsArabic } from '@/lib/a11y';
 
 export default function OrderTrackingPage() {
   const params = useParams();
@@ -293,7 +294,11 @@ export default function OrderTrackingPage() {
                       >
                         <div className="flex flex-col flex-1 min-w-0">
                           <span className="font-bold text-on-surface text-sm line-clamp-1">
-                            {item.product?.title || "Produit"}
+                            {containsArabic(item.product?.title) ? (
+                              <span lang="ar" dir="rtl">{item.product?.title}</span>
+                            ) : (
+                              item.product?.title || "Produit"
+                            )}
                           </span>
                           <span className="text-xs text-on-surface-variant whitespace-nowrap">
                             Prix unitaire: <PriceDisplay price={item.priceAtPurchase} />

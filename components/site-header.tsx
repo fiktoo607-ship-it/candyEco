@@ -117,7 +117,11 @@ export default function SiteHeader() {
             })}
           </nav>
           {mounted && <PwaInstallButton />}
-          <Link href="/cart" className="relative flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-3 text-primary hover:bg-surface-container-low transition-colors ml-sm">
+          <Link
+            href="/cart"
+            aria-label="Voir le panier"
+            className="relative flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-3 text-primary hover:bg-surface-container-low transition-colors ml-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
             <ShoppingCartIcon className="h-6 w-6" />
             {mounted && totalItemsCount > 0 && (
               <span
@@ -185,7 +189,11 @@ export default function SiteHeader() {
         {/* Mobile Actions */}
         <div className="flex items-center gap-2 lg:hidden">
           {mounted && <PwaInstallButton />}
-          <Link href="/cart" className="relative flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-2 text-primary">
+          <Link
+            href="/cart"
+            aria-label="Voir le panier"
+            className="relative flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-2 text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
             <ShoppingCartIcon className="h-6 w-6" />
             {mounted && totalItemsCount > 0 && (
               <span
@@ -199,7 +207,7 @@ export default function SiteHeader() {
           <button
             type="button"
             onClick={toggleMobileMenu}
-            className="inline-flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-2 text-primary"
+            className="inline-flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-2 text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}

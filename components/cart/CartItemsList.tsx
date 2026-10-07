@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { useCartStore } from '@/lib/cart-store';
 import dictionary from '@/lib/copy-dictionary.json';
 import PriceDisplay from '@/components/PriceDisplay';
+import { containsArabic } from '@/lib/a11y';
 
 export default function CartItemsList() {
   const { items, removeItem, updateQuantity } = useCartStore();
@@ -28,7 +29,13 @@ export default function CartItemsList() {
               </div>
 
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-lg text-on-surface line-clamp-1">{item.product.title}</h3>
+                <h3 className="font-semibold text-lg text-on-surface line-clamp-1">
+                  {containsArabic(item.product.title) ? (
+                    <span lang="ar" dir="rtl">{item.product.title}</span>
+                  ) : (
+                    item.product.title
+                  )}
+                </h3>
                 <p className="text-sm text-on-surface-variant mt-xs">{item.product.category}</p>
                 <p className="text-primary font-bold mt-xs"><PriceDisplay price={item.product.price} /></p>
                 {minQty > 1 && (
@@ -60,18 +67,20 @@ export default function CartItemsList() {
                 <div className="flex items-center border border-outline-variant rounded-lg overflow-hidden bg-surface-container-low h-9">
                   <button
                     type="button"
+                    aria-label="Diminuer la quantité"
                     onClick={() => updateQuantity(item.product.id, Math.max(minQty, item.quantity - 1))}
                     disabled={item.quantity <= minQty}
                     title={item.quantity <= minQty ? `Minimum: ${minQty}` : undefined}
-                    className="px-sm py-1 hover:bg-surface-container-high font-bold transition-colors text-on-surface-variant disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="px-sm py-1 hover:bg-surface-container-high font-bold transition-colors text-on-surface-variant disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
                     -
                   </button>
                   <span className="px-md font-bold text-on-surface">{item.quantity}</span>
                   <button
                     type="button"
+                    aria-label="Augmenter la quantité"
                     onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                    className="px-sm py-1 hover:bg-surface-container-high font-bold transition-colors text-on-surface-variant"
+                    className="px-sm py-1 hover:bg-surface-container-high font-bold transition-colors text-on-surface-variant focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
                     +
                   </button>
@@ -79,15 +88,16 @@ export default function CartItemsList() {
 
                 <button
                   type="button"
+                  aria-label="Supprimer cet article"
                   onClick={() => {
                     if (window.confirm("Voulez-vous vraiment supprimer cet article de votre panier ?")) {
                       removeItem(item.product.id);
                     }
                   }}
-                  className="rounded-lg p-2 text-error hover:bg-error/10 transition-colors flex items-center justify-center"
+                  className="rounded-lg p-2 text-error hover:bg-error/10 transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   title={dictionary.cart.list.remove}
                 >
-                  <span className="material-symbols-outlined text-lg">delete</span>
+                  <span className="material-symbols-outlined text-lg" aria-hidden="true">delete</span>
                 </button>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { containsArabic } from '@/lib/a11y';
 
 interface ProductTagsEditorProps {
   tags: string[];
@@ -29,12 +30,12 @@ export function ProductTagsEditor({
           value={newTagInput}
           onChange={(e) => setNewTagInput(e.target.value)}
           onKeyDown={onTagKeyDown}
-          className="flex-1 rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+          className="flex-1 rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary"
         />
         <button
           type="button"
           onClick={onAddTag}
-          className="rounded-xl bg-secondary-container px-md py-sm text-sm font-bold text-on-secondary-container hover:bg-outline-variant/30 transition-all flex items-center justify-center"
+          className="rounded-xl bg-secondary-container px-md py-sm text-sm font-bold text-on-secondary-container hover:bg-outline-variant/30 transition-all flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           Ajouter
         </button>
@@ -46,14 +47,19 @@ export function ProductTagsEditor({
               key={tag}
               className="inline-flex items-center gap-xs rounded-full bg-primary/10 border border-primary/20 px-sm py-1 text-xs font-bold text-primary transition-all animate-scale-up"
             >
-              {tag}
+              {containsArabic(tag) ? (
+                <span lang="ar" dir="rtl">{tag}</span>
+              ) : (
+                tag
+              )}
               <button
                 type="button"
                 onClick={() => onRemoveTag(tag)}
-                className="rounded-full p-[2px] text-primary/60 hover:bg-primary/20 hover:text-primary transition-colors flex items-center justify-center"
+                aria-label={`Supprimer le tag ${tag}`}
+                className="rounded-full p-[2px] text-primary/60 hover:bg-primary/20 hover:text-primary transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 title="Supprimer"
               >
-                <span className="material-symbols-outlined text-xs select-none">close</span>
+                <span className="material-symbols-outlined text-xs select-none" aria-hidden="true">close</span>
               </button>
             </span>
           ))}

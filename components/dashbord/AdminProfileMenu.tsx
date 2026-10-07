@@ -34,7 +34,7 @@ export default function AdminProfileMenu() {
       type="button"
       suppressHydrationWarning
       onClick={handleGoToProfile}
-      className={`group relative flex h-12 w-12 items-center justify-center rounded-full border transition-all duration-200 select-none focus:outline-none focus:ring-2 focus:ring-primary/30 shadow-soft cursor-pointer active:scale-95 ${
+      className={`group relative flex h-12 w-12 items-center justify-center rounded-full border transition-all duration-200 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 shadow-soft cursor-pointer active:scale-95 ${
         isProfileActive
           ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/20"
           : "border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface-container-low hover:border-primary/40"

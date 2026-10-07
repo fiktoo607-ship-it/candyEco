@@ -43,7 +43,7 @@ export default function FaqSection({ faqs }: FaqSectionProps) {
               {/* Accordion Header */}
               <button
                 onClick={() => toggleAccordion(index)}
-                className="w-full flex items-center justify-between gap-md p-md text-left focus:outline-none transition-colors hover:bg-surface-container-high"
+                className="w-full flex items-center justify-between gap-md p-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-colors hover:bg-surface-container-high"
                 aria-expanded={isOpen}
               >
                 <span className="font-display text-base md:text-lg font-bold text-on-surface leading-snug">
@@ -53,6 +53,7 @@ export default function FaqSection({ faqs }: FaqSectionProps) {
                   className={`material-symbols-outlined shrink-0 text-primary transition-transform duration-300 ${
                     isOpen ? 'rotate-180' : ''
                   }`}
+                  aria-hidden="true"
                 >
                   keyboard_arrow_down
                 </span>

@@ -7,6 +7,7 @@ import { useCartStore } from '@/lib/cart-store';
 import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
 import PriceDisplay from '@/components/PriceDisplay';
+import { containsArabic } from '@/lib/a11y';
 
 export interface ProductCardProps {
   product: {
@@ -91,10 +92,14 @@ export default function ProductCard({ product }: ProductCardProps) {
           </p>
           <Link
             href={`/our-product/${product.slug}`}
-            className="hover:text-primary transition-colors"
+            className="hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
           >
             <h3 className="font-display text-lg sm:text-2xl font-bold text-on-surface line-clamp-1">
-              {product.title}
+              {containsArabic(product.title) ? (
+                <span lang="ar" dir="rtl">{product.title}</span>
+              ) : (
+                product.title
+              )}
             </h3>
           </Link>
           {/* Product Tags (up to 3) */}
@@ -105,7 +110,11 @@ export default function ProductCard({ product }: ProductCardProps) {
                   key={tag}
                   className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-primary border border-primary/20"
                 >
-                  #{tag}
+                  {containsArabic(tag) ? (
+                    <span lang="ar" dir="rtl">#{tag}</span>
+                  ) : (
+                    `#${tag}`
+                  )}
                 </span>
               ))}
             </div>
@@ -113,7 +122,11 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         <p className="mt-xs sm:mt-sm flex-grow text-xs sm:text-base leading-normal sm:leading-8 text-on-surface-variant line-clamp-2">
-          {product.description}
+          {containsArabic(product.description) ? (
+            <span lang="ar" dir="rtl">{product.description}</span>
+          ) : (
+            product.description
+          )}
         </p>
 
         <div className="mt-sm sm:mt-md border-t border-surface-variant pt-sm flex flex-col gap-sm">

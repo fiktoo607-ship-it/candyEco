@@ -7,6 +7,7 @@ import ProductCard from '@/components/ProductCard';
 import SearchBar from '@/components/SearchBar';
 import { useBakeryStore } from '@/lib/store';
 import dictionary from '@/lib/copy-dictionary.json';
+import { containsArabic } from '@/lib/a11y';
 
 const filters = [
   { value: 'all', label: dictionary.productBrowser.filters.all },
@@ -200,7 +201,7 @@ export default function ProductBrowser() {
                   }}
                   onFocus={() => setShowTagDropdown(true)}
                   placeholder="Tag (ex: amande)..."
-                  className="w-full h-12 pl-11 pr-4 rounded-full border border-outline-variant bg-surface-container-low text-xs sm:text-base text-on-surface placeholder-outline outline-none transition-all focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
+                  className="w-full h-12 pl-11 pr-4 rounded-full border border-outline-variant bg-surface-container-low text-xs sm:text-base text-on-surface placeholder-outline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary focus:bg-surface-container-lowest"
                 />
                 {/* Tag Search Dropdown */}
                 {showTagDropdown && (
@@ -218,10 +219,14 @@ export default function ProductBrowser() {
                           key={tag}
                           type="button"
                           onClick={() => handleSelectTag(tag)}
-                          className="w-full text-left px-md py-sm text-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors font-medium flex items-center gap-xs"
+                          className="w-full text-left px-md py-sm text-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors font-medium flex items-center gap-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
                         >
                           <span className="text-primary font-bold">#</span>
-                          {tag}
+                          {containsArabic(tag) ? (
+                            <span lang="ar" dir="rtl">{tag}</span>
+                          ) : (
+                            tag
+                          )}
                         </button>
                       ))
                     )}
@@ -255,14 +260,18 @@ export default function ProductBrowser() {
                 key={tag}
                 className="inline-flex items-center gap-xxs rounded-full bg-primary-container pl-sm pr-xs py-[4px] text-xs font-bold text-on-primary-container shadow-sm transition-transform hover:scale-[1.02]"
               >
-                #{tag}
+                {containsArabic(tag) ? (
+                  <span lang="ar" dir="rtl">#{tag}</span>
+                ) : (
+                  `#${tag}`
+                )}
                 <button
                   type="button"
                   onClick={() => handleRemoveTag(tag)}
-                  className="flex items-center justify-center p-0.5 rounded-full hover:bg-on-primary-container/10 text-on-primary-container transition-colors"
+                  className="flex items-center justify-center p-0.5 rounded-full hover:bg-on-primary-container/10 text-on-primary-container transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
                   aria-label={`Supprimer le tag ${tag}`}
                 >
-                  <span className="material-symbols-outlined text-[14px] leading-none select-none">
+                  <span className="material-symbols-outlined text-[14px] leading-none select-none" aria-hidden="true">
                     close
                   </span>
                 </button>

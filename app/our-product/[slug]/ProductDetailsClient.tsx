@@ -5,6 +5,7 @@ import { useCartStore } from '@/lib/cart-store';
 import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
 import PriceDisplay from '@/components/PriceDisplay';
+import { containsArabic } from '@/lib/a11y';
 
 interface ProductData {
   id: string;
@@ -62,7 +63,11 @@ export default function ProductDetailsClient({ product }: { product: ProductData
             {product.category}
           </span>
           <h1 className="font-display text-4xl font-bold text-on-surface mt-sm">
-            {product.title}
+            {containsArabic(product.title) ? (
+              <span lang="ar" dir="rtl">{product.title}</span>
+            ) : (
+              product.title
+            )}
           </h1>
           <p className="mt-md text-2xl font-bold text-primary">
             <PriceDisplay price={product.price} />
@@ -72,14 +77,22 @@ export default function ProductDetailsClient({ product }: { product: ProductData
         <div className="border-t border-outline-variant/20 pt-md">
           <h2 className="text-lg font-bold text-on-surface-variant">{dictionary.productDetails.description}</h2>
           <p className="mt-xs text-base leading-8 text-on-surface-variant">
-            {product.description}
+            {containsArabic(product.description) ? (
+              <span lang="ar" dir="rtl">{product.description}</span>
+            ) : (
+              product.description
+            )}
           </p>
         </div>
 
         <div className="border-t border-outline-variant/20 pt-md">
           <h2 className="text-lg font-bold text-on-surface-variant">{dictionary.productDetails.story}</h2>
           <p className="mt-xs text-base leading-8 text-on-surface-variant italic">
-            {product.story}
+            {containsArabic(product.story) ? (
+              <span lang="ar" dir="rtl">{product.story}</span>
+            ) : (
+              product.story
+            )}
           </p>
         </div>
 

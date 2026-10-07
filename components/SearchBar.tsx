@@ -45,17 +45,17 @@ export default function SearchBar({ value, onChange, placeholder = "Rechercher u
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           onFocus={onFocus}
-          className="w-full h-12 pl-12 pr-12 rounded-full border border-outline-variant bg-surface-container-low text-base text-on-surface placeholder-outline outline-none transition-all focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
+          className="w-full h-12 pl-12 pr-12 rounded-full border border-outline-variant bg-surface-container-low text-base text-on-surface placeholder-outline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary focus:bg-surface-container-lowest"
         />
         {/* Reset (Clear) Button */}
         {value && (
           <button
             type="button"
             onClick={() => onChange("")}
-            className="absolute right-4 flex items-center justify-center p-1 rounded-full text-outline hover:text-on-surface hover:bg-surface-variant transition-colors"
+            className="absolute right-4 flex items-center justify-center p-1 rounded-full text-outline hover:text-on-surface hover:bg-surface-variant transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
             aria-label="Effacer la recherche"
           >
-            <span className="material-symbols-outlined text-lg select-none">
+            <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
               close
             </span>
           </button>

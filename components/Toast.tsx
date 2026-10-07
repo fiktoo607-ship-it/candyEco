@@ -46,10 +46,10 @@ export default function Toast({
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 rounded-lg p-1 text-white/80 transition-colors hover:bg-white/20 hover:text-white focus:outline-none"
+          className="shrink-0 rounded-lg p-1 text-white/80 transition-colors hover:bg-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
           aria-label="Fermer"
         >
-          <span className="material-symbols-outlined text-lg select-none">close</span>
+          <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">close</span>
         </button>
       </div>
     </div>
