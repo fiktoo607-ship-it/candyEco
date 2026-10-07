@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 import { deleteImage } from '@/lib/cloudinary';
 import { getServerSession } from 'next-auth';
+import { ensureProductTags } from '@/lib/tags';
 
 // Mock Cloudinary
 vi.mock('@/lib/cloudinary', () => ({
@@ -16,6 +17,11 @@ vi.mock('@/lib/cloudinary', () => ({
     result: 'ok',
   }),
   getPublicIdFromUrl: vi.fn().mockReturnValue('products/mock'),
+}));
+
+// Mock tags helper
+vi.mock('@/lib/tags', () => ({
+  ensureProductTags: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock next-auth session
@@ -137,6 +143,30 @@ describe('Products API', () => {
       expect(data[0].rating).toBe(4.5);
     });
 
+    it('should return 401 when dashboard=true query parameter is present without authenticated session', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(null);
+
+      const req = new NextRequest('http://localhost/api/products?dashboard=true');
+      const response = await getProducts(req);
+      expect(response.status).toBe(401);
+
+      const data = await response.json();
+      expect(data).toEqual({ error: 'Unauthorized' });
+    });
+
+    it('should return 401 when dashboard=true query parameter is present and user role is not admin', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({
+        user: { id: 'user-uuid', role: 'user', name: 'User', email: 'user@example.com' },
+      } as any);
+
+      const req = new NextRequest('http://localhost/api/products?dashboard=true');
+      const response = await getProducts(req);
+      expect(response.status).toBe(401);
+
+      const data = await response.json();
+      expect(data).toEqual({ error: 'Unauthorized' });
+    });
+
     it('should filter products dynamically by category when category query parameter is present', async () => {
       const mockProducts = [
         { ...mockProduct, id: 'prod-uuid-1', category: 'Cakes' },
@@ -233,6 +263,54 @@ describe('Products API', () => {
           tags: true,
         },
       });
+    });
+
+    it('should call ensureProductTags when tags are empty or omitted', async () => {
+      const req = new NextRequest('http://localhost/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validBody),
+      });
+
+      const expectedCreated = {
+        ...mockProduct,
+        ...validBody,
+        id: 'new-product-id',
+        publishedAt: new Date(validBody.publishedAt),
+      };
+
+      vi.mocked(prisma.product.create).mockResolvedValueOnce(expectedCreated);
+
+      const response = await createProduct(req);
+      expect(response.status).toBe(201);
+      expect(ensureProductTags).toHaveBeenCalledWith('new-product-id');
+    });
+
+    it('should not call ensureProductTags when tags are provided', async () => {
+      const bodyWithTags = {
+        ...validBody,
+        tags: ['شوكولا', 'سكر'],
+      };
+
+      const req = new NextRequest('http://localhost/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyWithTags),
+      });
+
+      const expectedCreated = {
+        ...mockProduct,
+        ...bodyWithTags,
+        id: 'tagged-product-id',
+        tags: [{ name: 'شوكولا' }, { name: 'سكر' }],
+        publishedAt: new Date(bodyWithTags.publishedAt),
+      };
+
+      vi.mocked(prisma.product.create).mockResolvedValueOnce(expectedCreated as any);
+
+      const response = await createProduct(req);
+      expect(response.status).toBe(201);
+      expect(ensureProductTags).not.toHaveBeenCalled();
     });
 
     it('should store custom rating value when specified in body', async () => {

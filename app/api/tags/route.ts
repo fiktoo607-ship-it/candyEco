@@ -1,14 +1,10 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { ensureProductTags } from '@/lib/tags';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    // Ensure all products in the database have their tags assigned first
-    await ensureProductTags();
-
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q');
 

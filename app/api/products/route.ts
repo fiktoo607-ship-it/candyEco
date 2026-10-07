@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { normalizePrice } from "@/lib/utils/currency";
+import { ensureProductTags } from "@/lib/tags";
 
 export async function GET(request?: NextRequest) {
   try {
@@ -19,7 +20,16 @@ export async function GET(request?: NextRequest) {
 
     if (request) {
       const { searchParams } = new URL(request.url);
-      isDashboard = searchParams.get('dashboard') === 'true';
+      const isDashboardParam = searchParams.get('dashboard') === 'true';
+
+      if (isDashboardParam) {
+        const session = await getServerSession(authOptions);
+        if (!session || (session.user as any)?.role !== 'admin') {
+          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        isDashboard = true;
+      }
+
       pageStr = searchParams.get('page');
       limitStr = searchParams.get('limit');
       const category = searchParams.get('category');
@@ -170,6 +180,10 @@ export async function POST(request: NextRequest) {
         tags: true
       }
     });
+
+    if (!tags || (Array.isArray(tags) && tags.length === 0)) {
+      await ensureProductTags(newProduct.id);
+    }
 
     return NextResponse.json({
       ...newProduct,

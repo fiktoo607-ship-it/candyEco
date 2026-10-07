@@ -25,7 +25,7 @@ describe('Tags API', () => {
     vi.clearAllMocks();
   });
 
-  it('should call ensureProductTags first', async () => {
+  it('should be idempotent and not call ensureProductTags on GET', async () => {
     vi.mocked(prisma.tag.findMany).mockResolvedValueOnce([
       { id: 'tag-1', name: 'لوز' },
       { id: 'tag-2', name: 'بندق' }
@@ -35,7 +35,7 @@ describe('Tags API', () => {
     const res = await getTags(req);
     expect(res.status).toBe(200);
 
-    expect(ensureProductTags).toHaveBeenCalledTimes(1);
+    expect(ensureProductTags).not.toHaveBeenCalled();
     expect(prisma.tag.findMany).toHaveBeenCalledWith({
       where: {
         products: {
