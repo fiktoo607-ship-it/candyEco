@@ -459,7 +459,8 @@ searchBakeryCatalog();
 For business inquiries, customized deployments, or operational questions:
 - **Brand:** Délices d’Eva
 - **Phone:** `+33 6 95 04 98 33`
-- **Email:** `contact@boulangerie-artisanale.fr`
+- **Email:** `contact@lesdelicesdeva.fr`
+- **Address:** `15 Rue de la Paix, 75002 Paris, France`
 - **Opening Hours:** Lundi - Samedi : 7h00 - 18h00 | Dimanche : Fermé
 - **Social Media:**
   - Instagram: [@lesdelices.d.eva](https://www.instagram.com/lesdelices.d.eva)

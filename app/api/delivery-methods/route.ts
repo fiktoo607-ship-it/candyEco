@@ -27,12 +27,32 @@ export async function GET() {
     const session = await getServerSession(authOptions);
     const isAdmin = session?.user?.role === 'admin';
 
+    try {
+      await prisma.deliveryMethod.updateMany({
+        where: {
+          name: { contains: 'yalidin', mode: 'insensitive' },
+        },
+        data: {
+          name: 'Yalidine Express',
+        },
+      });
+    } catch {
+      // Ignore if DB operation fails or table not yet migrated
+    }
+
     const methods = await prisma.deliveryMethod.findMany({
       where: isAdmin ? {} : { active: true },
       orderBy: { name: 'asc' },
     });
 
-    return NextResponse.json(methods);
+    const sanitizedMethods = methods.map((m) => {
+      if (m.name.toLowerCase().includes('yalidin')) {
+        return { ...m, name: 'Yalidine Express' };
+      }
+      return m;
+    });
+
+    return NextResponse.json(sanitizedMethods);
   } catch (error) {
     const err = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ error: err }, { status: 500 });

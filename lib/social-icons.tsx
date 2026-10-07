@@ -52,3 +52,24 @@ export function SocialIcon({ label, className }: SocialIconProps) {
       return <TikTokIcon className={className} />;
   }
 }
+
+export const INSTAGRAM_URL = 'https://www.instagram.com/lesdelices.d.eva?igsh=aDQwZGYyMXNpeG5n';
+export const TIKTOK_URL = 'https://www.tiktok.com/@les.delices.d.eva?_r=1&_t=ZS-96y0UWvpi3o';
+
+/**
+ * Returns the verified URL for a social platform.
+ * Fixes any wrong mapping such as Instagram pointing to TikTok.
+ */
+export function getSocialLink(label: SocialLabel, customHref?: string): string {
+  if (label === 'Instagram') {
+    if (customHref && !customHref.includes('tiktok.com') && customHref !== '#') {
+      return customHref;
+    }
+    return INSTAGRAM_URL;
+  }
+  if (label === 'TikTok') {
+    return customHref && customHref !== '#' ? customHref : TIKTOK_URL;
+  }
+  return customHref || '#';
+}
+

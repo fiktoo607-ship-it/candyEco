@@ -259,7 +259,9 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
                 />
                 <div className="flex flex-col">
                   <span className="text-sm font-bold text-on-surface">
-                    {method.name === 'Home Delivery'
+                    {method.name.toLowerCase().includes('yalidin')
+                      ? 'Yalidine Express'
+                      : method.name === 'Home Delivery'
                       ? 'Livraison à domicile'
                       : method.name === 'Office Pickup'
                       ? 'Retrait au bureau'
