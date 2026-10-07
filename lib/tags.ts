@@ -1,6 +1,6 @@
 import { prisma } from './prisma';
 
-export async function ensureProductTags() {
+export async function ensureProductTags(productId?: string) {
   if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
     return;
   }
@@ -9,7 +9,8 @@ export async function ensureProductTags() {
     where: {
       tags: {
         none: {}
-      }
+      },
+      ...(productId ? { id: productId } : {})
     },
     select: {
       id: true,
