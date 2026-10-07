@@ -42,6 +42,7 @@ vi.mock('@/lib/prisma', () => {
       create: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       findFirst: vi.fn(),
       groupBy: vi.fn().mockResolvedValue([]),
     },
@@ -85,11 +86,13 @@ vi.mock('@/lib/prisma', () => {
 });
 
 import { resetRateLimiter } from '@/lib/rate-limiter';
+import { resetIdempotencyStore } from '@/lib/idempotency';
 
 describe('Orders API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetRateLimiter();
+    resetIdempotencyStore();
     vi.mocked(prisma.order.create).mockImplementation(((args: any) =>
       Promise.resolve({
         id: 'order-uuid-123',
@@ -540,6 +543,83 @@ describe('Orders API', () => {
 
       const data = await response.json();
       expect(data).toEqual({ error: 'Transaction lock timeout' });
+    });
+
+    it('should handle concurrent orders with same Idempotency-Key atomically and execute creation only once', async () => {
+      vi.mocked(prisma.product.findMany).mockResolvedValue(mockDbProducts as any);
+      const createdOrder = {
+        id: 'order-idempotent-1',
+        reference: 'ORD-20261007-001',
+        totalPrice: '$25.00',
+        totalAmount: 25.0,
+        status: 'PENDING',
+        customerName: validPayload.customerName,
+        customerPhone: validPayload.customerPhone,
+        shippingAddress: validPayload.shippingAddress,
+      };
+      vi.mocked(prisma.order.create).mockResolvedValue(createdOrder as any);
+
+      const idempotencyKey = 'unique-key-12345';
+      const req1 = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify(validPayload),
+      });
+
+      const req2 = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify(validPayload),
+      });
+
+      // Fire both requests concurrently in the same split second
+      const [res1, res2] = await Promise.all([createOrder(req1), createOrder(req2)]);
+
+      expect(res1.status).toBe(201);
+      expect(res2.status).toBe(201);
+
+      const data1 = await res1.json();
+      const data2 = await res2.json();
+      expect(data1).toEqual(data2);
+
+      // Verify prisma.order.create was only executed once
+      expect(prisma.order.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw 400 immediately within transaction when product limitBay is exceeded', async () => {
+      const limitedProducts = [
+        {
+          id: 'prod-1',
+          title: 'Limited Cake',
+          price: '$10.00',
+          state: 'exist',
+          limitBay: 1,
+        },
+      ];
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(limitedProducts as any);
+
+      const payload = {
+        ...validPayload,
+        items: [{ productId: 'prod-1', quantity: 5 }],
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const res = await createOrder(req);
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain('dépasse la limite autorisée');
+      expect(prisma.order.create).not.toHaveBeenCalled();
     });
 
     it('should fall back to guest checkout (userId = null) when user session has a stale user ID that does not exist in the database', async () => {
@@ -1067,6 +1147,41 @@ describe('Orders API', () => {
 
       const data = await response.json();
       expect(data).toEqual({ error: 'Failed to update order' });
+    });
+
+    it('should return 409 Conflict when concurrent update modifies order status (updateMany count is 0)', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'admin-1', role: 'admin' } } as any);
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockOrder as any);
+      vi.mocked(prisma.order.updateMany).mockResolvedValueOnce({ count: 0 }); // Concurrently modified!
+
+      const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ACCEPTED' }),
+      });
+
+      const response = await updateOrder(req, { params: Promise.resolve({ id: mockOrder.id }) });
+      expect(response.status).toBe(409);
+      const data = await response.json();
+      expect(data.error).toContain('Conflit');
+      expect(prisma.order.update).not.toHaveBeenCalled();
+    });
+
+    it('should return 409 Conflict when client expectedStatus does not match current order status', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'admin-1', role: 'admin' } } as any);
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockOrder as any); // mockOrder has status 'PENDING'
+
+      const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ACCEPTED', expectedStatus: 'DELIVERED' }),
+      });
+
+      const response = await updateOrder(req, { params: Promise.resolve({ id: mockOrder.id }) });
+      expect(response.status).toBe(409);
+      const data = await response.json();
+      expect(data.error).toContain('Conflit');
+      expect(prisma.order.update).not.toHaveBeenCalled();
     });
 
     it('should allow customer to cancel their own order while status is PENDING', async () => {

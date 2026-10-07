@@ -55,6 +55,16 @@ export async function generateAtomicOrderReference(client: any = prisma, date: D
 }
 
 import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
+import { withIdempotency } from '@/lib/idempotency';
+
+export class OrderValidationError extends Error {
+  statusCode: number;
+  constructor(message: string, statusCode = 400) {
+    super(message);
+    this.name = 'OrderValidationError';
+    this.statusCode = statusCode;
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -142,171 +152,201 @@ export async function POST(request: NextRequest) {
 
     const uniqueProductIds = Array.from(aggregatedItemsMap.keys());
 
-    // 2. Fetch products from database to ensure pricing integrity
-    const dbProducts = await prisma.product.findMany({
-      where: { id: { in: uniqueProductIds } },
-    });
+    const rawIdempotencyKey = request.headers.get('idempotency-key') ||
+      request.headers.get('x-idempotency-key') ||
+      (body && typeof body === 'object' ? (body.idempotencyKey || body.clientReference) : null);
+    const idempotencyKey = rawIdempotencyKey ? String(rawIdempotencyKey).trim() : null;
 
-    if (dbProducts.length !== uniqueProductIds.length) {
-      return NextResponse.json({ error: 'One or more products in your cart could not be found' }, { status: 400 });
-    }
-
-    const productMap = new Map(dbProducts.map((p) => [p.id, p]));
-
-    // 3. Validate availability, purchase limits, and calculate total amounts authoritatively
-    let totalAmount = 0;
-    
     interface OrderItemData {
       productId: string;
       quantity: number;
       priceAtPurchase: string;
       amountAtPurchase: number;
     }
-    
-    const orderItemsData: OrderItemData[] = [];
 
-    for (const [productId, quantity] of aggregatedItemsMap.entries()) {
-      const dbProduct = productMap.get(productId);
-      if (!dbProduct) {
-        return NextResponse.json({ error: `Product ${productId} not found` }, { status: 400 });
-      }
+    const executeOrderCreation = async () => {
+      let attempts = 0;
+      const maxAttempts = 3;
+      let transactionResult;
 
-      if (dbProduct.state === 'outofStock') {
-        return NextResponse.json({ error: `Product "${dbProduct.title}" is out of stock` }, { status: 400 });
-      }
+      while (attempts < maxAttempts) {
+        try {
+          const reference = await generateAtomicOrderReference(prisma);
 
-      if (dbProduct.limitBay !== null && dbProduct.limitBay !== undefined && dbProduct.limitBay > 0) {
-        if (quantity > dbProduct.limitBay) {
-          return NextResponse.json(
-            { error: `La quantité pour "${dbProduct.title}" dépasse la limite autorisée (${dbProduct.limitBay}).` },
-            { status: 400 }
-          );
-        }
-      }
+          transactionResult = await prisma.$transaction(async (tx) => {
+            // 1. Fetch products inside transaction to ensure pricing & stock integrity
+            const dbProducts = await tx.product.findMany({
+              where: { id: { in: uniqueProductIds } },
+            });
 
-      const numericPrice = parseFloat(dbProduct.price.replace(/[^0-9.]/g, ''));
-      if (isNaN(numericPrice) || numericPrice < 0) {
-        return NextResponse.json({ error: 'Prix de produit invalide dans la base de données' }, { status: 500 });
-      }
+            if (dbProducts.length !== uniqueProductIds.length) {
+              throw new OrderValidationError('One or more products in your cart could not be found');
+            }
 
-      const itemAmount = Math.round(numericPrice * quantity * 100) / 100;
-      totalAmount += itemAmount;
+            const productMap = new Map(dbProducts.map((p) => [p.id, p]));
+            let totalAmount = 0;
+            const orderItemsData: OrderItemData[] = [];
 
-      orderItemsData.push({
-        productId,
-        quantity,
-        priceAtPurchase: dbProduct.price,
-        amountAtPurchase: numericPrice,
-      });
-    }
+            // 2. Validate availability, limits, calculate amounts, and deduct stock inside transaction
+            for (const [productId, quantity] of aggregatedItemsMap.entries()) {
+              const dbProduct = productMap.get(productId);
+              if (!dbProduct) {
+                throw new OrderValidationError(`Product ${productId} not found`);
+              }
 
-    totalAmount = Math.round(totalAmount * 100) / 100;
-    const totalPrice = `$${totalAmount.toFixed(2)}`;
+              if (dbProduct.state === 'outofStock') {
+                throw new OrderValidationError(`Product "${dbProduct.title}" is out of stock`);
+              }
 
-    if (userId) {
-      const userExists = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true },
-      });
-      if (!userExists) {
-        userId = null;
-      }
-    }
+              if (dbProduct.limitBay !== null && dbProduct.limitBay !== undefined && dbProduct.limitBay > 0) {
+                if (quantity > dbProduct.limitBay) {
+                  throw new OrderValidationError(
+                    `La quantité pour "${dbProduct.title}" dépasse la limite autorisée (${dbProduct.limitBay}).`
+                  );
+                }
+              }
 
-    // 3. Atomically write Order, OrderItems, and PointsTransaction
-    let attempts = 0;
-    const maxAttempts = 3;
-    let transactionResult;
+              const numericPrice = parseFloat(dbProduct.price.replace(/[^0-9.]/g, ''));
+              if (isNaN(numericPrice) || numericPrice < 0) {
+                throw new Error('Prix de produit invalide dans la base de données');
+              }
 
-    while (attempts < maxAttempts) {
-      try {
-        const reference = await generateAtomicOrderReference(prisma);
+              const itemAmount = Math.round(numericPrice * quantity * 100) / 100;
+              totalAmount += itemAmount;
 
-        transactionResult = await prisma.$transaction(async (tx) => {
-          const order = await tx.order.create({
-            data: {
-              reference,
-              sessionId,
-              status: 'PENDING',
-              totalPrice,
-              totalAmount,
-              customerName,
-              customerPhone,
-              customerEmail: customerEmail || null,
-              shippingAddress,
-              userId,
-              deliveryMethod,
-              items: {
-                create: orderItemsData,
-              },
-            },
-            include: {
-              items: {
-                include: {
-                  product: true,
+              orderItemsData.push({
+                productId,
+                quantity,
+                priceAtPurchase: dbProduct.price,
+                amountAtPurchase: numericPrice,
+              });
+
+              // Deduct limit / available stock within transaction
+              if (dbProduct.limitBay !== null && dbProduct.limitBay !== undefined && dbProduct.limitBay > 0) {
+                const remainingLimit = dbProduct.limitBay - quantity;
+                await tx.product.update({
+                  where: { id: productId },
+                  data: {
+                    limitBay: remainingLimit,
+                    ...(remainingLimit <= 0 ? { state: 'outofStock' } : {}),
+                  },
+                });
+              }
+            }
+
+            totalAmount = Math.round(totalAmount * 100) / 100;
+            const totalPrice = `$${totalAmount.toFixed(2)}`;
+
+            let finalUserId = userId;
+            if (finalUserId) {
+              const userExists = await tx.user.findUnique({
+                where: { id: finalUserId },
+                select: { id: true },
+              });
+              if (!userExists) {
+                finalUserId = null;
+              }
+            }
+
+            const order = await tx.order.create({
+              data: {
+                reference,
+                sessionId: sessionId || idempotencyKey || null,
+                status: 'PENDING',
+                totalPrice,
+                totalAmount,
+                customerName,
+                customerPhone,
+                customerEmail: customerEmail || null,
+                shippingAddress,
+                userId: finalUserId,
+                deliveryMethod,
+                items: {
+                  create: orderItemsData,
                 },
               },
-            },
+              include: {
+                items: {
+                  include: {
+                    product: true,
+                  },
+                },
+              },
+            });
+
+            const notif = await tx.orderNotification.create({
+              data: {
+                orderId: order.id,
+              },
+              include: {
+                order: true,
+              },
+            });
+
+            return { newOrder: order, notification: notif };
           });
-
-          const notif = await tx.orderNotification.create({
-            data: {
-              orderId: order.id,
-            },
-            include: {
-              order: true,
-            },
-          });
-
-          return { newOrder: order, notification: notif };
-        });
-        break; // Success!
-      } catch (err: any) {
-        attempts++;
-        if (err.code === 'P2002' && attempts < maxAttempts) {
-          console.warn(`Unique constraint violation on order reference. Retrying attempt ${attempts}...`);
-          continue;
-        }
-        throw err;
-      }
-    }
-
-    const { newOrder, notification } = transactionResult!;
-
-    try {
-      const { notificationEmitter } = await import('@/lib/notification-emitter');
-      notificationEmitter.emit('new-order', notification);
-
-      const { hasActiveAdminTab } = await import('@/lib/presence');
-      const isAdminActive = await hasActiveAdminTab();
-
-      if (isAdminActive) {
-        console.log('[Orders API] Active admin tab detected (visibilityState=visible). Skipping Web Push notification.');
-      } else {
-        // Trigger Web Push notification to all subscribed administrator devices
-        const { sendPushNotification } = await import('@/lib/push-notifications');
-        const clientName = newOrder.customerName || 'Nouveau Client';
-        const amount = newOrder.totalPrice || '0.00 €';
-        
-        sendPushNotification(
-          { role: 'admin' },
-          {
-            title: 'Nouvelle commande ! 🍰',
-            body: `${clientName} a passé une commande de ${amount}.`,
-            icon: '/logo.jpeg',
-            url: '/dashboard',
-            data: { orderId: newOrder.id }
+          break; // Success!
+        } catch (err: any) {
+          if (err instanceof OrderValidationError) {
+            throw err;
           }
-        ).catch((err) => {
-          console.error('[Orders API] Failed to dispatch admin Web Push notification:', err);
-        });
+          attempts++;
+          if (err.code === 'P2002' && attempts < maxAttempts) {
+            console.warn(`Unique constraint violation on order reference. Retrying attempt ${attempts}...`);
+            continue;
+          }
+          throw err;
+        }
       }
-    } catch (e) {
-      console.error('[Orders API] Failed to emit new-order notification:', e);
+
+      const { newOrder, notification } = transactionResult!;
+
+      try {
+        const { notificationEmitter } = await import('@/lib/notification-emitter');
+        notificationEmitter.emit('new-order', notification);
+
+        const { hasActiveAdminTab } = await import('@/lib/presence');
+        const isAdminActive = await hasActiveAdminTab();
+
+        if (isAdminActive) {
+          console.log('[Orders API] Active admin tab detected (visibilityState=visible). Skipping Web Push notification.');
+        } else {
+          // Trigger Web Push notification to all subscribed administrator devices
+          const { sendPushNotification } = await import('@/lib/push-notifications');
+          const clientName = newOrder.customerName || 'Nouveau Client';
+          const amount = newOrder.totalPrice || '0.00 €';
+
+          sendPushNotification(
+            { role: 'admin' },
+            {
+              title: 'Nouvelle commande ! 🍰',
+              body: `${clientName} a passé une commande de ${amount}.`,
+              icon: '/logo.jpeg',
+              url: '/dashboard',
+              data: { orderId: newOrder.id },
+            }
+          ).catch((err) => {
+            console.error('[Orders API] Failed to dispatch admin Web Push notification:', err);
+          });
+        }
+      } catch (e) {
+        console.error('[Orders API] Failed to emit new-order notification:', e);
+      }
+
+      return { status: 201, body: newOrder };
+    };
+
+    if (idempotencyKey) {
+      const idempotentResult = await withIdempotency(idempotencyKey, executeOrderCreation);
+      return NextResponse.json(idempotentResult.body, { status: idempotentResult.status });
     }
 
-    return NextResponse.json(newOrder, { status: 201 });
+    const result = await executeOrderCreation();
+    return NextResponse.json(result.body, { status: result.status });
   } catch (error) {
+    if (error instanceof OrderValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
     let errMsg = error instanceof Error ? error.message : 'Failed to submit order';
     if (errMsg.includes("Can't reach database server") || errMsg.includes("prisma") || errMsg.includes("pooled.db.prisma.io")) {
       errMsg = "Impossible de contacter le serveur de base de données. Veuillez vérifier votre connexion Internet.";

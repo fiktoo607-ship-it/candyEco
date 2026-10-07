@@ -69,6 +69,17 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Automatically claim all prior guest orders associated with this phone number (Issue #68)
+    await prisma.order.updateMany({
+      where: {
+        customerPhone: phoneNormalized,
+        userId: null,
+      },
+      data: {
+        userId: newUser.id,
+      },
+    });
+
     return NextResponse.json({
       success: true,
       message: 'Compte créé avec succès. Vous pouvez maintenant vous connecter.',
