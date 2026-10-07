@@ -31,26 +31,73 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { vipThreshold, fideleThreshold } = body;
 
+    if (vipThreshold === undefined && fideleThreshold === undefined) {
+      return NextResponse.json(
+        { error: 'Au moins un seuil de fidélité doit être spécifié.' },
+        { status: 400 }
+      );
+    }
+
+    // Retrieve current configuration for relative comparison
+    const vipConfig = await prisma.siteConfig.findUnique({
+      where: { key: 'fidelity_vip_threshold' },
+    });
+    const fideleConfig = await prisma.siteConfig.findUnique({
+      where: { key: 'fidelity_fidele_threshold' },
+    });
+
+    const currentVip = vipConfig ? parseInt(vipConfig.value, 10) : 500;
+    const currentFidele = fideleConfig ? parseInt(fideleConfig.value, 10) : 100;
+
+    let parsedVip = currentVip;
+    if (vipThreshold !== undefined) {
+      parsedVip = Number(vipThreshold);
+      if (isNaN(parsedVip) || !Number.isFinite(parsedVip) || parsedVip <= 0 || !Number.isInteger(parsedVip)) {
+        return NextResponse.json(
+          { error: 'Le seuil VIP doit être un entier strictement positif.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    let parsedFidele = currentFidele;
+    if (fideleThreshold !== undefined) {
+      parsedFidele = Number(fideleThreshold);
+      if (isNaN(parsedFidele) || !Number.isFinite(parsedFidele) || parsedFidele <= 0 || !Number.isInteger(parsedFidele)) {
+        return NextResponse.json(
+          { error: 'Le seuil Fidèle doit être un entier strictement positif.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (parsedVip <= parsedFidele) {
+      return NextResponse.json(
+        { error: 'Le seuil VIP doit être strictement supérieur au seuil Fidèle.' },
+        { status: 400 }
+      );
+    }
+
     if (vipThreshold !== undefined) {
       await prisma.siteConfig.upsert({
         where: { key: 'fidelity_vip_threshold' },
-        update: { value: String(vipThreshold) },
-        create: { key: 'fidelity_vip_threshold', value: String(vipThreshold) },
+        update: { value: String(parsedVip) },
+        create: { key: 'fidelity_vip_threshold', value: String(parsedVip) },
       });
     }
 
     if (fideleThreshold !== undefined) {
       await prisma.siteConfig.upsert({
         where: { key: 'fidelity_fidele_threshold' },
-        update: { value: String(fideleThreshold) },
-        create: { key: 'fidelity_fidele_threshold', value: String(fideleThreshold) },
+        update: { value: String(parsedFidele) },
+        create: { key: 'fidelity_fidele_threshold', value: String(parsedFidele) },
       });
     }
 
     return NextResponse.json({
       success: true,
-      vipThreshold: vipThreshold !== undefined ? parseInt(vipThreshold) : 500,
-      fideleThreshold: fideleThreshold !== undefined ? parseInt(fideleThreshold) : 100,
+      vipThreshold: parsedVip,
+      fideleThreshold: parsedFidele,
     });
   } catch (error) {
     const err = error instanceof Error ? error.message : 'Failed to update fidelity config';

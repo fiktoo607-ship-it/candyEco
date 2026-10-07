@@ -129,5 +129,71 @@ describe('Config API', () => {
       const data = await response.json();
       expect(data.error).toBe('Vous ne pouvez pas sélectionner plus de 2 produits pour le carousel.');
     });
+
+    it('should return 400 when fidelity threshold is negative or zero', async () => {
+      const req = new NextRequest('http://localhost/api/config', {
+        method: 'POST',
+        body: JSON.stringify({
+          fidelity_vip_threshold: -100,
+          fidelity_fidele_threshold: 50,
+        }),
+      });
+
+      const response = await updateConfig(req);
+      expect(response.status).toBe(400);
+
+      const data = await response.json();
+      expect(data.error).toContain('strictement positif');
+    });
+
+    it('should return 400 when fidelity VIP threshold is less than or equal to Fidèle threshold (inverted)', async () => {
+      const req = new NextRequest('http://localhost/api/config', {
+        method: 'POST',
+        body: JSON.stringify({
+          fidelity_vip_threshold: 100,
+          fidelity_fidele_threshold: 200,
+        }),
+      });
+
+      const response = await updateConfig(req);
+      expect(response.status).toBe(400);
+
+      const data = await response.json();
+      expect(data.error).toBe('Le seuil VIP doit être strictement supérieur au seuil Fidèle.');
+    });
+
+    it('should return 400 when fidelity VIP equals Fidèle threshold', async () => {
+      const req = new NextRequest('http://localhost/api/config', {
+        method: 'POST',
+        body: JSON.stringify({
+          fidelity_vip_threshold: 100,
+          fidelity_fidele_threshold: 100,
+        }),
+      });
+
+      const response = await updateConfig(req);
+      expect(response.status).toBe(400);
+
+      const data = await response.json();
+      expect(data.error).toBe('Le seuil VIP doit être strictement supérieur au seuil Fidèle.');
+    });
+
+    it('should save valid fidelity thresholds when VIP is strictly greater than Fidèle', async () => {
+      const req = new NextRequest('http://localhost/api/config', {
+        method: 'POST',
+        body: JSON.stringify({
+          fidelity_vip_threshold: 500,
+          fidelity_fidele_threshold: 100,
+        }),
+      });
+
+      const response = await updateConfig(req);
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+      expect(data).toEqual({ success: true });
+      expect(saveSiteConfig).toHaveBeenCalledWith('fidelity_vip_threshold', 500);
+      expect(saveSiteConfig).toHaveBeenCalledWith('fidelity_fidele_threshold', 100);
+    });
   });
 });

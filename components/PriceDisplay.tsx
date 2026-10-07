@@ -1,15 +1,16 @@
 import React from 'react';
-import { formatPrice } from '@/lib/price';
+import { formatCurrency } from '@/lib/utils/currency';
 
 interface PriceDisplayProps {
   price: string | number | undefined | null;
+  currency?: string;
   className?: string;
 }
 
-export default function PriceDisplay({ price, className }: PriceDisplayProps) {
+export default function PriceDisplay({ price, currency, className }: PriceDisplayProps) {
   return (
     <span className={`inline-block whitespace-nowrap ${className || ''}`}>
-      {formatPrice(price)}
+      {formatCurrency(price, currency)}
     </span>
   );
 }
