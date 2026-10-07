@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { logAuthData } from "@/logs/featurs";
 import { acquireAdminLock, recordLoginHistory } from "@/lib/admin-session";
+import { MAX_PASSWORD_LENGTH } from "@/lib/validations/auth";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -69,6 +70,10 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials, req) {
         if (!credentials?.phone || !credentials?.password) {
           throw new Error("MissingCredentials");
+        }
+
+        if (typeof credentials.password !== "string" || credentials.password.length > MAX_PASSWORD_LENGTH) {
+          throw new Error("InvalidCredentials");
         }
 
         const phoneNormalized = credentials.phone.trim();
@@ -167,17 +172,38 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             token.role = dbUser.role;
             token.phone = dbUser.phone;
+          } else {
+            // User was deleted from database: invalidate token and revoke privileges
+            delete (token as any).id;
+            delete (token as any).role;
+            delete (token as any).phone;
+            delete (token as any).email;
+            delete (token as any).name;
+            delete (token as any).picture;
+            delete (token as any).sub;
+            return {};
           }
         } catch (e) {
+          // If token has been cleared or deleted, return empty
+          if (!token?.id || !token?.role) {
+            return {};
+          }
           // Ignore lookup failures in edge environments
         }
       }
       return token;
     },
     async session({ session, token }) {
+      if (!token?.id || !token?.role) {
+        return {
+          ...session,
+          user: undefined as any,
+          expires: new Date(0).toISOString(),
+        };
+      }
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = (token.role as string) || "user";
+        session.user.role = token.role as string;
         session.user.phone = (token.phone as string) || null;
       }
       return session;
@@ -206,37 +232,34 @@ export const authOptions: NextAuthOptions = {
         .map((e) => e.trim().toLowerCase())
         .filter(Boolean);
 
-      let shouldBeAdmin = false;
-      if (email) {
-        shouldBeAdmin = adminEmails.includes(email.toLowerCase());
-      }
-
       try {
-        if (!shouldBeAdmin) {
-          // Check if this is the first user in the database
-          const userCount = await prisma.user.count();
-          if (userCount === 0) {
-            shouldBeAdmin = true;
-          }
-        }
-
         if (dbUser) {
-          if (shouldBeAdmin && dbUser.role !== "admin") {
-            await prisma.user.update({
-              where: { id: user.id },
-              data: { role: "admin" },
-            });
+          // Existing user: preserve their existing role in the database.
+          // Do NOT silently elevate existing users to admin on every sign-in.
+          (user as any).role = dbUser.role;
+        } else {
+          // First-time signup / bootstrap: check if user qualifies for initial admin role
+          let shouldBeAdmin = false;
+          if (email) {
+            shouldBeAdmin = adminEmails.includes(email.toLowerCase());
+          }
+          if (!shouldBeAdmin) {
+            // Check if this is the first user in the database
+            const userCount = await prisma.user.count();
+            if (userCount === 0) {
+              shouldBeAdmin = true;
+            }
+          }
+
+          if (shouldBeAdmin) {
             (user as any).role = "admin";
           } else {
-            (user as any).role = dbUser.role;
+            (user as any).role = "user";
           }
-        } else if (shouldBeAdmin) {
-          // New user will be saved with role 'admin'
-          (user as any).role = "admin";
         }
 
         // Verify active session lock for any admin login
-        const isUserAdmin = (user as any).role === "admin" || dbUser?.role === "admin" || shouldBeAdmin;
+        const isUserAdmin = (user as any).role === "admin";
         if (isUserAdmin) {
           const lockResult = await acquireAdminLock(user.id, {
             userName: user.name,

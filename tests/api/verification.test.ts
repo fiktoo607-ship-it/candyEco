@@ -83,6 +83,19 @@ describe('Authentication Registration & Verification API', () => {
       expect(data.error).toBe('Le mot de passe doit comporter au moins 8 caractères.');
     });
 
+    it('should return 400 if password exceeds 128 characters (Issue #63)', async () => {
+      const longPassword = 'a'.repeat(129);
+      const req = new NextRequest('http://localhost/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ name: 'Test', phone: '+1234567890', password: longPassword }),
+      });
+
+      const response = await registerUser(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('Le mot de passe ne doit pas dépasser 128 caractères.');
+    });
+
     it('should return 400 if phone is already taken', async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: 'u1', phone: '+1234567890' } as any);
 
