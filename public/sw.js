@@ -159,6 +159,59 @@ self.addEventListener('message', (event) => {
   }
 });
 
+// Helper function to sanitize notification URLs and prevent Open Redirect / XSS
+function sanitizeNotificationUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') {
+    return '/';
+  }
+
+  const trimmed = rawUrl.trim();
+  if (!trimmed) {
+    return '/';
+  }
+
+  // Explicitly deny dangerous schemes
+  const lower = trimmed.toLowerCase();
+  if (
+    lower.startsWith('javascript:') ||
+    lower.startsWith('data:') ||
+    lower.startsWith('vbscript:') ||
+    lower.startsWith('file:') ||
+    lower.startsWith('blob:')
+  ) {
+    return '/';
+  }
+
+  // Deny protocol-relative URLs (e.g. //attacker.com)
+  if (trimmed.startsWith('//')) {
+    return '/';
+  }
+
+  try {
+    // Relative path check: starts with single '/'
+    if (trimmed.startsWith('/')) {
+      const resolved = new URL(trimmed, self.location.origin);
+      if (resolved.origin === self.location.origin) {
+        return resolved.pathname + resolved.search + resolved.hash;
+      }
+      return '/';
+    }
+
+    // Absolute URL check: must strictly match same origin and safe protocol
+    const parsed = new URL(trimmed, self.location.origin);
+    if (
+      parsed.origin === self.location.origin &&
+      (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+    ) {
+      return parsed.pathname + parsed.search + parsed.hash;
+    }
+  } catch (err) {
+    return '/';
+  }
+
+  return '/';
+}
+
 // Push notification event listener
 self.addEventListener('push', (event) => {
   if (!event.data) {
@@ -179,7 +232,7 @@ self.addEventListener('push', (event) => {
       title: parsedData.title || payload.title,
       body: parsedData.body || payload.body,
       icon: parsedData.icon || payload.icon,
-      url: parsedData.url || payload.url,
+      url: sanitizeNotificationUrl(parsedData.url || payload.url),
       data: parsedData.data || {},
     };
   } catch (err) {
@@ -191,7 +244,7 @@ self.addEventListener('push', (event) => {
     icon: payload.icon,
     badge: '/logo.jpeg',
     data: {
-      url: payload.url,
+      url: sanitizeNotificationUrl(payload.url),
       ...payload.data
     },
   };
@@ -205,14 +258,15 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const clickUrl = event.notification.data?.url || '/';
+  const clickUrl = sanitizeNotificationUrl(event.notification.data?.url);
+  const targetFullUrl = new URL(clickUrl, self.location.origin).href;
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       // Find an open window matching the origin and focus it
       for (const client of windowClients) {
         if (client.url.startsWith(self.location.origin) && 'focus' in client) {
-          if (client.url !== new URL(clickUrl, self.location.origin).href && 'navigate' in client) {
+          if (client.url !== targetFullUrl && 'navigate' in client) {
             client.navigate(clickUrl);
           }
           return client.focus();

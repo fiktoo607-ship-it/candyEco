@@ -5,6 +5,7 @@ import {
   releaseAdminLock,
   getActiveAdminSession,
   getActiveAdminSessions,
+  generateSecureSessionId,
   _resetInMemoryAdminSession,
   MAX_CONCURRENT_ADMINS,
 } from '@/lib/admin-session';
@@ -261,6 +262,36 @@ describe('Admin Multi-Device & 2-Admin Concurrency Management', () => {
       const data = await res.json();
       expect(data.activeSessions.length).toBe(1);
       expect(data.activeSessions[0].userName).toBe('Admin 2');
+    });
+  });
+
+  describe('CSPRNG Session ID Security (Issue #50)', () => {
+    it('generates secure session IDs without calling Math.random()', () => {
+      const mathRandomSpy = vi.spyOn(Math, 'random');
+      const sessionId = generateSecureSessionId();
+
+      expect(typeof sessionId).toBe('string');
+      expect(sessionId.length).toBeGreaterThanOrEqual(16);
+      expect(mathRandomSpy).not.toHaveBeenCalled();
+
+      mathRandomSpy.mockRestore();
+    });
+
+    it('creates new session with CSPRNG sessionId without calling Math.random()', async () => {
+      const mathRandomSpy = vi.spyOn(Math, 'random');
+
+      const result = await acquireAdminLock('admin-csprng', {
+        deviceId: 'dev-csprng',
+        userName: 'Secure Admin',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.activeSession).toBeDefined();
+      expect(typeof result.activeSession?.sessionId).toBe('string');
+      expect(result.activeSession?.sessionId.length).toBeGreaterThanOrEqual(16);
+      expect(mathRandomSpy).not.toHaveBeenCalled();
+
+      mathRandomSpy.mockRestore();
     });
   });
 });

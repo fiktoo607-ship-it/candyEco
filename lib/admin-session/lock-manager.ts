@@ -1,3 +1,4 @@
+import { randomUUID as nodeRandomUUID } from 'crypto';
 import { redisPub } from '../redis';
 import {
   DeviceInfo,
@@ -24,6 +25,31 @@ export interface ActiveAdminSession {
 export const MAX_CONCURRENT_ADMINS = 2;
 export const ADMIN_SESSIONS_KEY = 'admin:active_sessions';
 export const SESSION_TTL_SECONDS = 180; // 3 minutes timeout if inactive
+
+/**
+ * Cryptographically secure random session ID generator (CSPRNG).
+ * Uses Node.js crypto.randomUUID(), Web Crypto API crypto.randomUUID(),
+ * or crypto.getRandomValues(new Uint8Array(16)) formatted as hexadecimal string.
+ * Strictly eliminates any insecure Math.random() fallback.
+ */
+export function generateSecureSessionId(): string {
+  if (typeof nodeRandomUUID === 'function') {
+    try {
+      return nodeRandomUUID();
+    } catch {}
+  }
+  if (typeof crypto !== 'undefined') {
+    if (typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    if (typeof crypto.getRandomValues === 'function') {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+    }
+  }
+  throw new Error('CSPRNG unavailable for session ID generation');
+}
 
 const globalForAdminSessions = globalThis as unknown as {
   inMemoryActiveSessions?: ActiveAdminSession[];
@@ -198,7 +224,7 @@ export async function acquireAdminLock(
 
   // Create new session
   const newSession: ActiveAdminSession = {
-    sessionId: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `sess_${Date.now()}_${Math.random()}`,
+    sessionId: generateSecureSessionId(),
     deviceId: normalizedDeviceId,
     userId,
     userName: options?.userName ?? null,
