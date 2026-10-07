@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
+import { MAX_PASSWORD_LENGTH } from '@/lib/validations/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,18 +24,21 @@ export async function POST(request: NextRequest) {
     const { name, phone, password } = body;
 
     // Validate inputs
-    if (!name || name.trim() === '') {
+    if (!name || typeof name !== 'string' || name.trim() === '') {
       return NextResponse.json({ error: 'Le nom est obligatoire.' }, { status: 400 });
     }
-    if (!phone || phone.trim() === '') {
+    if (!phone || typeof phone !== 'string' || phone.trim() === '') {
       return NextResponse.json({ error: 'Le numéro de téléphone est obligatoire.' }, { status: 400 });
     }
     const phoneRegex = /^[+0-9\s-]{8,20}$/;
     if (!phoneRegex.test(phone.trim())) {
       return NextResponse.json({ error: 'Un numéro de téléphone valide est obligatoire.' }, { status: 400 });
     }
-    if (!password || password.length < 8) {
+    if (!password || typeof password !== 'string' || password.length < 8) {
       return NextResponse.json({ error: 'Le mot de passe doit comporter au moins 8 caractères.' }, { status: 400 });
+    }
+    if (password.length > MAX_PASSWORD_LENGTH) {
+      return NextResponse.json({ error: `Le mot de passe ne doit pas dépasser ${MAX_PASSWORD_LENGTH} caractères.` }, { status: 400 });
     }
 
     const phoneNormalized = phone.trim();

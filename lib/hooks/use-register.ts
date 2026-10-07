@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  MIN_PASSWORD_LENGTH,
+  MAX_PASSWORD_LENGTH,
+  PHONE_REGEX,
+} from "@/lib/validations/auth";
 
 export interface RegisterFormData {
   name: string;
@@ -10,7 +15,6 @@ export interface RegisterFormData {
   confirmPassword: string;
 }
 
-const PHONE_REGEX = /^[+0-9\s-]{8,20}$/;
 
 export function useRegister() {
   const router = useRouter();
@@ -48,6 +52,9 @@ export function useRegister() {
     }
     if (!password || password.length < 8) {
       return "Le mot de passe doit comporter au moins 8 caractères.";
+    }
+    if (password.length > 128) {
+      return "Le mot de passe ne doit pas dépasser 128 caractères.";
     }
     if (password !== confirmPassword) {
       return "Les mots de passe ne correspondent pas.";

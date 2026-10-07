@@ -52,6 +52,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'MissingCredentials' }, { status: 400 });
     }
 
+    if (typeof password !== 'string' || password.length > 128) {
+      return NextResponse.json({ error: 'InvalidCredentials' }, { status: 400 });
+    }
+
     const user = await prisma.user.findFirst({
       where: { phone: String(phone).trim() },
     });
