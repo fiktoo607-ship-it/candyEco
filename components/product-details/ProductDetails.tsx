@@ -9,6 +9,7 @@ import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
 import PriceDisplay from '@/components/PriceDisplay';
 import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
+import { containsArabic } from '@/lib/a11y';
 
 interface ProductData {
   id: string;
@@ -146,12 +147,20 @@ export default function ProductDetails({ product }: { product: ProductData }) {
             </span>
             {product.tags && product.tags.length > 0 && product.tags.map((tag) => (
               <span key={tag} className="rounded-full bg-primary/10 px-sm py-xs text-xs text-primary font-semibold border border-primary/20">
-                #{tag}
+                {containsArabic(tag) ? (
+                  <span lang="ar" dir="rtl">#{tag}</span>
+                ) : (
+                  `#${tag}`
+                )}
               </span>
             ))}
           </div>
           <h1 className="font-display text-4xl font-bold text-on-surface mt-sm">
-            {product.title}
+            {containsArabic(product.title) ? (
+              <span lang="ar" dir="rtl">{product.title}</span>
+            ) : (
+              product.title
+            )}
           </h1>
           <p className="mt-md text-2xl font-bold text-primary">
             <PriceDisplay price={product.price} />
@@ -161,14 +170,22 @@ export default function ProductDetails({ product }: { product: ProductData }) {
         <div className="border-t border-outline-variant/20 pt-md">
           <h2 className="text-lg font-bold text-on-surface-variant">{dictionary.productDetails.description}</h2>
           <p className="mt-xs text-base leading-8 text-on-surface-variant">
-            {product.description}
+            {containsArabic(product.description) ? (
+              <span lang="ar" dir="rtl">{product.description}</span>
+            ) : (
+              product.description
+            )}
           </p>
         </div>
 
         <div className="border-t border-outline-variant/20 pt-md">
           <h2 className="text-lg font-bold text-on-surface-variant">{dictionary.productDetails.story}</h2>
           <p className="mt-xs text-base leading-8 text-on-surface-variant italic">
-            {product.story}
+            {containsArabic(product.story) ? (
+              <span lang="ar" dir="rtl">{product.story}</span>
+            ) : (
+              product.story
+            )}
           </p>
         </div>
 
@@ -196,14 +213,16 @@ export default function ProductDetails({ product }: { product: ProductData }) {
                   <button
                     key={star}
                     type="button"
+                    aria-label={`Noter ${star} sur 5`}
                     onClick={() => handleRateClick(star)}
                     onMouseEnter={() => setHoverRating(star)}
                     onMouseLeave={() => setHoverRating(0)}
                     disabled={isSubmittingRating}
-                    className="text-amber-500 hover:scale-110 transition-transform focus:outline-none disabled:opacity-50"
+                    className="text-amber-500 hover:scale-110 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded disabled:opacity-50"
                   >
                     <span
                       className="material-symbols-outlined text-2xl select-none"
+                      aria-hidden="true"
                       style={star <= (hoverRating || 0) ? { fontVariationSettings: "'FILL' 1" } : undefined}
                     >
                       star

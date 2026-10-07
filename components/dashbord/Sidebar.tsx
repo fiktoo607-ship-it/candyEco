@@ -68,10 +68,10 @@ export default function Sidebar() {
         {/* Collapse Toggle Button (Desktop Only): Centered on dividing line and stays fixed on scroll */}
         <button
           onClick={toggleCollapsed}
-          className="hidden desktop:flex absolute top-6 -right-4 h-8 w-8 items-center justify-center rounded-full border border-outline-variant/35 bg-surface hover:bg-surface-container-low text-on-surface-variant focus:outline-none shadow-sm z-[35] transition-all cursor-pointer hover:scale-105 active:scale-95"
+          className="hidden desktop:flex absolute top-6 -right-4 h-8 w-8 items-center justify-center rounded-full border border-outline-variant/35 bg-surface hover:bg-surface-container-low text-on-surface-variant focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 shadow-sm z-[35] transition-all cursor-pointer hover:scale-105 active:scale-95"
           aria-label={activeCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <span className="material-symbols-outlined text-lg select-none">
+          <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
             {activeCollapsed ? 'chevron_right' : 'chevron_left'}
           </span>
         </button>
@@ -239,10 +239,10 @@ export default function Sidebar() {
               <NotificationBell />
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-surface-container-low text-on-surface focus:outline-none lg:hidden"
+                className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-surface-container-low text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:hidden"
                 aria-label="Toggle navigation menu"
               >
-                <span className="material-symbols-outlined text-2xl select-none">
+                <span className="material-symbols-outlined text-2xl select-none" aria-hidden="true">
                   {isOpen ? 'close' : 'menu'}
                 </span>
               </button>

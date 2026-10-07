@@ -117,7 +117,7 @@ function LoginContent() {
                 onChange={handleInputChange}
                 required
                 placeholder="+33 6 12 34 56 78"
-                className="rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-sm outline-none transition-all focus:border-primary focus:bg-surface-container-lowest"
+                className="rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary focus:bg-surface-container-lowest"
               />
             </div>
 
@@ -134,14 +134,15 @@ function LoginContent() {
                   onChange={handleInputChange}
                   required
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-outline-variant bg-surface-container-low pl-md pr-lg py-sm text-sm outline-none transition-all focus:border-primary focus:bg-surface-container-lowest"
+                  className="w-full rounded-xl border border-outline-variant bg-surface-container-low pl-md pr-lg py-sm text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary focus:bg-surface-container-lowest"
                 />
                 <button
                   type="button"
                   onClick={toggleShowPassword}
-                  className="absolute right-sm text-on-surface-variant hover:text-primary transition-colors focus:outline-none flex items-center justify-center p-xs"
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  className="absolute right-sm text-on-surface-variant hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg flex items-center justify-center p-xs"
                 >
-                  <span className="material-symbols-outlined text-lg select-none">
+                  <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
                     {showPassword ? "visibility_off" : "visibility"}
                   </span>
                 </button>
@@ -151,7 +152,7 @@ function LoginContent() {
             <button
               type="submit"
               disabled={loading || googleLoading}
-              className="inline-flex w-full items-center justify-center gap-sm rounded-xl bg-primary px-md py-sm text-base font-semibold text-white shadow-soft transition-all hover:bg-surface-tint active:scale-[0.99] disabled:opacity-50"
+              className="inline-flex w-full items-center justify-center gap-sm rounded-xl bg-primary px-md py-sm text-base font-semibold text-white shadow-soft transition-all hover:bg-surface-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.99] disabled:opacity-50"
             >
               {loading ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
@@ -173,7 +174,7 @@ function LoginContent() {
             <button
               onClick={handleGoogleLogin}
               disabled={loading || googleLoading}
-              className="relative inline-flex w-full items-center justify-center gap-sm rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-base font-semibold text-on-surface transition-all duration-200 hover:bg-surface-container hover:shadow-soft active:scale-[0.98] disabled:opacity-50"
+              className="relative inline-flex w-full items-center justify-center gap-sm rounded-xl border border-outline-variant bg-surface-container-low px-md py-sm text-base font-semibold text-on-surface transition-all duration-200 hover:bg-surface-container hover:shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.98] disabled:opacity-50"
             >
               {googleLoading ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
@@ -212,10 +213,11 @@ function LoginContent() {
 
             <button
               onClick={() => router.push("/home")}
-              className="inline-flex w-full items-center justify-center gap-xs rounded-xl px-md py-sm text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors"
+              aria-label="Retour à l'accueil"
+              className="inline-flex w-full items-center justify-center gap-xs rounded-xl px-md py-sm text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
-              <span className="material-symbols-outlined text-base select-none">arrow_back</span>
-              <span>Retour à l'accueil</span>
+              <span className="material-symbols-outlined text-base select-none" aria-hidden="true">arrow_back</span>
+              <span>Retour à l&apos;accueil</span>
             </button>
           </div>
         </div>

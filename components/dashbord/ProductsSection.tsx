@@ -5,6 +5,7 @@ import { useDashboardStore } from '@/lib/dashboard-store';
 import PriceDisplay from '@/components/PriceDisplay';
 import { ProductStateBadge } from './products/ProductStateBadge';
 import { useDashboardPagination } from './hooks/useDashboardPagination';
+import { containsArabic } from '@/lib/a11y';
 
 
 export default function ProductsSection() {
@@ -284,10 +285,18 @@ export default function ProductsSection() {
                         </div>
                       </div>
                       <h3 className="font-semibold text-on-surface text-base mt-xs">
-                        {product.title}
+                        {containsArabic(product.title) ? (
+                          <span lang="ar" dir="rtl">{product.title}</span>
+                        ) : (
+                          product.title
+                        )}
                       </h3>
                       <p className="text-xs text-on-surface-variant line-clamp-2 mt-xs">
-                        {product.description}
+                        {containsArabic(product.description) ? (
+                          <span lang="ar" dir="rtl">{product.description}</span>
+                        ) : (
+                          product.description
+                        )}
                       </p>
                     </div>
                   </div>
@@ -362,10 +371,18 @@ export default function ProductsSection() {
                       </td>
                       <td className="p-md">
                         <div className="font-semibold text-on-surface group-hover:text-primary transition-colors flex items-center gap-sm">
-                          {product.title}
+                          {containsArabic(product.title) ? (
+                            <span lang="ar" dir="rtl">{product.title}</span>
+                          ) : (
+                            product.title
+                          )}
                         </div>
                         <div className="text-xs text-on-surface-variant/80 mt-[2px] line-clamp-1 max-w-md">
-                          {product.description}
+                          {containsArabic(product.description) ? (
+                            <span lang="ar" dir="rtl">{product.description}</span>
+                          ) : (
+                            product.description
+                          )}
                         </div>
                       </td>
                       <td className="p-md">

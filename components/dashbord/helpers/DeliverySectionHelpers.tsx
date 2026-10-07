@@ -28,7 +28,7 @@ export function StatusToggle({ active, onToggle }: StatusToggleProps) {
       onClick={onToggle}
       role="switch"
       aria-checked={active}
-      className="inline-flex items-center gap-2 select-none cursor-pointer focus:outline-none group active:scale-95 transition-transform"
+      className="inline-flex items-center gap-2 select-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-full group active:scale-95 transition-transform"
       title={active ? 'Actif - Cliquer pour désactiver' : 'Inactif - Cliquer pour activer'}
     >
       <span
