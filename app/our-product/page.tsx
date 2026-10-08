@@ -13,7 +13,7 @@ export default function OurProductPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="mx-auto flex max-w-container-max flex-1 flex-col px-gutter py-md md:py-xl">
+      <main id="main-content" className="mx-auto flex max-w-container-max flex-1 flex-col px-gutter py-md md:py-xl">
         <section className="mt-0 md:mt-xl">
           <ProductBrowser />
         </section>

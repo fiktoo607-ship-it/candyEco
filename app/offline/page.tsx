@@ -13,7 +13,7 @@ export default function OfflinePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="flex-1 flex flex-col items-center justify-center p-md bg-background text-center select-none">
+      <main id="main-content" className="flex-1 flex flex-col items-center justify-center p-md bg-background text-center select-none">
         <div className="max-w-md w-full rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-lg shadow-soft">
           <span className="material-symbols-outlined text-6xl text-primary mb-md animate-pulse select-none notranslate" translate="no">
             wifi_off

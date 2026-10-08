@@ -33,6 +33,7 @@ export default function DashboardPage() {
 
   return (
     <main
+      id="main-content"
       dir="ltr"
       className="flex min-h-screen flex-col bg-surface text-on-surface desktop:flex-row"
     >

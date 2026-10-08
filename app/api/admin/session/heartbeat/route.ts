@@ -8,7 +8,27 @@ import {
   getActiveAdminSessions,
   setAdminTabActive,
   MAX_CONCURRENT_ADMINS,
+  ActiveAdminSession,
 } from '@/lib/admin-session';
+
+function sanitizeSessions(sessions: ActiveAdminSession[]) {
+  return sessions.map((s, idx) => ({
+    id: `session-${idx + 1}`,
+    userId: s.userId,
+    userName: s.userName || 'Administrateur',
+    userPhone: s.userPhone || 'Numéro non renseigné',
+    userEmail: s.userEmail ? s.userEmail.replace(/(.{2})(.*)(@.*)/, '$1***$3') : null,
+    deviceInfo: s.deviceInfo ? {
+      browser: s.deviceInfo.browser,
+      os: s.deviceInfo.os,
+      deviceType: s.deviceInfo.deviceType,
+      label: s.deviceInfo.label,
+    } : undefined,
+    locationInfo: s.locationInfo,
+    loginAt: s.loginAt,
+    lastSeenAt: s.lastSeenAt,
+  }));
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,14 +38,16 @@ export async function GET(req: NextRequest) {
     }
 
     const activeSessions = await getActiveAdminSessions();
-    const mySession = activeSessions.find((s) => s.userId === session.user.id);
+    const sanitized = sanitizeSessions(activeSessions);
+    const mySessionIndex = activeSessions.findIndex((s) => s.userId === session.user.id);
+    const mySanitizedSession = mySessionIndex !== -1 ? sanitized[mySessionIndex] : null;
 
     return NextResponse.json({
-      isActive: activeSessions.length > 0,
-      isCurrentUser: !!mySession,
-      activeSessions,
-      session: mySession || activeSessions[0] || null,
-      slotsOccupied: activeSessions.length,
+      isActive: sanitized.length > 0,
+      isCurrentUser: mySessionIndex !== -1,
+      activeSessions: sanitized,
+      session: mySanitizedSession || sanitized[0] || null,
+      slotsOccupied: sanitized.length,
       maxSlots: MAX_CONCURRENT_ADMINS,
     });
   } catch (error) {
@@ -93,7 +115,7 @@ export async function POST(req: NextRequest) {
               lockResult.error === 'SameAccountAnotherDevice'
                 ? 'Ce compte est déjà connecté sur un autre appareil'
                 : 'La limite de 2 administrateurs connectés simultanément est atteinte',
-            activeSessions: lockResult.activeSessions,
+            activeSessions: sanitizeSessions(lockResult.activeSessions || []),
           },
           { status: 409 }
         );

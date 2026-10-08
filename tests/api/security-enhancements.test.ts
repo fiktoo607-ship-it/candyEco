@@ -16,6 +16,7 @@ vi.mock('@/lib/prisma', () => ({
     user: {
       findUnique: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
     deliveryMethod: {
       findMany: vi.fn(),
@@ -120,6 +121,119 @@ describe('Security & Validation Enhancements Test Suite', () => {
       const data = await res.json();
       expect(data.error).toBe('Données invalides');
       expect(data.details?.price).toBeDefined();
+    });
+
+    it('PUT /api/users/[id] should exclude password hash from the response (Issue #6)', async () => {
+      (getServerSession as any).mockResolvedValue({
+        user: { id: 'admin-1', role: 'admin' },
+      });
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'user-123',
+        status: 'Non vérifié',
+        trustScore: 0,
+      } as any);
+
+      vi.mocked(prisma.user.update).mockResolvedValue({
+        id: 'user-123',
+        name: 'John Doe',
+        email: 'john@example.com',
+        status: 'VIP',
+        trustScore: 500,
+        password: '$2b$10$supersecretpasswordhashthatmustneverbeexposed',
+      } as any);
+
+      const req = new NextRequest('http://localhost:3000/api/users/user-123', {
+        method: 'PUT',
+        body: JSON.stringify({
+          status: 'VIP',
+        }),
+      });
+
+      const res = await userDetailApi.PUT(req, {
+        params: Promise.resolve({ id: 'user-123' }),
+      });
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.success).toBe(true);
+      expect(data.user).toBeDefined();
+      expect(data.user.id).toBe('user-123');
+      expect(data.user.status).toBe('VIP');
+      expect(data.user.password).toBeUndefined();
+    });
+  });
+
+  describe('User Deletion Security (Issue #45)', () => {
+    it('DELETE /api/users/[id] should prevent admin from deleting other admin accounts', async () => {
+      (getServerSession as any).mockResolvedValue({
+        user: { id: 'admin-caller', role: 'admin' },
+      });
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'other-admin',
+        role: 'admin',
+        name: 'Another Admin',
+      } as any);
+
+      const req = new NextRequest('http://localhost:3000/api/users/other-admin', {
+        method: 'DELETE',
+      });
+
+      const res = await userDetailApi.DELETE(req, {
+        params: Promise.resolve({ id: 'other-admin' }),
+      });
+
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.error).toBe('Impossible de supprimer un compte administrateur.');
+      expect(prisma.user.delete).not.toHaveBeenCalled();
+    });
+
+    it('DELETE /api/users/[id] should prevent admin from deleting their own account', async () => {
+      (getServerSession as any).mockResolvedValue({
+        user: { id: 'admin-caller', role: 'admin' },
+      });
+
+      const req = new NextRequest('http://localhost:3000/api/users/admin-caller', {
+        method: 'DELETE',
+      });
+
+      const res = await userDetailApi.DELETE(req, {
+        params: Promise.resolve({ id: 'admin-caller' }),
+      });
+
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toBe('Vous ne pouvez pas supprimer votre propre compte.');
+      expect(prisma.user.delete).not.toHaveBeenCalled();
+    });
+
+    it('DELETE /api/users/[id] should allow admin to delete non-admin user', async () => {
+      (getServerSession as any).mockResolvedValue({
+        user: { id: 'admin-caller', role: 'admin' },
+      });
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: 'user-regular',
+        role: 'user',
+        name: 'Regular Customer',
+      } as any);
+
+      const req = new NextRequest('http://localhost:3000/api/users/user-regular', {
+        method: 'DELETE',
+      });
+
+      const res = await userDetailApi.DELETE(req, {
+        params: Promise.resolve({ id: 'user-regular' }),
+      });
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.success).toBe(true);
+      expect(prisma.user.delete).toHaveBeenCalledWith({
+        where: { id: 'user-regular' },
+      });
     });
   });
 });

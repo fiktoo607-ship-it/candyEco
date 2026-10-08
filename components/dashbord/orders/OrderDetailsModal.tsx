@@ -2,6 +2,7 @@ import React from 'react';
 import { Order } from '@/lib/hooks/use-orders';
 import PriceDisplay from '@/components/PriceDisplay';
 import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
+import { useFocusTrap } from '@/lib/hooks/use-focus-trap';
 import { formatFrenchDate } from '@/lib/date';
 import { ORDER_STATUS_CONFIG } from '@/types/orderStatusConfig';
 
@@ -25,16 +26,26 @@ export function OrderDetailsModal({
   onStatusChangeClick,
 }: OrderDetailsModalProps) {
   useLockBodyScroll(!!order);
+  const modalRef = useFocusTrap<HTMLDivElement>({
+    isOpen: !!order,
+    onClose,
+  });
 
   if (!order) return null;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-sm md:p-md">
-      <div className="w-full max-w-2xl bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-soft flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-left">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="order-details-modal-title"
+        className="w-full max-w-2xl bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-soft flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-left"
+      >
         {/* Fixed Header */}
         <div className="flex items-center justify-between border-b border-outline-variant/30 p-md bg-surface-container-low flex-shrink-0">
           <div>
-            <h3 className="text-lg font-bold text-on-surface flex items-center gap-xs">
+            <h3 id="order-details-modal-title" className="text-lg font-bold text-on-surface flex items-center gap-xs">
               <span className="material-symbols-outlined text-primary text-xl">description</span>
               Détails de la Commande
             </h3>
@@ -45,7 +56,7 @@ export function OrderDetailsModal({
           <button
             onClick={onClose}
             className="rounded-full p-xs text-on-surface-variant hover:bg-surface-container-high transition-colors"
-            aria-label="Fermer"
+            aria-label="Fermer la boîte de dialogue"
           >
             <span className="material-symbols-outlined">close</span>
           </button>

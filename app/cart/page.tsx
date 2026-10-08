@@ -24,7 +24,7 @@ export default function CartPage() {
     return (
       <div className="flex min-h-screen flex-col">
         <SiteHeader />
-        <main className="mx-auto flex max-w-container-max flex-1 flex-col items-center justify-center px-gutter py-xl">
+        <main id="main-content" className="mx-auto flex max-w-container-max flex-1 flex-col items-center justify-center px-gutter py-xl">
           <span className="material-symbols-outlined text-4xl text-primary animate-spin">
             sync
           </span>
@@ -43,6 +43,7 @@ export default function CartPage() {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <main
+        id="main-content"
         className="mx-auto flex max-w-container-max flex-1 flex-col px-gutter py-xl w-full"
         dir="ltr"
       >

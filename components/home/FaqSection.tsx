@@ -42,9 +42,11 @@ export default function FaqSection({ faqs }: FaqSectionProps) {
             >
               {/* Accordion Header */}
               <button
+                id={`faq-header-${faq.id}`}
                 onClick={() => toggleAccordion(index)}
                 className="w-full flex items-center justify-between gap-md p-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-colors hover:bg-surface-container-high"
                 aria-expanded={isOpen}
+                aria-controls={`faq-answer-${faq.id}`}
               >
                 <span className="font-display text-base md:text-lg font-bold text-on-surface leading-snug">
                   {faq.question}
@@ -61,6 +63,9 @@ export default function FaqSection({ faqs }: FaqSectionProps) {
 
               {/* Accordion Content */}
               <div
+                id={`faq-answer-${faq.id}`}
+                role="region"
+                aria-labelledby={`faq-header-${faq.id}`}
                 className={`transition-all duration-300 ease-in-out ${
                   isOpen ? 'max-h-[500px] border-t border-outline-variant/10' : 'max-h-0'
                 }`}

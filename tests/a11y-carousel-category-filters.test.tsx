@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React, { act, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import HeroCarousel, { CarouselSlide } from '@/components/home/HeroCarousel';
+import HeroCarousel, { CarouselSlide, sanitizeSlideUrl } from '@/components/home/HeroCarousel';
 import HeroCarouselReExport from '@/components/hero-carousel';
 import CategoryFilter, { defaultCategories } from '@/components/category-filter';
 
@@ -224,4 +224,57 @@ describe('A11y Fixes Verification (Issues #56, #57)', () => {
       unmount();
     });
   });
+
+  describe('Issue #16: Carousel URL Validation & Open Redirect / XSS Prevention', () => {
+    it('rejects dangerous javascript:, data:, vbscript:, and file: schemes', () => {
+      expect(sanitizeSlideUrl('javascript:alert(1)')).toBeNull();
+      expect(sanitizeSlideUrl('JAVASCRIPT:alert(document.cookie)')).toBeNull();
+      expect(sanitizeSlideUrl('data:text/html,<script>alert(1)</script>')).toBeNull();
+      expect(sanitizeSlideUrl('vbscript:msgbox(1)')).toBeNull();
+      expect(sanitizeSlideUrl('file:///etc/passwd')).toBeNull();
+    });
+
+    it('rejects protocol-relative URLs and empty/hash links', () => {
+      expect(sanitizeSlideUrl('//attacker.com/exploit')).toBeNull();
+      expect(sanitizeSlideUrl('')).toBeNull();
+      expect(sanitizeSlideUrl('   ')).toBeNull();
+      expect(sanitizeSlideUrl('#')).toBeNull();
+      expect(sanitizeSlideUrl(null)).toBeNull();
+      expect(sanitizeSlideUrl(undefined)).toBeNull();
+    });
+
+    it('allows valid relative internal paths', () => {
+      expect(sanitizeSlideUrl('/our-product/bonbons')).toBe('/our-product/bonbons');
+      expect(sanitizeSlideUrl('/contact')).toBe('/contact');
+      expect(sanitizeSlideUrl('/a-propos')).toBe('/a-propos');
+    });
+
+    it('allows valid external http and https URLs', () => {
+      expect(sanitizeSlideUrl('https://example.com/promo')).toBe('https://example.com/promo');
+      expect(sanitizeSlideUrl('http://example.com/promo')).toBe('http://example.com/promo');
+    });
+
+    it('rejects invalid or malformed URL strings', () => {
+      expect(sanitizeSlideUrl('ht tp://invalid.com')).toBeNull();
+      expect(sanitizeSlideUrl('not-a-valid-url')).toBeNull();
+    });
+
+    it('HeroCarousel renders safe link and neutralizes malicious javascript: URL', () => {
+      const maliciousSlide: CarouselSlide = {
+        id: 'slide-bad',
+        title: 'Malicious Slide',
+        description: 'Test payload',
+        imageUrl: '/test.jpg',
+        linkUrl: 'javascript:alert(1)',
+      };
+
+      const { container, unmount } = renderComponent(<HeroCarousel slides={[maliciousSlide]} />);
+      const links = container.querySelectorAll('a');
+      links.forEach((link) => {
+        expect(link.getAttribute('href')).not.toBe('javascript:alert(1)');
+      });
+      unmount();
+    });
+  });
 });
+

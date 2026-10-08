@@ -35,6 +35,8 @@ export default function Toast({
   return (
     <div className="fixed top-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-[9999] pointer-events-auto">
       <div
+        role="status"
+        aria-live="polite"
         className={`flex items-center gap-3 rounded-2xl border px-4 py-3.5 shadow-xl backdrop-blur-md transition-all ${bgStyles}`}
       >
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/20">

@@ -21,6 +21,49 @@ interface Slide {
   primaryLink?: { href: string; label: string; isComingSoon: boolean };
 }
 
+/**
+ * Validates and sanitizes slide link URLs to prevent open redirects and XSS (Issue #16).
+ * Rejects javascript:, data:, vbscript: and ensures external links use valid http/https
+ * or relative internal paths.
+ */
+export function sanitizeSlideUrl(url?: string | null): string | null {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === '#') return null;
+
+  const lower = trimmed.toLowerCase();
+  if (
+    lower.startsWith('javascript:') ||
+    lower.startsWith('data:') ||
+    lower.startsWith('vbscript:') ||
+    lower.startsWith('file:')
+  ) {
+    return null;
+  }
+
+  // Reject protocol-relative URLs
+  if (trimmed.startsWith('//')) {
+    return null;
+  }
+
+  // Allow relative internal paths
+  if (trimmed.startsWith('/')) {
+    return trimmed;
+  }
+
+  // Allow valid http / https URLs
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return trimmed;
+    }
+  } catch {
+    // Invalid URL
+  }
+
+  return null;
+}
+
 interface HeroCarouselProps {
   slides?: CarouselSlide[];
 }
@@ -39,30 +82,62 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
 
   const displaySlides: Slide[] = slides.map((slide) => {
-    const isProduct = slide.isProduct ?? slide.linkUrl?.startsWith('/our-product/');
+    const safeUrl = sanitizeSlideUrl(slide.linkUrl);
+    const isProduct = slide.isProduct ?? (safeUrl ? safeUrl.startsWith('/our-product/') : false);
     return {
       imageUrl: slide.imageUrl,
       title: slide.title,
       description: slide.description,
       primaryLink: isProduct
-        ? (slide.linkUrl
+        ? (safeUrl
             ? {
-                href: slide.linkUrl,
+                href: safeUrl,
                 label: "Savoir plus",
                 isComingSoon: false,
               }
             : undefined)
         : {
-            href: slide.linkUrl || "#",
-            label: "Coming Soon",
-            isComingSoon: true,
+            href: safeUrl || "#",
+            label: safeUrl ? "Savoir plus" : "Coming Soon",
+            isComingSoon: !safeUrl,
           },
     };
   });
 
+  const [isPlaying, setIsPlaying] = useState<boolean>(true);
+  const [reducedMotion, setReducedMotion] = useState<boolean>(false);
+
+  // Respect prefers-reduced-motion: disable automatic sliding by default if user prefers reduced motion
+  useEffect(() => {
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (mediaQuery.matches) {
+        setReducedMotion(true);
+        setIsPlaying(false);
+      }
+
+      const handleChange = (e: MediaQueryListEvent) => {
+        if (e.matches) {
+          setReducedMotion(true);
+          setIsPlaying(false);
+        } else {
+          setReducedMotion(false);
+        }
+      };
+
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
+      } else if ('addListener' in mediaQuery) {
+        (mediaQuery as any).addListener(handleChange);
+        return () => (mediaQuery as any).removeListener(handleChange);
+      }
+    }
+  }, []);
+
   const startTimer = () => {
     stopTimer();
-    if (displaySlides.length === 0) return;
+    if (!isPlaying || reducedMotion || displaySlides.length <= 1) return;
     timerRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
     }, 6000); // cycles slides every 6 seconds
@@ -76,28 +151,42 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
   };
 
   useEffect(() => {
-    startTimer();
+    if (isPlaying && !reducedMotion) {
+      startTimer();
+    } else {
+      stopTimer();
+    }
     return () => stopTimer();
-  }, [displaySlides.length]);
+  }, [displaySlides.length, isPlaying, reducedMotion]);
+
+  const togglePlayPause = () => {
+    setIsPlaying((prev) => !prev);
+  };
 
   const handleNext = () => {
     if (displaySlides.length === 0) return;
     stopTimer();
     setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
-    startTimer();
+    if (isPlaying && !reducedMotion) {
+      startTimer();
+    }
   };
 
   const handlePrev = () => {
     if (displaySlides.length === 0) return;
     stopTimer();
     setCurrentSlide((prev) => (prev - 1 + displaySlides.length) % displaySlides.length);
-    startTimer();
+    if (isPlaying && !reducedMotion) {
+      startTimer();
+    }
   };
 
   const handleDotClick = (index: number) => {
     stopTimer();
     setCurrentSlide(index);
-    startTimer();
+    if (isPlaying && !reducedMotion) {
+      startTimer();
+    }
   };
 
   // Touch handlers for swiping
@@ -265,25 +354,45 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
         </button>
       )}
 
-      {/* Slide Indicator Dots centered at the bottom */}
+      {/* Slide Indicator Dots and Play/Pause toggle centered at the bottom */}
       {displaySlides.length > 1 && (
-        <div suppressHydrationWarning className="absolute bottom-md left-1/2 z-30 flex -translate-x-1/2 items-center gap-3">
-          {displaySlides.map((_, index) => {
-            const isActive = index === currentSlide;
-            return (
-              <button
-                key={index}
-                onClick={() => handleDotClick(index)}
-                className={`h-3 transition-all duration-300 ease-out rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                  isActive
-                    ? "w-12 bg-[#2a1082] shadow-md shadow-[#2a1082]/50"
-                    : "w-3 bg-white/40 hover:bg-white/70 hover:scale-110"
-                }`}
-                aria-label={`Go to slide ${index + 1}`}
-                aria-current={isActive ? "true" : undefined}
-              />
-            );
-          })}
+        <div suppressHydrationWarning className="absolute bottom-md left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 bg-neutral-900/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 shadow-lg">
+          <button
+            type="button"
+            onClick={togglePlayPause}
+            aria-label={isPlaying ? "Pause carousel" : "Play carousel"}
+            aria-pressed={!isPlaying}
+            title={isPlaying ? "Pause automated slide transitions" : "Start automated slide transitions"}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-white/90 hover:text-white hover:bg-white/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+          >
+            {isPlaying ? (
+              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            )}
+          </button>
+          <div className="flex items-center gap-2">
+            {displaySlides.map((_, index) => {
+              const isActive = index === currentSlide;
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleDotClick(index)}
+                  className={`h-3 transition-all duration-300 ease-out rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                    isActive
+                      ? "w-12 bg-[#2a1082] shadow-md shadow-[#2a1082]/50"
+                      : "w-3 bg-white/40 hover:bg-white/70 hover:scale-110"
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                  aria-current={isActive ? "true" : undefined}
+                />
+              );
+            })}
+          </div>
         </div>
       )}
     </section>

@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getSiteConfig } from '@/lib/config';
+import { handleServerError } from '@/lib/api-error-handler';
 
 import crypto from 'crypto';
 
@@ -29,7 +30,7 @@ export async function generateAtomicOrderReference(client: any = prisma, date: D
       if (rawVal !== undefined && rawVal !== null) {
         const seqNum = Number(rawVal);
         if (!isNaN(seqNum)) {
-          const seqStr = String(((seqNum - 1) % 999) + 1).padStart(3, '0');
+          const seqStr = seqNum <= 999 ? String(seqNum).padStart(3, '0') : String(seqNum);
           return `${datePrefix}${seqStr}`;
         }
       }
@@ -41,7 +42,7 @@ export async function generateAtomicOrderReference(client: any = prisma, date: D
       const retryResult = await dbClient.$queryRaw`SELECT nextval('order_reference_seq') as seq`;
       if (retryResult && Array.isArray(retryResult) && retryResult.length > 0 && retryResult[0]?.seq !== undefined) {
         const seqNum = Number(retryResult[0].seq);
-        const seqStr = String(((seqNum - 1) % 999) + 1).padStart(3, '0');
+        const seqStr = seqNum <= 999 ? String(seqNum).padStart(3, '0') : String(seqNum);
         return `${datePrefix}${seqStr}`;
       }
     } catch {
@@ -198,6 +199,10 @@ export async function POST(request: NextRequest) {
                 throw new OrderValidationError(`Product "${dbProduct.title}" is out of stock`);
               }
 
+              if (dbProduct.state === 'commingSoun' || dbProduct.state === 'comingSoon') {
+                throw new OrderValidationError(`Product "${dbProduct.title}" is coming soon and cannot be ordered`);
+              }
+
               if (dbProduct.limitBay !== null && dbProduct.limitBay !== undefined && dbProduct.limitBay > 0) {
                 if (quantity > dbProduct.limitBay) {
                   throw new OrderValidationError(
@@ -234,7 +239,28 @@ export async function POST(request: NextRequest) {
               }
             }
 
-            totalAmount = Math.round(totalAmount * 100) / 100;
+            // 3. Validate delivery method and add delivery fee (Issues #28, #25)
+            let deliveryFee = 0;
+            let validatedDeliveryMethod: string | null = null;
+
+            if (deliveryMethod && typeof deliveryMethod === 'string' && deliveryMethod.trim()) {
+              const cleanMethod = deliveryMethod.trim();
+              const deliveryRecord = await (tx.deliveryMethod ? tx.deliveryMethod.findFirst({
+                where: {
+                  name: { equals: cleanMethod, mode: 'insensitive' },
+                  active: true,
+                },
+              }) : null);
+
+              if (!deliveryRecord) {
+                throw new OrderValidationError(`Méthode de livraison non valide ou inactive : "${cleanMethod}".`);
+              }
+
+              validatedDeliveryMethod = deliveryRecord.name;
+              deliveryFee = Number(deliveryRecord.price) || 0;
+            }
+
+            totalAmount = Math.round((totalAmount + deliveryFee) * 100) / 100;
             const totalPrice = `$${totalAmount.toFixed(2)}`;
 
             let finalUserId = userId;
@@ -260,7 +286,7 @@ export async function POST(request: NextRequest) {
                 customerEmail: customerEmail || null,
                 shippingAddress,
                 userId: finalUserId,
-                deliveryMethod,
+                ...(validatedDeliveryMethod || deliveryMethod ? { deliveryMethod: validatedDeliveryMethod || deliveryMethod } : {}),
                 items: {
                   create: orderItemsData,
                 },
@@ -364,8 +390,11 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '5');
+    const rawPage = parseInt(searchParams.get('page') || '1', 10);
+    const rawLimit = parseInt(searchParams.get('limit') || '5', 10);
+    // Enforce safe pagination boundaries: clamp limit between 1 and 100 (Issue #15)
+    const page = Math.max(1, isNaN(rawPage) ? 1 : rawPage);
+    const limit = Math.min(Math.max(1, isNaN(rawLimit) ? 5 : rawLimit), 100);
     const query = searchParams.get('query') || '';
     const status = searchParams.get('status') || '';
     const sortBy = searchParams.get('sortBy') || 'createdAt';
@@ -559,9 +588,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : 'Failed to fetch orders';
-    console.error('[Orders API] Error fetching orders:', error);
-    return NextResponse.json({ error: errMsg }, { status: 500 });
+    return handleServerError(error, '[Orders API] Error fetching orders:', 'Failed to fetch orders');
   }
 }
 

@@ -90,7 +90,7 @@ model OrderItem {
   orderId         String
   order           Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId       String
-  product         Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product         Product     @relation(fields: [productId], references: [id], onDelete: Restrict)
   quantity        Int
   priceAtPurchase String      // Formatted snapshot of product.price at purchase (e.g. "$4.50")
   amountAtPurchase Float       // Numeric snapshot of product price at purchase (e.g. 4.50)
@@ -189,6 +189,7 @@ model Rating {
   rating    Float
   createdAt DateTime @default(now())
 
+  @@unique([productId, userId])
   @@index([productId])
   @@index([userId])
 }

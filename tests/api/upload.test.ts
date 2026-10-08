@@ -17,9 +17,12 @@ vi.mock('next-auth', () => ({
   }),
 }));
 
+import { resetRateLimiter } from '@/lib/rate-limiter';
+
 describe('Upload API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetRateLimiter();
   });
 
   it('should upload a valid file to Cloudinary and return URL and public ID', async () => {
@@ -121,5 +124,89 @@ describe('Upload API', () => {
 
     const data = await response.json();
     expect(data).toEqual({ error: 'Cloudinary authorization failed' });
+  });
+
+  describe('Security Hardening (Issues #44, #18)', () => {
+    it('should reject path-traversing or unapproved folder names with 400', async () => {
+      const invalidFolders = ['../../secrets', '../products', 'products/subfolder', 'etc/passwd', 'invalid_folder'];
+
+      for (const folder of invalidFolders) {
+        const formData = new FormData();
+        const mockFile = new Blob(['image-bytes'], { type: 'image/jpeg' });
+        formData.append('file', mockFile);
+        formData.append('folder', folder);
+
+        const req = new NextRequest('http://localhost/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const response = await uploadFile(req);
+        expect(response.status).toBe(400);
+        const data = await response.json();
+        expect(data.error).toContain('Dossier de destination non autorisé');
+      }
+    });
+
+    it('should reject non-image or executable MIME types (.php, .exe, .sh) with 400', async () => {
+      const invalidMimeTypes = ['application/x-php', 'application/x-msdownload', 'text/x-sh', 'application/javascript', 'text/html'];
+
+      for (const mimeType of invalidMimeTypes) {
+        const formData = new FormData();
+        const mockFile = new Blob(['malicious-script-content'], { type: mimeType });
+        formData.append('file', mockFile);
+        formData.append('folder', 'products');
+
+        const req = new NextRequest('http://localhost/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const response = await uploadFile(req);
+        expect(response.status).toBe(400);
+        const data = await response.json();
+        expect(data.error).toContain('Format de fichier non autorisé');
+      }
+    });
+
+    it('should reject files exceeding the 5MB size limit with 400', async () => {
+      const formData = new FormData();
+      // 6MB buffer
+      const largeBuffer = new Uint8Array(6 * 1024 * 1024);
+      const mockFile = new Blob([largeBuffer], { type: 'image/jpeg' });
+      formData.append('file', mockFile);
+      formData.append('folder', 'products');
+
+      const req = new NextRequest('http://localhost/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await uploadFile(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('taille du fichier dépasse');
+    });
+
+    it('should reject files with executable extensions (.php, .exe, .sh) with 400', async () => {
+      const maliciousFiles = ['payload.php', 'virus.exe', 'script.sh'];
+
+      for (const fileName of maliciousFiles) {
+        const formData = new FormData();
+        const mockFile = new File(['echo malicious'], fileName, { type: 'image/jpeg' });
+        formData.append('file', mockFile);
+        formData.append('folder', 'products');
+
+        const req = new NextRequest('http://localhost/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const response = await uploadFile(req);
+        expect(response.status).toBe(400);
+        const data = await response.json();
+        expect(data.error).toContain('Type de fichier exécutable interdit');
+      }
+    });
   });
 });

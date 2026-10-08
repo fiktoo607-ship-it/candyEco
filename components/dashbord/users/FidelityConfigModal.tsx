@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
+import { useFocusTrap } from '@/lib/hooks/use-focus-trap';
 import { useDashboardStore } from '@/lib/dashboard-store';
 import { User } from './userHelpers';
 
@@ -21,6 +22,10 @@ export function FidelityConfigModal({
   onRefreshUsers,
 }: FidelityConfigModalProps) {
   useLockBodyScroll(isOpen);
+  const modalRef = useFocusTrap<HTMLDivElement>({
+    isOpen,
+    onClose,
+  });
   const { showToast } = useDashboardStore();
 
   const [vipThreshold, setVipThreshold] = useState<string>('500');
@@ -119,16 +124,23 @@ export function FidelityConfigModal({
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-sm md:p-md bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-surface-container-lowest shadow-2xl border border-outline-variant/30 animate-scale-up flex flex-col max-h-[90vh]">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="fidelity-modal-title"
+        className="w-full max-w-lg overflow-hidden rounded-2xl bg-surface-container-lowest shadow-2xl border border-outline-variant/30 animate-scale-up flex flex-col max-h-[90vh]"
+      >
         {/* Header */}
         <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low flex-shrink-0">
           <div className="flex items-center gap-xs">
             <span className="material-symbols-outlined text-amber-500 text-xl select-none">stars</span>
-            <h2 className="font-display text-lg font-bold text-on-surface">Mise à jour de la fidélité</h2>
+            <h2 id="fidelity-modal-title" className="font-display text-lg font-bold text-on-surface">Mise à jour de la fidélité</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
+            aria-label="Fermer la boîte de dialogue"
             className="rounded-full p-xs text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
           >
             <span className="material-symbols-outlined">close</span>

@@ -34,14 +34,18 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
   const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState('');
   
+  const [nameError, setNameError] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [addressError, setAddressError] = useState('');
   const [formError, setFormError] = useState('');
   const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    setIsOffline(!navigator.onLine);
+    if (typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean') {
+      setIsOffline(!navigator.onLine);
+    }
 
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
@@ -100,29 +104,49 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
       setFormError("La boutique est fermée pour le moment. Prise de commande impossible.");
       return;
     }
-    if (items.length === 0) return;
 
-    if (!customerName || !customerPhone || !shippingAddress || !selectedMethod) {
-      setFormError(dictionary.cart.form.validationError);
-      return;
-    }
-
+    setNameError('');
     setPhoneError('');
     setEmailError('');
+    setAddressError('');
+    setFormError('');
 
-    const phoneRegex = /^\+?[0-9\s\-()]{6,25}$/;
-    if (!phoneRegex.test(customerPhone)) {
-      setPhoneError('Veuillez saisir un numéro de téléphone valide.');
-      return;
+    let hasFieldErrors = false;
+    if (!customerName.trim()) {
+      setNameError(dictionary.cart.form.nameLabel ? `${dictionary.cart.form.nameLabel} est requis.` : 'Veuillez saisir votre nom.');
+      hasFieldErrors = true;
+    }
+
+    if (!customerPhone.trim()) {
+      setPhoneError(dictionary.cart.form.phoneLabel ? `${dictionary.cart.form.phoneLabel} est requis.` : 'Veuillez saisir un numéro de téléphone.');
+      hasFieldErrors = true;
+    } else {
+      const phoneRegex = /^\+?[0-9\s\-()]{6,25}$/;
+      if (!phoneRegex.test(customerPhone)) {
+        setPhoneError('Veuillez saisir un numéro de téléphone valide.');
+        hasFieldErrors = true;
+      }
     }
 
     if (customerEmail) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(customerEmail)) {
         setEmailError('Veuillez saisir une adresse e-mail valide.');
-        return;
+        hasFieldErrors = true;
       }
     }
+
+    if (!shippingAddress.trim()) {
+      setAddressError(dictionary.cart.form.addressLabel ? `${dictionary.cart.form.addressLabel} est requise.` : 'Veuillez saisir votre adresse.');
+      hasFieldErrors = true;
+    }
+
+    if (hasFieldErrors || !selectedMethod) {
+      setFormError(dictionary.cart.form.validationError);
+      return;
+    }
+
+    if (items.length === 0) return;
 
     const payload = {
       customerName,
@@ -165,26 +189,38 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
         </div>
       )}
 
-      <form onSubmit={handleCheckout} className="space-y-sm">
+      <form onSubmit={handleCheckout} className="space-y-sm" noValidate>
         <div>
-          <label className="block text-sm font-bold text-on-surface-variant mb-xs">
+          <label htmlFor="name" className="block text-sm font-bold text-on-surface-variant mb-xs">
             {dictionary.cart.form.nameLabel}
           </label>
           <input
+            id="name"
+            name="name"
             type="text"
             required
             placeholder={dictionary.cart.form.namePlaceholder}
             value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary"
+            onChange={(e) => {
+              setCustomerName(e.target.value);
+              if (nameError) setNameError('');
+            }}
+            aria-invalid={nameError ? "true" : undefined}
+            aria-describedby={nameError ? "name-error" : undefined}
+            className={`w-full rounded-lg border bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary ${
+              nameError ? 'border-error' : 'border-outline-variant'
+            }`}
           />
+          {nameError && <p id="name-error" className="text-xs text-error mt-xs">{nameError}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-on-surface-variant mb-xs">
+          <label htmlFor="phone" className="block text-sm font-bold text-on-surface-variant mb-xs">
             {dictionary.cart.form.phoneLabel}
           </label>
           <input
+            id="phone"
+            name="phone"
             type="tel"
             required
             placeholder={dictionary.cart.form.phonePlaceholder}
@@ -193,19 +229,23 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
               setCustomerPhone(e.target.value);
               if (phoneError) setPhoneError('');
             }}
+            aria-invalid={phoneError ? "true" : undefined}
+            aria-describedby={phoneError ? "phone-error" : undefined}
             className={`w-full rounded-lg border bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary text-left ${
               phoneError ? 'border-error' : 'border-outline-variant'
             }`}
             dir="ltr"
           />
-          {phoneError && <p className="text-xs text-error mt-xs">{phoneError}</p>}
+          {phoneError && <p id="phone-error" className="text-xs text-error mt-xs">{phoneError}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-on-surface-variant mb-xs">
+          <label htmlFor="email" className="block text-sm font-bold text-on-surface-variant mb-xs">
             Adresse E-mail (Optionnel)
           </label>
           <input
+            id="email"
+            name="email"
             type="email"
             placeholder="Ex: client@example.com"
             value={customerEmail}
@@ -213,73 +253,90 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
               setCustomerEmail(e.target.value);
               if (emailError) setEmailError('');
             }}
+            aria-invalid={emailError ? "true" : undefined}
+            aria-describedby={emailError ? "email-error" : undefined}
             className={`w-full rounded-lg border bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary ${
               emailError ? 'border-error' : 'border-outline-variant'
             }`}
           />
-          {emailError && <p className="text-xs text-error mt-xs">{emailError}</p>}
+          {emailError && <p id="email-error" className="text-xs text-error mt-xs">{emailError}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-on-surface-variant mb-xs">
+          <label htmlFor="address" className="block text-sm font-bold text-on-surface-variant mb-xs">
             {dictionary.cart.form.addressLabel}
           </label>
           <input
+            id="address"
+            name="address"
             type="text"
             required
             placeholder={dictionary.cart.form.addressPlaceholder}
             value={shippingAddress}
-            onChange={(e) => setShippingAddress(e.target.value)}
-            className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary"
+            onChange={(e) => {
+              setShippingAddress(e.target.value);
+              if (addressError) setAddressError('');
+            }}
+            aria-invalid={addressError ? "true" : undefined}
+            aria-describedby={addressError ? "address-error" : undefined}
+            className={`w-full rounded-lg border bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none focus:border-primary ${
+              addressError ? 'border-error' : 'border-outline-variant'
+            }`}
           />
+          {addressError && <p id="address-error" className="text-xs text-error mt-xs">{addressError}</p>}
         </div>
 
         {/* Delivery Method Selection */}
-        <div className="pt-xs">
-          <label className="block text-sm font-bold text-on-surface-variant mb-sm">
+        <fieldset className="pt-xs border-0 p-0 m-0">
+          <legend className="block text-sm font-bold text-on-surface-variant mb-sm">
             Mode de livraison
-          </label>
+          </legend>
           <div className="space-y-xs">
-            {deliveryMethods.map((method) => (
-              <label
-                key={method.id}
-                className={`flex items-start gap-sm rounded-xl border p-sm cursor-pointer transition-all ${
-                  selectedMethod === method.name
-                    ? 'border-primary bg-primary/5'
-                    : 'border-outline-variant bg-surface-container-low hover:bg-surface-container-high'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="deliveryMethod"
-                  value={method.name}
-                  checked={selectedMethod === method.name}
-                  onChange={() => setSelectedMethod(method.name)}
-                  className="mt-[3px] accent-primary"
-                />
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-on-surface">
-                    {method.name.toLowerCase().includes('yalidin')
-                      ? 'Yalidine Express'
-                      : method.name === 'Home Delivery'
-                      ? 'Livraison à domicile'
-                      : method.name === 'Office Pickup'
-                      ? 'Retrait au bureau'
-                      : method.name === 'Store Pickup'
-                      ? 'Retrait en magasin'
-                      : method.name}
-                  </span>
-                  {method.description && (
-                    <span className="text-xs text-on-surface-variant mt-[2px]">{method.description}</span>
-                  )}
-                  {method.price > 0 && (
-                    <span className="text-xs font-semibold text-primary mt-[2px]">+<PriceDisplay price={method.price} /></span>
-                  )}
-                </div>
-              </label>
-            ))}
+            {deliveryMethods.map((method) => {
+              const methodInputId = `delivery-method-${method.id}`;
+              return (
+                <label
+                  key={method.id}
+                  htmlFor={methodInputId}
+                  className={`flex items-start gap-sm rounded-xl border p-sm cursor-pointer transition-all ${
+                    selectedMethod === method.name
+                      ? 'border-primary bg-primary/5'
+                      : 'border-outline-variant bg-surface-container-low hover:bg-surface-container-high'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    id={methodInputId}
+                    name="deliveryMethod"
+                    value={method.name}
+                    checked={selectedMethod === method.name}
+                    onChange={() => setSelectedMethod(method.name)}
+                    className="mt-[3px] accent-primary"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-on-surface">
+                      {method.name.toLowerCase().includes('yalidin')
+                        ? 'Yalidine Express'
+                        : method.name === 'Home Delivery'
+                        ? 'Livraison à domicile'
+                        : method.name === 'Office Pickup'
+                        ? 'Retrait au bureau'
+                        : method.name === 'Store Pickup'
+                        ? 'Retrait en magasin'
+                        : method.name}
+                    </span>
+                    {method.description && (
+                      <span className="text-xs text-on-surface-variant mt-[2px]">{method.description}</span>
+                    )}
+                    {method.price > 0 && (
+                      <span className="text-xs font-semibold text-primary mt-[2px]">+<PriceDisplay price={method.price} /></span>
+                    )}
+                  </div>
+                </label>
+              );
+            })}
           </div>
-        </div>
+        </fieldset>
 
         {!storeEnabled && (
           <div className="rounded-xl bg-amber-50 border border-amber-200 p-sm text-amber-800 text-sm flex items-start gap-xs mt-md">

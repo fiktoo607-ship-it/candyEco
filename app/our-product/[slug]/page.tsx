@@ -51,7 +51,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="mx-auto flex max-w-container-max flex-1 flex-col px-gutter py-xl w-full">
+      <main id="main-content" className="mx-auto flex max-w-container-max flex-1 flex-col px-gutter py-xl w-full">
         <ProductDetails product={serializableProduct} />
       </main>
       <SiteFooter />

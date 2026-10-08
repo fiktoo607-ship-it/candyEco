@@ -213,10 +213,13 @@ Create your local environment file:
 cp .env.example .env
 ```
 
-### 5. Setup Database & Prisma
+### 5. Setup Database & Prisma Migrations
 ```bash
-# Push Prisma schema to PostgreSQL
-npx prisma db push
+# Apply migrations to local PostgreSQL database
+npx prisma migrate dev
+
+# Alternatively, in production / CI deployments, apply migrations using:
+# npx prisma migrate deploy
 
 # Generate Prisma Client types
 npx prisma generate
@@ -224,6 +227,23 @@ npx prisma generate
 # Run automatic tag verification and keyword linking
 npm run db:ensure-tags
 ```
+
+#### Database Migration Workflow
+For reliable, version-controlled schema evolution:
+1. **Development Schema Changes:** Edit `prisma/schema.prisma` and run:
+   ```bash
+   npx prisma migrate dev --name <descriptive_migration_name>
+   ```
+   This generates a new SQL migration file in `prisma/migrations/` and updates the database.
+2. **Production Deployment:** Apply outstanding migrations automatically without prompting:
+   ```bash
+   npx prisma migrate deploy
+   ```
+3. **Migration Status:** Verify synchronization state between the database and migration files:
+   ```bash
+   npx prisma migrate status
+   ```
+> **Note:** Avoid using `npx prisma db push` in production environments as it does not preserve versioned migration history.
 
 ### 6. Start the Development Server
 ```bash

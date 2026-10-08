@@ -2,6 +2,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { GET as getConfig, POST as updateConfig } from '@/app/api/config/route';
 import { getAllSiteConfigs, saveSiteConfig } from '@/lib/config';
 import { NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth';
 
 // Mock lib/config
 vi.mock('@/lib/config', () => ({
@@ -32,7 +33,7 @@ describe('Config API', () => {
   });
 
   describe('GET /api/config', () => {
-    it('should retrieve all site configurations', async () => {
+    it('should retrieve all site configurations for authenticated admin', async () => {
       const response = await getConfig();
       expect(response.status).toBe(200);
 
@@ -40,9 +41,65 @@ describe('Config API', () => {
       expect(data).toEqual(mockConfigs);
       expect(getAllSiteConfigs).toHaveBeenCalled();
     });
+
+    it('should reject unauthenticated or non-admin callers on GET with 401', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(null);
+      const res = await getConfig();
+      expect(res.status).toBe(401);
+      const data = await res.json();
+      expect(data.error).toBe('Unauthorized');
+    });
+
+    it('should strip sensitive secret keys from GET response (Issue #40)', async () => {
+      vi.mocked(getAllSiteConfigs).mockResolvedValueOnce({
+        carousel_max_slides: 5,
+        cloudinary_api_secret: 'super-secret-key',
+        database_url: 'postgres://...',
+        smtp_password: 'smtp-secret-password',
+        contact_phone: '+123456789',
+      });
+
+      const res = await getConfig();
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.carousel_max_slides).toBe(5);
+      expect(data.contact_phone).toBe('+123456789');
+      expect(data.cloudinary_api_secret).toBeUndefined();
+      expect(data.database_url).toBeUndefined();
+      expect(data.smtp_password).toBeUndefined();
+    });
   });
 
   describe('POST /api/config', () => {
+    it('should reject unauthenticated or non-admin callers on POST with 401', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce(null);
+      const req = new NextRequest('http://localhost/api/config', {
+        method: 'POST',
+        body: JSON.stringify({ carousel_max_slides: 5 }),
+      });
+      const response = await updateConfig(req);
+      expect(response.status).toBe(401);
+      const data = await response.json();
+      expect(data.error).toBe('Unauthorized');
+    });
+
+    it('should reject disallowed keys in POST /api/config with 400 (Issue #40)', async () => {
+      const req = new NextRequest('http://localhost/api/config', {
+        method: 'POST',
+        body: JSON.stringify({
+          carousel_max_slides: 5,
+          malicious_key: 'hacked',
+          secret_token: '123',
+        }),
+      });
+      const response = await updateConfig(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('non autorisée(s)');
+      expect(data.error).toContain('malicious_key');
+      expect(saveSiteConfig).not.toHaveBeenCalled();
+    });
+
     it('should successfully save valid configurations', async () => {
       const req = new NextRequest('http://localhost/api/config', {
         method: 'POST',

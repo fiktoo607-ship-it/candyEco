@@ -158,4 +158,35 @@ describe('Products API - Pagination & Filtering', () => {
       include: { tags: true }
     });
   });
+
+  describe('Unbounded Pagination Protection (Issue #15)', () => {
+    it('should clamp limit=1000000 to safe maximum of 100', async () => {
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce([]);
+
+      const req = new NextRequest('http://localhost/api/products?limit=1000000');
+      await getProducts(req);
+
+      expect(prisma.product.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 100,
+          skip: 0,
+        })
+      );
+    });
+
+    it('should clamp limit=0 or negative limit to minimum of 1', async () => {
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce([]);
+
+      const req = new NextRequest('http://localhost/api/products?limit=-10');
+      await getProducts(req);
+
+      expect(prisma.product.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 1,
+          skip: 0,
+        })
+      );
+    });
+  });
 });
+

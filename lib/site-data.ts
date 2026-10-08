@@ -16,7 +16,7 @@ export type ProductCard = {
   imageUrl: string;
   description: string;
   story: string;
-  limitBay: number | null;
+  limitBay: number | null; // Maximum purchase limit per order
   state: 'exist' | 'outofStock' | 'commingSoun';
   publishedAt: Date | string | null;
   createdAt?: Date | string;

@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { authOptions } from '@/lib/auth';
+import { authOptions, getGoogleProvider } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
@@ -181,6 +181,104 @@ describe('NextAuth Callbacks & Security Hardening', () => {
 
       // bcrypt.compare must NOT have been called
       expect(bcrypt.compare).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('GoogleProvider Hardening (Issues #46, #41, #17, #3)', () => {
+    it('should return null and warn in development when GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET is missing', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const providerNoId = getGoogleProvider('', 'secret', 'development');
+      expect(providerNoId).toBeNull();
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Missing GOOGLE_CLIENT_ID and/or GOOGLE_CLIENT_SECRET')
+      );
+
+      warnSpy.mockClear();
+      const providerNoSecret = getGoogleProvider('client-id', undefined, 'development');
+      expect(providerNoSecret).toBeNull();
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Missing GOOGLE_CLIENT_ID and/or GOOGLE_CLIENT_SECRET')
+      );
+
+      warnSpy.mockClear();
+      const providerProd = getGoogleProvider(undefined, undefined, 'production');
+      expect(providerProd).toBeNull();
+      expect(warnSpy).not.toHaveBeenCalled();
+
+      warnSpy.mockRestore();
+    });
+
+    it('should create GoogleProvider with valid credentials and hardened options', () => {
+      const provider = getGoogleProvider('valid-client-id', 'valid-client-secret', 'production') as any;
+      expect(provider).not.toBeNull();
+      expect(provider.id).toBe('google');
+
+      // Verify dummy values are eliminated
+      expect(provider.options.clientId).toBe('valid-client-id');
+      expect(provider.options.clientSecret).toBe('valid-client-secret');
+
+      // Verify allowDangerousEmailAccountLinking is NOT enabled (prevent account takeover)
+      expect(provider.options.allowDangerousEmailAccountLinking).toBeFalsy();
+
+      // Verify scopes are pruned to standard openid email profile
+      const scopes = provider.options.authorization?.params?.scope;
+      expect(scopes).toBe('openid email profile');
+      expect(scopes).not.toContain('phonenumbers.read');
+      expect(scopes).not.toContain('addresses.read');
+
+      // Verify profile mapping
+      const profile = provider.options.profile({
+        sub: '12345',
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+        picture: 'https://example.com/avatar.jpg',
+      });
+      expect(profile).toEqual({
+        id: '12345',
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+        image: 'https://example.com/avatar.jpg',
+      });
+      // Ensure no phone or address fields extracted from People API
+      expect((profile as any).phone).toBeUndefined();
+      expect((profile as any).address).toBeUndefined();
+    });
+
+    it('should verify authOptions always contains CredentialsProvider and conditionally contains GoogleProvider based on env', () => {
+      const creds = authOptions.providers.find((p: any) => p.id === 'credentials' || p.name === 'Credentials');
+      expect(creds).toBeDefined();
+
+      const googleInOptions = authOptions.providers.find((p: any) => p.id === 'google') as any;
+      if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+        expect(googleInOptions).toBeDefined();
+        expect(googleInOptions?.options.clientId).not.toBe('dummy-client-id');
+        expect(googleInOptions?.options.clientSecret).not.toBe('dummy-client-secret');
+        expect(googleInOptions?.options.allowDangerousEmailAccountLinking).toBeFalsy();
+      } else {
+        expect(googleInOptions).toBeUndefined();
+      }
+    });
+
+    it('should cleanly omit GoogleProvider when imported in an environment lacking credentials', async () => {
+      const origId = process.env.GOOGLE_CLIENT_ID;
+      const origSecret = process.env.GOOGLE_CLIENT_SECRET;
+      try {
+        delete process.env.GOOGLE_CLIENT_ID;
+        delete process.env.GOOGLE_CLIENT_SECRET;
+        vi.resetModules();
+
+        const { authOptions: isolatedOptions } = await import('@/lib/auth');
+        const google = isolatedOptions.providers.find((p: any) => p.id === 'google');
+        const creds = isolatedOptions.providers.find((p: any) => p.id === 'credentials' || p.name === 'Credentials');
+
+        expect(google).toBeUndefined();
+        expect(creds).toBeDefined();
+      } finally {
+        if (origId) process.env.GOOGLE_CLIENT_ID = origId;
+        if (origSecret) process.env.GOOGLE_CLIENT_SECRET = origSecret;
+        vi.resetModules();
+      }
     });
   });
 });

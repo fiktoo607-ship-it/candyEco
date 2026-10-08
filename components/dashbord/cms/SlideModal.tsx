@@ -1,5 +1,6 @@
 import React from 'react';
 import { CarouselSlide } from '@/lib/hooks/use-carousel';
+import { useFocusTrap } from '@/lib/hooks/use-focus-trap';
 
 interface SlideModalProps {
   isOpen: boolean;
@@ -38,20 +39,32 @@ export function SlideModal({
   handleSlideImageUpload,
   handleSlideSubmit,
 }: SlideModalProps) {
+  const modalRef = useFocusTrap<HTMLDivElement>({
+    isOpen,
+    onClose,
+  });
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-sm md:p-md backdrop-blur-sm">
-      <div className="w-full max-w-xl rounded-2xl border border-outline-variant bg-surface-container-lowest shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-fade-in text-left">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="slide-modal-title"
+        className="w-full max-w-xl rounded-2xl border border-outline-variant bg-surface-container-lowest shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-fade-in text-left"
+      >
         {/* Fixed Header */}
         <div className="flex items-center justify-between border-b border-outline-variant/30 p-md flex-shrink-0">
-          <h3 className="font-display text-lg md:text-xl font-bold text-on-surface flex items-center gap-xs">
+          <h3 id="slide-modal-title" className="font-display text-lg md:text-xl font-bold text-on-surface flex items-center gap-xs">
             <span className="material-symbols-outlined text-primary text-xl">add_photo_alternate</span>
             {editingSlide ? "Modifier la diapositive" : "Ajouter une diapositive"}
           </h3>
           <button
             type="button"
             onClick={onClose}
+            aria-label="Fermer la boîte de dialogue"
             className="rounded-full p-1 text-on-surface-variant hover:bg-surface-variant transition-colors"
           >
             <span className="material-symbols-outlined">close</span>

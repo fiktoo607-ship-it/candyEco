@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { z } from 'zod';
+import { handleServerError } from '@/lib/api-error-handler';
+import { getFidelityThresholds } from '@/app/api/fidelity-config/route';
 
 const updateUserSchema = z.object({
   status: z.enum(['VIP', 'Fidèle', 'Vérifié', 'Non vérifié']).optional(),
@@ -45,11 +47,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Utilisateur non trouvé.' }, { status: 404 });
     }
 
+    const { vipThreshold, fideleThreshold } = await getFidelityThresholds();
+
     let defaultScore = existingUser.trustScore ?? 0;
-    if (status === 'VIP' && (trustScore === undefined || trustScore < 500)) {
-      defaultScore = Math.max(defaultScore, 500);
-    } else if (status === 'Fidèle' && (trustScore === undefined || trustScore < 100)) {
-      defaultScore = Math.max(defaultScore, 100);
+    if (status === 'VIP' && (trustScore === undefined || trustScore < vipThreshold)) {
+      defaultScore = Math.max(defaultScore, vipThreshold);
+    } else if (status === 'Fidèle' && (trustScore === undefined || trustScore < fideleThreshold)) {
+      defaultScore = Math.max(defaultScore, fideleThreshold);
     }
 
     const updatedUser = await prisma.user.update({
@@ -60,15 +64,16 @@ export async function PUT(
       },
     });
 
+    // Exclude password hash from response (Issue #6)
+    const { password: _, ...userWithoutPassword } = updatedUser;
+
     return NextResponse.json({
       success: true,
       message: 'Statut du client mis à jour avec succès.',
-      user: updatedUser,
+      user: userWithoutPassword,
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Update failed';
-    console.error('Update User API Error:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, 'Update User API Error:', 'Update failed');
   }
 }
 
@@ -97,6 +102,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'Utilisateur non trouvé.' }, { status: 404 });
     }
 
+    // Prevent deleting other admin accounts (Issue #45)
+    if (existingUser.role === 'admin') {
+      return NextResponse.json(
+        { error: 'Impossible de supprimer un compte administrateur.' },
+        { status: 403 }
+      );
+    }
+
     await prisma.user.delete({
       where: { id },
     });
@@ -104,8 +117,6 @@ export async function DELETE(
     return NextResponse.json({ success: true, message: 'Utilisateur supprimé avec succès.' });
 
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Deletion failed';
-    console.error('Delete User API Error:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, 'Delete User API Error:', 'Deletion failed');
   }
 }

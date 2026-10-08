@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { normalizePrice } from "@/lib/utils/currency";
 import { ensureProductTags } from "@/lib/tags";
+import { handleServerError } from "@/lib/api-error-handler";
 
 export async function GET(request?: NextRequest) {
   try {
@@ -64,6 +65,11 @@ export async function GET(request?: NextRequest) {
         }
       }
 
+      if (searchParams.get('catalog') === 'true' || searchParams.get('public') === 'true') {
+        hasWhere = true;
+        where.state = 'exist';
+      }
+
       if (hasWhere) {
         queryOptions.where = where;
       }
@@ -81,8 +87,11 @@ export async function GET(request?: NextRequest) {
       }
 
       if (pageStr || limitStr) {
-        const page = Math.max(1, parseInt(pageStr || '1', 10));
-        const limit = Math.max(1, parseInt(limitStr || '6', 10));
+        const rawPage = parseInt(pageStr || '1', 10);
+        const rawLimit = parseInt(limitStr || '6', 10);
+        // Enforce safe pagination boundaries: clamp limit between 1 and 100 (Issue #15)
+        const page = Math.max(1, isNaN(rawPage) ? 1 : rawPage);
+        const limit = Math.min(Math.max(1, isNaN(rawLimit) ? 6 : rawLimit), 100);
         queryOptions.skip = (page - 1) * limit;
         queryOptions.take = limit;
       }
@@ -113,23 +122,32 @@ export async function GET(request?: NextRequest) {
       return mapped;
     });
 
+    // By default, filter public catalog queries so only published/active products are returned to non-admin visitors (Issue #30)
+    const resultProducts = isDashboard
+      ? mappedProducts
+      : mappedProducts.filter((p: any) => {
+          const isActive = !p.state || p.state === 'exist' || p.state === 'AVAILABLE' || p.state === 'active';
+          const isPublished = !p.publishedAt || new Date(p.publishedAt) <= new Date();
+          return isActive && isPublished;
+        });
+
     let hasNextPage = false;
     if (pageStr || limitStr) {
-      const page = Math.max(1, parseInt(pageStr || '1', 10));
-      const limit = Math.max(1, parseInt(limitStr || '6', 10));
+      const rawPage = parseInt(pageStr || '1', 10);
+      const rawLimit = parseInt(limitStr || '6', 10);
+      const page = Math.max(1, isNaN(rawPage) ? 1 : rawPage);
+      const limit = Math.min(Math.max(1, isNaN(rawLimit) ? 6 : rawLimit), 100);
       hasNextPage = total > page * limit;
     }
 
-    return NextResponse.json(mappedProducts, {
+    return NextResponse.json(resultProducts, {
       headers: {
         'x-total-count': total.toString(),
         'x-has-next-page': hasNextPage.toString()
       }
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch products';
-    console.error('Error fetching products:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Products API] Error fetching products:', 'Failed to fetch products');
   }
 }
 

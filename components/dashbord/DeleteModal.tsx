@@ -1,6 +1,7 @@
 import { useDashboardStore } from '@/lib/dashboard-store';
 import { useDeleteProduct } from '@/lib/hooks/use-products';
 import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
+import { useFocusTrap } from '@/lib/hooks/use-focus-trap';
 
 export default function DeleteModal() {
   const {
@@ -14,6 +15,10 @@ export default function DeleteModal() {
   const isSubmitting = deleteMutation.isPending;
 
   useLockBodyScroll(isDeleteOpen);
+  const modalRef = useFocusTrap<HTMLDivElement>({
+    isOpen: isDeleteOpen,
+    onClose: () => setIsDeleteOpen(false),
+  });
 
   if (!isDeleteOpen) return null;
 
@@ -35,9 +40,15 @@ export default function DeleteModal() {
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-md bg-black/40 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-modal-title"
+        className="w-full max-w-md overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up"
+      >
         <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low">
-          <h2 className="font-display text-xl font-bold text-error flex items-center gap-xs">
+          <h2 id="delete-modal-title" className="font-display text-xl font-bold text-error flex items-center gap-xs">
             <svg className="w-6 h-6 text-error" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
             </svg>
@@ -46,6 +57,7 @@ export default function DeleteModal() {
           <button
             type="button"
             onClick={() => setIsDeleteOpen(false)}
+            aria-label="Fermer la boîte de dialogue"
             className="rounded-full p-xs text-on-surface-variant transition-colors hover:bg-surface-container-high"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

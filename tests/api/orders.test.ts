@@ -36,6 +36,13 @@ vi.mock('@/lib/prisma', () => {
       findMany: vi.fn(),
       create: vi.fn(),
     },
+    deliveryMethod: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
     order: {
       count: vi.fn(),
       findMany: vi.fn(),
@@ -787,6 +794,96 @@ describe('Orders API', () => {
       expect(prisma.order.create).not.toHaveBeenCalled();
     });
 
+    it('should reject order containing a product with state "commingSoun" with 400 (Issue #21)', async () => {
+      const comingSoonProducts = [
+        {
+          id: 'prod-coming-soon',
+          title: 'Gâteau Futuriste',
+          price: '$30.00',
+          state: 'commingSoun',
+          limitBay: null,
+        },
+      ];
+
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(comingSoonProducts as any);
+
+      const payload = {
+        ...validPayload,
+        items: [{ productId: 'prod-coming-soon', quantity: 1 }],
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('is coming soon and cannot be ordered');
+      expect(prisma.order.create).not.toHaveBeenCalled();
+    });
+
+    it('should validate delivery method "Express" and add delivery price to order total (Issues #28, #25)', async () => {
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
+      vi.mocked(prisma.deliveryMethod.findFirst).mockResolvedValueOnce({
+        id: 'deliv-express',
+        name: 'Express',
+        price: 7.50,
+        active: true,
+      } as any);
+
+      const payload = {
+        ...validPayload,
+        deliveryMethod: 'Express',
+        items: [
+          { productId: 'prod-1', quantity: 2 }, // $5.00 * 2 = $10.00
+          { productId: 'prod-2', quantity: 1 }, // $10.00 * 1 = $10.00
+        ], // Products total: $20.00, + delivery ($7.50) = $27.50
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(201);
+      expect(prisma.order.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            totalAmount: 27.50,
+            totalPrice: '$27.50',
+            deliveryMethod: 'Express',
+          }),
+        })
+      );
+    });
+
+    it('should reject order when delivery method is inactive or not found (Issue #28)', async () => {
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
+      vi.mocked(prisma.deliveryMethod.findFirst).mockResolvedValueOnce(null);
+
+      const payload = {
+        ...validPayload,
+        deliveryMethod: 'InexistantDelivery',
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('Méthode de livraison non valide ou inactive');
+      expect(prisma.order.create).not.toHaveBeenCalled();
+    });
+
     it('should ignore client-provided manipulated prices and calculate authoritative total from database', async () => {
       vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
       vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(null);
@@ -995,6 +1092,21 @@ describe('Orders API', () => {
       expect(resOrderCount.status).toBe(200);
       const dataOrderCount = await resOrderCount.json();
       expect(dataOrderCount.data[0].customerOrderCount).toBe(5);
+    });
+
+    it('should clamp limit=1000000 to safe ceiling of 100 in pagination meta and SQL query (Issue #15)', async () => {
+      vi.mocked(prisma.$queryRaw)
+        .mockResolvedValueOnce([{ count: 200 }])
+        .mockResolvedValueOnce([]);
+      vi.mocked(prisma.order.findMany).mockResolvedValueOnce([]);
+
+      const req = new NextRequest('http://localhost/api/orders?limit=1000000');
+      const res = await getOrders(req);
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.meta.limit).toBe(100);
+      expect(data.meta.totalPages).toBe(2);
     });
 
     it('should return 500 when database count or query fails', async () => {

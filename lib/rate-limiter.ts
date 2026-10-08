@@ -48,16 +48,46 @@ export function resetRateLimiter(): void {
 }
 
 /**
- * Extracts a trustworthy client IP address from request headers.
+ * Extracts a trustworthy client IP address from request.
+ * Prioritizes request.ip and parses the rightmost trusted proxy hop from X-Forwarded-For
+ * to prevent client header spoofing attacks (Issue #7).
  */
 export function getClientIp(request: Request | NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    const clientIp = forwarded.split(',')[0].trim();
-    if (clientIp) return clientIp;
+  if (!request) return '127.0.0.1';
+
+  // 1. Prefer direct request.ip from Next.js runtime when present
+  if (typeof (request as any).ip === 'string' && (request as any).ip.trim()) {
+    return (request as any).ip.trim();
   }
-  const realIp = request.headers.get('x-real-ip');
-  if (realIp) return realIp.trim();
+
+  if (!request.headers) return '127.0.0.1';
+
+  // 2. Parse X-Forwarded-For: parse only the rightmost trusted proxy hop
+  // Prevents attackers from spoofing arbitrary IPs at the beginning of the list
+  let forwarded: string | null = null;
+  if (typeof request.headers.get === 'function') {
+    forwarded = request.headers.get('x-forwarded-for');
+  } else if ((request.headers as any)['x-forwarded-for']) {
+    forwarded = String((request.headers as any)['x-forwarded-for']);
+  }
+
+  if (forwarded) {
+    const hops = forwarded.split(',').map((h) => h.trim()).filter(Boolean);
+    if (hops.length > 0) {
+      const rightmost = hops[hops.length - 1];
+      if (rightmost) return rightmost;
+    }
+  }
+
+  // 3. Fallback to X-Real-IP if provided by reverse proxy
+  let realIp: string | null = null;
+  if (typeof request.headers.get === 'function') {
+    realIp = request.headers.get('x-real-ip');
+  } else if ((request.headers as any)['x-real-ip']) {
+    realIp = String((request.headers as any)['x-real-ip']);
+  }
+  if (realIp && realIp.trim()) return realIp.trim();
+
   return '127.0.0.1';
 }
 

@@ -43,45 +43,54 @@ export async function POST(request: NextRequest) {
 
     const phoneNormalized = phone.trim();
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findFirst({
-      where: { phone: phoneNormalized },
-    });
-
-    if (existingUser) {
-      return NextResponse.json({ error: 'Ce numéro de téléphone est déjà utilisé.' }, { status: 400 });
-    }
-
-    // Determine role (admin if first user)
-    let role = 'user';
-    const userCount = await prisma.user.count();
-    if (userCount === 0) {
-      role = 'admin';
-    }
-
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create the user (pre-verified because no email is provided for email verification)
-    const newUser = await prisma.user.create({
-      data: {
-        name: name.trim(),
-        phone: phoneNormalized,
-        password: hashedPassword,
-        role,
-        emailVerified: new Date(),
-      },
-    });
+    // Use an atomic database transaction to prevent first-user bootstrap race conditions (Issue #42)
+    const runInTransaction = async <T>(fn: (tx: any) => Promise<T>): Promise<T> => {
+      if (typeof prisma.$transaction === 'function') {
+        return prisma.$transaction(fn);
+      }
+      return fn(prisma);
+    };
 
-    // Automatically claim all prior guest orders associated with this phone number (Issue #68)
-    await prisma.order.updateMany({
-      where: {
-        customerPhone: phoneNormalized,
-        userId: null,
-      },
-      data: {
-        userId: newUser.id,
-      },
+    const newUser = await runInTransaction(async (tx) => {
+      // Check if user already exists
+      const existingUser = await tx.user.findFirst({
+        where: { phone: phoneNormalized },
+      });
+
+      if (existingUser) {
+        throw new Error('PhoneAlreadyUsed');
+      }
+
+      // Determine role atomically
+      const userCount = await tx.user.count();
+      const role = userCount === 0 ? 'admin' : 'user';
+
+      // Create the user (phone-only registration without email: emailVerified is null)
+      const createdUser = await tx.user.create({
+        data: {
+          name: name.trim(),
+          phone: phoneNormalized,
+          password: hashedPassword,
+          role,
+          emailVerified: null,
+        },
+      });
+
+      // Automatically claim all prior guest orders associated with this phone number (Issue #68)
+      await tx.order.updateMany({
+        where: {
+          customerPhone: phoneNormalized,
+          userId: null,
+        },
+        data: {
+          userId: createdUser.id,
+        },
+      });
+
+      return createdUser;
     });
 
     return NextResponse.json({
@@ -91,6 +100,10 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error) {
+    if (error instanceof Error && error.message === 'PhoneAlreadyUsed') {
+      return NextResponse.json({ error: 'Ce numéro de téléphone est déjà utilisé.' }, { status: 400 });
+    }
+
     const errorMessage = error instanceof Error ? error.message : 'Registration failed';
     console.error('Registration API Error:', error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });

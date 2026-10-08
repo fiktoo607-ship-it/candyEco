@@ -142,6 +142,92 @@ export async function getActiveAdminSession(userId?: string): Promise<ActiveAdmi
   return sessions[0] || null;
 }
 
+class AsyncMutex {
+  private queue: Promise<void> = Promise.resolve();
+
+  async runExclusive<T>(fn: () => Promise<T>): Promise<T> {
+    let release: () => void;
+    const nextInQueue = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+
+    const currentQueue = this.queue;
+    this.queue = this.queue.then(() => nextInQueue);
+
+    await currentQueue;
+    try {
+      return await fn();
+    } finally {
+      release!();
+    }
+  }
+}
+
+export const adminLockMutex = new AsyncMutex();
+const REDIS_MUTEX_KEY = 'admin:active_sessions:mutex';
+
+export async function withAdminSessionMutex<T>(fn: () => Promise<T>): Promise<T> {
+  return adminLockMutex.runExclusive(async () => {
+    let hasRedisLock = false;
+    if (redisPub) {
+      try {
+        if (redisPub.status === 'wait') {
+          await redisPub.connect().catch(() => {});
+        }
+        for (let i = 0; i < 20; i++) {
+          const acquired = await redisPub.set(REDIS_MUTEX_KEY, 'locked', 'PX', 5000, 'NX');
+          if (acquired === 'OK') {
+            hasRedisLock = true;
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+      } catch (err) {
+        // Fall back to in-memory mutex
+      }
+    }
+
+    try {
+      return await fn();
+    } finally {
+      if (hasRedisLock && redisPub) {
+        try {
+          await redisPub.del(REDIS_MUTEX_KEY);
+        } catch {}
+      }
+    }
+  });
+}
+
+/**
+ * Resolves a reliable, non-bypassable device identifier.
+ * Prevents circumventing single-device concurrency limits via 'default_device'
+ * or omitted device IDs (e.g. during OAuth sign-ins).
+ */
+export function resolveDeviceId(options?: AcquireAdminLockOptions): string {
+  const explicit = options?.deviceId?.trim();
+  if (explicit && explicit !== 'default_device') {
+    return explicit;
+  }
+
+  const ua = options?.userAgent?.trim() || '';
+  const model = options?.deviceName?.trim() || extractDeviceModelFromHeaders(options?.headers) || '';
+  let platform = '';
+  if (options?.headers) {
+    if (typeof options.headers.get === 'function') {
+      platform = options.headers.get('sec-ch-ua-platform') || options.headers.get('sec-ch-ua') || '';
+    } else {
+      platform = (options.headers as any)['sec-ch-ua-platform'] || (options.headers as any)['sec-ch-ua'] || '';
+    }
+  }
+
+  if (ua || model || platform) {
+    return `fp_${Buffer.from(`${ua}:${model}:${platform}`).toString('base64url').slice(0, 32)}`;
+  }
+
+  return `anon_${generateSecureSessionId()}`;
+}
+
 export interface AcquireAdminLockOptions {
   deviceId?: string;
   deviceName?: string | null;
@@ -165,132 +251,139 @@ export interface AcquireAdminLockResult {
  * 1. Single device per account: Rejects if the same user is already active on a different device.
  * 2. Max 2 concurrent admins: Rejects if 2 different admins are already active.
  * 3. Idempotent on same device: Refreshes timestamp and updates info without consuming extra slots.
+ * 4. TOCTOU safe: Mutex-locked atomic operation across checks and mutations.
  */
 export async function acquireAdminLock(
   userId: string,
   options?: AcquireAdminLockOptions
 ): Promise<AcquireAdminLockResult> {
-  const activeSessions = await getActiveAdminSessions();
-  const normalizedDeviceId = options?.deviceId?.trim() || 'default_device';
-  const effectiveModel = options?.deviceName || extractDeviceModelFromHeaders(options?.headers);
+  return withAdminSessionMutex(async () => {
+    const activeSessions = await getActiveAdminSessions();
+    const normalizedDeviceId = resolveDeviceId(options);
+    const effectiveModel = options?.deviceName || extractDeviceModelFromHeaders(options?.headers);
 
-  // Check if this user already has an active session
-  const existingUserSession = activeSessions.find((s) => s.userId === userId);
+    // Check if this user already has an active session
+    const existingUserSession = activeSessions.find((s) => s.userId === userId);
 
-  if (existingUserSession) {
-    // If deviceId differs, prevent login on second device
-    if (
-      existingUserSession.deviceId &&
-      normalizedDeviceId &&
-      existingUserSession.deviceId !== normalizedDeviceId &&
-      normalizedDeviceId !== 'default_device' &&
-      existingUserSession.deviceId !== 'default_device'
-    ) {
+    if (existingUserSession) {
+      // If deviceId differs, prevent login on second device (no default_device bypass)
+      if (existingUserSession.deviceId !== normalizedDeviceId) {
+        return {
+          success: false,
+          error: 'SameAccountAnotherDevice',
+          activeSessions,
+          activeSession: existingUserSession,
+        };
+      }
+
+      // Same device: refresh and update metadata
+      existingUserSession.lastSeenAt = Date.now();
+      if (options?.userName) existingUserSession.userName = options.userName;
+      if (options?.userEmail) existingUserSession.userEmail = options.userEmail;
+      if (options?.userPhone) existingUserSession.userPhone = options.userPhone;
+      if (options?.userAgent || effectiveModel) {
+        existingUserSession.deviceInfo = parseDeviceInfo(options?.userAgent, effectiveModel || existingUserSession.deviceInfo?.model);
+      }
+      if (options?.headers) existingUserSession.locationInfo = extractLocationInfo(options.headers);
+
+      await saveActiveAdminSessions(activeSessions);
       return {
-        success: false,
-        error: 'SameAccountAnotherDevice',
+        success: true,
         activeSessions,
         activeSession: existingUserSession,
       };
     }
 
-    // Same device: refresh and update metadata
-    existingUserSession.lastSeenAt = Date.now();
-    if (options?.userName) existingUserSession.userName = options.userName;
-    if (options?.userEmail) existingUserSession.userEmail = options.userEmail;
-    if (options?.userPhone) existingUserSession.userPhone = options.userPhone;
-    if (options?.userAgent || effectiveModel) {
-      existingUserSession.deviceInfo = parseDeviceInfo(options?.userAgent, effectiveModel || existingUserSession.deviceInfo?.model);
+    // User is not active yet: check slot availability
+    if (activeSessions.length >= MAX_CONCURRENT_ADMINS) {
+      return {
+        success: false,
+        error: 'MaxAdminsReached',
+        activeSessions,
+        activeSession: activeSessions[0],
+      };
     }
-    if (options?.headers) existingUserSession.locationInfo = extractLocationInfo(options.headers);
 
-    await saveActiveAdminSessions(activeSessions);
+    // Create new session
+    const newSession: ActiveAdminSession = {
+      sessionId: generateSecureSessionId(),
+      deviceId: normalizedDeviceId,
+      userId,
+      userName: options?.userName ?? null,
+      userEmail: options?.userEmail ?? null,
+      userPhone: options?.userPhone ?? null,
+      deviceInfo: parseDeviceInfo(options?.userAgent, effectiveModel),
+      locationInfo: extractLocationInfo(options?.headers),
+      loginAt: Date.now(),
+      lastSeenAt: Date.now(),
+    };
+
+    const updatedSessions = [...activeSessions, newSession];
+    await saveActiveAdminSessions(updatedSessions);
+
     return {
       success: true,
-      activeSessions,
-      activeSession: existingUserSession,
+      activeSessions: updatedSessions,
+      activeSession: newSession,
     };
-  }
-
-  // User is not active yet: check slot availability
-  if (activeSessions.length >= MAX_CONCURRENT_ADMINS) {
-    return {
-      success: false,
-      error: 'MaxAdminsReached',
-      activeSessions,
-      activeSession: activeSessions[0],
-    };
-  }
-
-  // Create new session
-  const newSession: ActiveAdminSession = {
-    sessionId: generateSecureSessionId(),
-    deviceId: normalizedDeviceId,
-    userId,
-    userName: options?.userName ?? null,
-    userEmail: options?.userEmail ?? null,
-    userPhone: options?.userPhone ?? null,
-    deviceInfo: parseDeviceInfo(options?.userAgent, effectiveModel),
-    locationInfo: extractLocationInfo(options?.headers),
-    loginAt: Date.now(),
-    lastSeenAt: Date.now(),
-  };
-
-  const updatedSessions = [...activeSessions, newSession];
-  await saveActiveAdminSessions(updatedSessions);
-
-  return {
-    success: true,
-    activeSessions: updatedSessions,
-    activeSession: newSession,
-  };
+  });
 }
 
 /**
  * Refreshes an active session for the specified user and device.
+ * TOCTOU safe: wrapped in distributed/in-process mutex.
  */
 export async function refreshAdminLock(
   userId: string,
   deviceId?: string,
   options?: { deviceName?: string | null; userAgent?: string | null; headers?: HeaderContainer }
 ): Promise<boolean> {
-  const activeSessions = await getActiveAdminSessions();
-  const session = activeSessions.find(
-    (s) => s.userId === userId && (!deviceId || s.deviceId === 'default_device' || s.deviceId === deviceId)
-  );
+  return withAdminSessionMutex(async () => {
+    const activeSessions = await getActiveAdminSessions();
+    const normalizedDeviceId = deviceId && deviceId !== 'default_device'
+      ? deviceId.trim()
+      : resolveDeviceId({ deviceId, deviceName: options?.deviceName, userAgent: options?.userAgent, headers: options?.headers });
 
-  if (!session) {
-    return false;
-  }
+    const session = activeSessions.find(
+      (s) => s.userId === userId && (s.deviceId === normalizedDeviceId || s.deviceId === deviceId)
+    );
 
-  session.lastSeenAt = Date.now();
-  const effectiveModel = options?.deviceName || extractDeviceModelFromHeaders(options?.headers);
-  if (effectiveModel || (options?.userAgent && !session.deviceInfo?.model)) {
-    session.deviceInfo = parseDeviceInfo(options?.userAgent, effectiveModel || session.deviceInfo?.model);
-  }
-  await saveActiveAdminSessions(activeSessions);
-  return true;
+    if (!session) {
+      return false;
+    }
+
+    session.lastSeenAt = Date.now();
+    const effectiveModel = options?.deviceName || extractDeviceModelFromHeaders(options?.headers);
+    if (effectiveModel || (options?.userAgent && !session.deviceInfo?.model)) {
+      session.deviceInfo = parseDeviceInfo(options?.userAgent, effectiveModel || session.deviceInfo?.model);
+    }
+    await saveActiveAdminSessions(activeSessions);
+    return true;
+  });
 }
 
 /**
  * Releases the session for the given user and device (or all for user if no deviceId).
+ * TOCTOU safe: wrapped in distributed/in-process mutex.
  */
 export async function releaseAdminLock(userId?: string, deviceId?: string): Promise<void> {
-  let activeSessions = await getActiveAdminSessions();
+  return withAdminSessionMutex(async () => {
+    let activeSessions = await getActiveAdminSessions();
 
-  if (userId) {
-    activeSessions = activeSessions.filter((s) => {
-      if (s.userId !== userId) return true;
-      if (deviceId && s.deviceId !== deviceId && s.deviceId !== 'default_device') {
-        return true;
-      }
-      return false;
-    });
-  } else {
-    activeSessions = [];
-  }
+    if (userId) {
+      activeSessions = activeSessions.filter((s) => {
+        if (s.userId !== userId) return true;
+        if (deviceId && deviceId !== 'default_device' && s.deviceId !== deviceId) {
+          return true;
+        }
+        return false;
+      });
+    } else {
+      activeSessions = [];
+    }
 
-  await saveActiveAdminSessions(activeSessions);
+    await saveActiveAdminSessions(activeSessions);
+  });
 }
 
 // Utility function for tests to clear state

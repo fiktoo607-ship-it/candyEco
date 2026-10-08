@@ -34,17 +34,20 @@ export const useCartStore = create<CartState>()(
       items: [],
       addItem: (product, quantity = 1) => {
         set((state) => {
+          const maxLimit = product.limitBay && product.limitBay > 0 ? product.limitBay : 100;
           const existingItem = state.items.find((item) => item.product.id === product.id);
           if (existingItem) {
+            const nextQty = Math.min(maxLimit, existingItem.quantity + quantity);
             return {
               items: state.items.map((item) =>
                 item.product.id === product.id
-                  ? { ...item, quantity: item.quantity + quantity }
+                  ? { ...item, quantity: nextQty }
                   : item
               ),
             };
           }
-          return { items: [...state.items, { product, quantity }] };
+          const initialQty = Math.min(maxLimit, Math.max(1, quantity));
+          return { items: [...state.items, { product, quantity: initialQty }] };
         });
       },
       removeItem: (productId) => {
@@ -54,9 +57,12 @@ export const useCartStore = create<CartState>()(
       },
       updateQuantity: (productId, quantity) => {
         set((state) => ({
-          items: state.items.map((item) =>
-            item.product.id === productId ? { ...item, quantity } : item
-          ),
+          items: state.items.map((item) => {
+            if (item.product.id !== productId) return item;
+            const maxLimit = item.product.limitBay && item.product.limitBay > 0 ? item.product.limitBay : 100;
+            const clampedQty = Math.min(maxLimit, Math.max(1, quantity));
+            return { ...item, quantity: clampedQty };
+          }),
         }));
       },
       clearCart: () => set({ items: [] }),

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
+import { useFocusTrap } from '@/lib/hooks/use-focus-trap';
 import { ORDER_STATUS_CONFIG } from '@/types/orderStatusConfig';
 
 interface OrderStatusConfirmModalProps {
@@ -20,6 +21,10 @@ export function OrderStatusConfirmModal({
   newStatus,
 }: OrderStatusConfirmModalProps) {
   useLockBodyScroll(isOpen);
+  const modalRef = useFocusTrap<HTMLDivElement>({
+    isOpen,
+    onClose,
+  });
 
   if (!isOpen) return null;
 
@@ -29,15 +34,22 @@ export function OrderStatusConfirmModal({
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-md bg-black/40 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="status-modal-title"
+        className="w-full max-w-md overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up"
+      >
         <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low">
-          <h2 className="font-display text-base font-bold text-primary flex items-center gap-xs">
+          <h2 id="status-modal-title" className="font-display text-base font-bold text-primary flex items-center gap-xs">
             <span className="material-symbols-outlined text-primary text-xl">published_with_changes</span>
             Confirmer le changement
           </h2>
           <button
             type="button"
             onClick={onClose}
+            aria-label="Fermer la boîte de dialogue"
             className="rounded-full p-xs text-on-surface-variant transition-colors hover:bg-surface-container-high"
           >
             <span className="material-symbols-outlined text-xl">close</span>

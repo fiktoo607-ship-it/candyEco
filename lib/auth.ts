@@ -9,6 +9,41 @@ import { logAuthData } from "@/logs/featurs";
 import { acquireAdminLock, recordLoginHistory } from "@/lib/admin-session";
 import { MAX_PASSWORD_LENGTH } from "@/lib/validations/auth";
 
+export function getGoogleProvider(
+  clientId = process.env.GOOGLE_CLIENT_ID?.trim(),
+  clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim(),
+  nodeEnv = process.env.NODE_ENV
+) {
+  if (!clientId || !clientSecret) {
+    if (nodeEnv === "development") {
+      console.warn(
+        "[NextAuth] Missing GOOGLE_CLIENT_ID and/or GOOGLE_CLIENT_SECRET. Google OAuth provider is disabled."
+      );
+    }
+    return null;
+  }
+
+  return GoogleProvider({
+    clientId,
+    clientSecret,
+    authorization: {
+      params: {
+        scope: "openid email profile",
+      },
+    },
+    profile(profile) {
+      return {
+        id: profile.sub,
+        name: profile.name,
+        email: profile.email,
+        image: profile.picture,
+      };
+    },
+  });
+}
+
+const googleProvider = getGoogleProvider();
+
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   adapter: PrismaAdapter(prisma),
@@ -16,49 +51,7 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || process.env.Client_ID || "dummy-client-id",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || "dummy-client-secret",
-      allowDangerousEmailAccountLinking: true,
-      authorization: {
-        params: {
-          scope: "openid email profile https://www.googleapis.com/auth/user.phonenumbers.read https://www.googleapis.com/auth/user.addresses.read"
-        }
-      },
-      async profile(profile, tokens) {
-        let phone = null;
-        let address = null;
-
-        if (tokens.access_token) {
-          try {
-            const res = await fetch(
-              "https://people.googleapis.com/v1/people/me?personFields=phoneNumbers,addresses",
-              {
-                headers: {
-                  Authorization: `Bearer ${tokens.access_token}`,
-                },
-              }
-            );
-            if (res.ok) {
-              const peopleData = await res.json();
-              phone = peopleData.phoneNumbers?.[0]?.value || null;
-              address = peopleData.addresses?.[0]?.formatted || null;
-            }
-          } catch (err) {
-            console.error("Error fetching extra profile data from Google People API:", err);
-          }
-        }
-
-        return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          image: profile.picture,
-          phone,
-          address,
-        };
-      }
-    }),
+    ...(googleProvider ? [googleProvider] : []),
     CredentialsProvider({
       name: "Credentials",
       credentials: {

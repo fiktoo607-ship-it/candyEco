@@ -13,6 +13,7 @@ vi.mock('next-auth', () => ({
 vi.mock('@/lib/prisma', () => {
   const mockPrisma = {
     deliveryMethod: {
+      findFirst: vi.fn(),
       findMany: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
@@ -202,6 +203,12 @@ describe('Delivery Method Selection API Tests', () => {
       vi.mocked(prisma.product.findMany).mockResolvedValue([
         { id: 'prod-1', title: 'Cookie', price: '$2.50', state: 'exist' },
       ] as any);
+      vi.mocked(prisma.deliveryMethod.findFirst).mockResolvedValue({
+        id: 'dm-1',
+        name: 'Home Delivery',
+        price: 5.0,
+        active: true,
+      } as any);
       vi.mocked(prisma.order.create).mockResolvedValue({ id: 'order-xyz' } as any);
 
       const payload = {

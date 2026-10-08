@@ -1,3 +1,16 @@
+const cspHeader = `
+  default-src 'self';
+  script-src 'self' 'unsafe-eval' 'unsafe-inline';
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  img-src 'self' blob: data: https://lh3.googleusercontent.com https://images.unsplash.com https://res.cloudinary.com;
+  font-src 'self' https://fonts.gstatic.com data:;
+  connect-src 'self' https: wss:;
+  frame-ancestors 'self';
+  form-action 'self';
+  base-uri 'self';
+  object-src 'none';
+`.replace(/\s{2,}/g, ' ').trim();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -39,6 +52,10 @@ const nextConfig = {
       {
         source: "/(.*)",
         headers: [
+          {
+            key: "Content-Security-Policy",
+            value: cspHeader,
+          },
           {
             key: "X-Content-Type-Options",
             value: "nosniff",

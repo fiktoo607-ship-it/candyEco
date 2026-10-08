@@ -2,28 +2,88 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAllSiteConfigs, saveSiteConfig } from '@/lib/config';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { handleServerError } from '@/lib/api-error-handler';
+
+export const ALLOWED_CONFIG_KEYS = new Set([
+  'carousel_products',
+  'carousel_max_slides',
+  'new_products_limit',
+  'homepage_story_title',
+  'homepage_story_description',
+  'homepage_story_image',
+  'about_hero_title',
+  'about_hero_description',
+  'about_heritage_image',
+  'about_heritage_title',
+  'about_heritage_desc1',
+  'about_heritage_desc2',
+  'contact_phone',
+  'contact_email',
+  'contact_address',
+  'contact_hours',
+  'contact_social_instagram',
+  'contact_social_instagram_user',
+  'contact_social_tiktok',
+  'contact_social_tiktok_user',
+  'store_enabled',
+  'store_message',
+  'fidelity_vip_threshold',
+  'vipThreshold',
+  'fidelity_fidele_threshold',
+  'fideleThreshold',
+]);
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const config = await getAllSiteConfigs();
-    return NextResponse.json(config);
+
+    // Ensure sensitive secret keys are never exposed publicly (Issue #40)
+    const SENSITIVE_KEY_PATTERNS = [
+      /secret/i,
+      /token/i,
+      /password/i,
+      /credential/i,
+      /api_key/i,
+      /private/i,
+      /smtp/i,
+      /database/i,
+    ];
+
+    const sanitizedConfig: Record<string, any> = {};
+    for (const [k, v] of Object.entries(config)) {
+      if (!SENSITIVE_KEY_PATTERNS.some((pat) => pat.test(k))) {
+        sanitizedConfig[k] = v;
+      }
+    }
+
+    return NextResponse.json(sanitizedConfig);
   } catch (error) {
-    console.error('[Config API] Error getting config:', error);
-    return NextResponse.json(
-      { error: 'Failed to retrieve website configurations' },
-      { status: 500 }
-    );
+    return handleServerError(error, '[Config API] Error getting config:', 'Failed to retrieve website configurations');
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'admin') {
+    if (!session || session.user?.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
+
+    // Enforce strict allowlist of editable keys (Issue #40)
+    const invalidKeys = Object.keys(body).filter((key) => !ALLOWED_CONFIG_KEYS.has(key));
+    if (invalidKeys.length > 0) {
+      return NextResponse.json(
+        { error: `Clé(s) de configuration non autorisée(s) : ${invalidKeys.join(', ')}` },
+        { status: 400 }
+      );
+    }
     
     // Validate carousel products limit and max slides
     let maxSlides = 5;
@@ -116,10 +176,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[Config API] Error saving config:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to save configurations' },
-      { status: 500 }
-    );
+    return handleServerError(error, '[Config API] Error saving config:', 'Failed to save configurations');
   }
 }

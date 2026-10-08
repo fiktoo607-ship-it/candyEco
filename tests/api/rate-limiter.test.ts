@@ -79,14 +79,25 @@ describe('Rate Limiter & Abuse Protection (SEC-08)', () => {
     expect(blocked).toBe(5);
   });
 
-  it('should accurately extract client IP from forwarding headers', () => {
+  it('should accurately extract client IP using request.ip or rightmost forwarding hop (Issue #7)', () => {
+    // 1. Direct request.ip priority
+    const reqWithDirectIp = new NextRequest('http://localhost/api/test', {
+      headers: {
+        'x-forwarded-for': 'spoofed.attacker.ip, 150.172.238.178',
+      },
+    });
+    (reqWithDirectIp as any).ip = '198.51.100.99';
+    expect(getClientIp(reqWithDirectIp)).toBe('198.51.100.99');
+
+    // 2. Rightmost proxy hop from X-Forwarded-For to prevent leftmost spoofing
     const reqWithForwarded = new NextRequest('http://localhost/api/test', {
       headers: {
         'x-forwarded-for': '203.0.113.195, 70.41.3.18, 150.172.238.178',
       },
     });
-    expect(getClientIp(reqWithForwarded)).toBe('203.0.113.195');
+    expect(getClientIp(reqWithForwarded)).toBe('150.172.238.178');
 
+    // 3. Fallback to X-Real-IP
     const reqWithRealIp = new NextRequest('http://localhost/api/test', {
       headers: {
         'x-real-ip': '198.51.100.42',
@@ -94,6 +105,7 @@ describe('Rate Limiter & Abuse Protection (SEC-08)', () => {
     });
     expect(getClientIp(reqWithRealIp)).toBe('198.51.100.42');
 
+    // 4. Default fallback when no headers are provided
     const reqEmpty = new NextRequest('http://localhost/api/test');
     expect(getClientIp(reqEmpty)).toBe('127.0.0.1');
   });

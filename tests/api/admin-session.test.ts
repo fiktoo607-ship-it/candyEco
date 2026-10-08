@@ -21,6 +21,7 @@ import {
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { resetRateLimiter } from '@/lib/rate-limiter';
 
 vi.mock('next-auth', () => ({
   getServerSession: vi.fn(),
@@ -166,9 +167,21 @@ describe('Admin Multi-Device & 2-Admin Concurrency Management', () => {
       expect(res.status).toBe(401);
     });
 
-    it('returns public list of active sessions with device & location details for logged-out admins', async () => {
+    it('returns 401 Unauthorized on GET /api/admin/session/active when unauthenticated (Issue #39)', async () => {
+      vi.mocked(getServerSession).mockResolvedValue(null);
+      const res = await getActiveSessionsRoute();
+      expect(res.status).toBe(401);
+      const data = await res.json();
+      expect(data.error).toBe('Unauthorized');
+    });
+
+    it('returns sanitized active sessions on GET /api/admin/session/active for authenticated admins with deviceId stripped', async () => {
+      vi.mocked(getServerSession).mockResolvedValue({
+        user: { id: 'admin-1', role: 'admin' },
+      } as any);
+
       await acquireAdminLock('admin-1', {
-        deviceId: 'dev-phone',
+        deviceId: 'dev-phone-secret',
         userName: 'Sara Admin',
         userPhone: '+33 6 12 34 56 78',
         userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
@@ -186,6 +199,9 @@ describe('Admin Multi-Device & 2-Admin Concurrency Management', () => {
       expect(data.activeSessions[0].userPhone).toBe('+33 6 12 34 56 78');
       expect(data.activeSessions[0].deviceInfo.os).toBe('iOS (iPhone)');
       expect(data.activeSessions[0].deviceInfo.deviceType).toBe('mobile');
+      // Crucial: deviceId and internal session identifiers must be stripped
+      expect((data.activeSessions[0] as any).deviceId).toBeUndefined();
+      expect((data.activeSessions[0] as any).sessionId).toBeUndefined();
     });
 
     it('returns 409 conflict when 3rd admin tries to heartbeat without a slot', async () => {
@@ -262,6 +278,92 @@ describe('Admin Multi-Device & 2-Admin Concurrency Management', () => {
       const data = await res.json();
       expect(data.activeSessions.length).toBe(1);
       expect(data.activeSessions[0].userName).toBe('Admin 2');
+      // Verify deviceId and sessionId are stripped from POST response
+      expect((data.activeSessions[0] as any).deviceId).toBeUndefined();
+      expect((data.activeSessions[0] as any).sessionId).toBeUndefined();
+    });
+
+    it('rate limits POST /api/admin/session/active to prevent brute-force probing', async () => {
+      resetRateLimiter();
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+
+      const req = {
+        headers: { get: () => '192.168.1.100' },
+        json: vi.fn().mockResolvedValue({ phone: '0999999999', password: 'bad-password' }),
+      } as any;
+
+      // First 5 attempts fail with 401
+      for (let i = 0; i < 5; i++) {
+        const res = await postActiveSessionsRoute(req);
+        expect(res.status).toBe(401);
+      }
+
+      // 6th attempt must be blocked by rate limiter with 429
+      const blockedRes = await postActiveSessionsRoute(req);
+      expect(blockedRes.status).toBe(429);
+      const data = await blockedRes.json();
+      expect(data.error).toContain('Trop de tentatives');
+    });
+  });
+
+  describe('TOCTOU Concurrency & Default Device Bypass Security (Issues #43, #45)', () => {
+    it('prevents TOCTOU race conditions when simulating concurrent lock requests', async () => {
+      // 1 slot is occupied by admin-1
+      await acquireAdminLock('admin-1', { deviceId: 'dev-1', userName: 'Admin One' });
+
+      // Simulate simultaneous requests by admin-2 and admin-3 for the remaining 1 slot
+      const [resA, resB] = await Promise.all([
+        acquireAdminLock('admin-2', { deviceId: 'dev-2', userName: 'Admin Two' }),
+        acquireAdminLock('admin-3', { deviceId: 'dev-3', userName: 'Admin Three' }),
+      ]);
+
+      // Exactly ONE must succeed and the other must fail with MaxAdminsReached
+      const successes = [resA, resB].filter((r) => r.success);
+      const failures = [resA, resB].filter((r) => !r.success);
+
+      expect(successes.length).toBe(1);
+      expect(failures.length).toBe(1);
+      expect(failures[0].error).toBe('MaxAdminsReached');
+
+      const allActive = await getActiveAdminSessions();
+      expect(allActive.length).toBe(2);
+    });
+
+    it('prevents default_device bypass when an admin has an active session and tries logging in from another device', async () => {
+      // Admin logs in with deviceId
+      const firstLogin = await acquireAdminLock('admin-bypass', {
+        deviceId: 'dev-trusted',
+        userName: 'Admin Bypass',
+      });
+      expect(firstLogin.success).toBe(true);
+
+      // Same admin attempts to log in using 'default_device' (or omitted deviceId like in OAuth)
+      const secondLogin = await acquireAdminLock('admin-bypass', {
+        deviceId: 'default_device',
+        userName: 'Admin Bypass',
+        userAgent: 'Different Mobile Safari',
+      });
+
+      expect(secondLogin.success).toBe(false);
+      expect(secondLogin.error).toBe('SameAccountAnotherDevice');
+    });
+
+    it('prevents circumventing single-device limit when initial session was created without deviceId (e.g. OAuth)', async () => {
+      // Admin logs in via OAuth on desktop
+      const oauthLogin = await acquireAdminLock('admin-oauth', {
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0',
+        userName: 'Admin OAuth',
+      });
+      expect(oauthLogin.success).toBe(true);
+
+      // Same admin attempts to log in from a mobile phone
+      const secondOAuthLogin = await acquireAdminLock('admin-oauth', {
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/604.1',
+        userName: 'Admin OAuth',
+      });
+
+      expect(secondOAuthLogin.success).toBe(false);
+      expect(secondOAuthLogin.error).toBe('SameAccountAnotherDevice');
     });
   });
 

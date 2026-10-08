@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-export async function GET() {
+export async function getFidelityThresholds(): Promise<{ vipThreshold: number; fideleThreshold: number }> {
   try {
     const vipConfig = await prisma.siteConfig.findUnique({
       where: { key: 'fidelity_vip_threshold' },
@@ -12,13 +12,18 @@ export async function GET() {
       where: { key: 'fidelity_fidele_threshold' },
     });
 
-    return NextResponse.json({
-      vipThreshold: vipConfig ? parseInt(vipConfig.value) : 500,
-      fideleThreshold: fideleConfig ? parseInt(fideleConfig.value) : 100,
-    });
+    return {
+      vipThreshold: vipConfig ? parseInt(vipConfig.value, 10) : 500,
+      fideleThreshold: fideleConfig ? parseInt(fideleConfig.value, 10) : 100,
+    };
   } catch (error) {
-    return NextResponse.json({ vipThreshold: 500, fideleThreshold: 100 });
+    return { vipThreshold: 500, fideleThreshold: 100 };
   }
+}
+
+export async function GET() {
+  const thresholds = await getFidelityThresholds();
+  return NextResponse.json(thresholds);
 }
 
 export async function POST(request: NextRequest) {

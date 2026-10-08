@@ -10,7 +10,7 @@ export default function CartItemsList() {
   return (
     <div className="space-y-md">
       {items.map((item) => {
-        const minQty = item.product.limitBay && item.product.limitBay > 0 ? item.product.limitBay : 1;
+        const maxQty = item.product.limitBay && item.product.limitBay > 0 ? item.product.limitBay : undefined;
 
         return (
           <div
@@ -38,8 +38,8 @@ export default function CartItemsList() {
                 </h3>
                 <p className="text-sm text-on-surface-variant mt-xs">{item.product.category}</p>
                 <p className="text-primary font-bold mt-xs"><PriceDisplay price={item.product.price} /></p>
-                {minQty > 1 && (
-                  <p className="text-xs text-outline mt-[2px]">Min. {minQty} par commande</p>
+                {maxQty !== undefined && (
+                  <p className="text-xs text-outline mt-[2px]">Max. {maxQty} par commande</p>
                 )}
               </div>
             </div>
@@ -68,9 +68,8 @@ export default function CartItemsList() {
                   <button
                     type="button"
                     aria-label="Diminuer la quantité"
-                    onClick={() => updateQuantity(item.product.id, Math.max(minQty, item.quantity - 1))}
-                    disabled={item.quantity <= minQty}
-                    title={item.quantity <= minQty ? `Minimum: ${minQty}` : undefined}
+                    onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1))}
+                    disabled={item.quantity <= 1}
                     className="px-sm py-1 hover:bg-surface-container-high font-bold transition-colors text-on-surface-variant disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
                     -
@@ -80,7 +79,9 @@ export default function CartItemsList() {
                     type="button"
                     aria-label="Augmenter la quantité"
                     onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                    className="px-sm py-1 hover:bg-surface-container-high font-bold transition-colors text-on-surface-variant focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    disabled={maxQty !== undefined && item.quantity >= maxQty}
+                    title={maxQty !== undefined && item.quantity >= maxQty ? `Limite maximale: ${maxQty}` : undefined}
+                    className="px-sm py-1 hover:bg-surface-container-high font-bold transition-colors text-on-surface-variant disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
                     +
                   </button>

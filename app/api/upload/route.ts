@@ -3,6 +3,24 @@ import { uploadImage } from '@/lib/cloudinary';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
+import { handleServerError } from '@/lib/api-error-handler';
+
+export const ALLOWED_UPLOAD_FOLDERS = new Set([
+  'products',
+  'banners',
+  'avatars',
+  'carousel',
+  'slides',
+  'custom-folder',
+]);
+
+export const ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+]);
+
+export const MAX_UPLOAD_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,7 +54,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const folder = (formData.get('folder') as string) || 'products';
+    // Validate destination directory against path traversal and allowlist (Issue #44)
+    const rawFolder = formData.get('folder');
+    const folder = (typeof rawFolder === 'string' && rawFolder.trim() ? rawFolder.trim() : 'products');
+
+    if (
+      folder.includes('..') ||
+      folder.includes('/') ||
+      folder.includes('\\') ||
+      !ALLOWED_UPLOAD_FOLDERS.has(folder)
+    ) {
+      return NextResponse.json(
+        { error: 'Dossier de destination non autorisé ou invalide' },
+        { status: 400 }
+      );
+    }
+
+    // Validate MIME type (Issue #18)
+    if (!ALLOWED_MIME_TYPES.has(file.type)) {
+      return NextResponse.json(
+        { error: 'Format de fichier non autorisé. Formats acceptés : image/jpeg, image/png, image/webp.' },
+        { status: 400 }
+      );
+    }
+
+    // Enforce strict file size ceiling (max 5MB)
+    if (file.size > MAX_UPLOAD_FILE_SIZE) {
+      return NextResponse.json(
+        { error: 'La taille du fichier dépasse la limite autorisée de 5 Mo.' },
+        { status: 400 }
+      );
+    }
+
+    // Reject dangerous executable extensions
+    if ('name' in file && typeof (file as any).name === 'string') {
+      const fileName = ((file as any).name as string).toLowerCase();
+      const dangerousExtensions = ['.php', '.exe', '.sh', '.bat', '.cmd', '.js', '.ts', '.py', '.phtml', '.phar'];
+      if (dangerousExtensions.some((ext) => fileName.endsWith(ext))) {
+        return NextResponse.json(
+          { error: 'Type de fichier exécutable interdit.' },
+          { status: 400 }
+        );
+      }
+    }
 
     // Call Cloudinary helper
     const result = await uploadImage(file, folder);
@@ -46,11 +106,6 @@ export async function POST(request: NextRequest) {
       publicId: result.publicId,
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to upload file';
-    console.error('[Upload API] Error uploading file:', error);
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return handleServerError(error, '[Upload API] Error uploading file:', 'Failed to upload file');
   }
 }

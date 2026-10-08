@@ -208,7 +208,9 @@ export default function SiteHeader() {
             type="button"
             onClick={toggleMobileMenu}
             className="inline-flex items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest p-2 text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            aria-label="Toggle navigation menu"
+            aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation-menu"
           >
             {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
           </button>
@@ -216,7 +218,7 @@ export default function SiteHeader() {
       </div>
 
       {mobileMenuOpen ? (
-        <div className="border-t border-outline-variant/20 bg-surface-container-lowest px-gutter py-md lg:hidden">
+        <div id="mobile-navigation-menu" className="border-t border-outline-variant/20 bg-surface-container-lowest px-gutter py-md lg:hidden">
           <nav className="flex flex-col gap-sm">
             {navigationLinks.map((link) => {
               const active = pathname === link.href;

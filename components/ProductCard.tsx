@@ -26,15 +26,15 @@ export interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
-  const minQuantity = product.limitBay && product.limitBay > 0 ? product.limitBay : 1;
-  const [quantity, setQuantity] = useState(minQuantity);
+  const maxQuantity = product.limitBay && product.limitBay > 0 ? product.limitBay : undefined;
+  const [quantity, setQuantity] = useState(1);
 
   const handleIncrease = () => {
-    setQuantity((prev) => prev + 1);
+    setQuantity((prev) => (!maxQuantity || prev < maxQuantity ? prev + 1 : prev));
   };
 
   const handleDecrease = () => {
-    setQuantity((prev) => (prev > minQuantity ? prev - 1 : prev));
+    setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
   };
 
   const handleAddToCart = () => {
@@ -165,8 +165,9 @@ export default function ProductCard({ product }: ProductCardProps) {
                   type="button"
                   onClick={handleDecrease}
                   className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  disabled={quantity <= minQuantity}
-                  title={`Minimum quantity is ${minQuantity}`}
+                  disabled={quantity <= 1}
+                  title="Quantité minimale : 1"
+                  aria-label="Diminuer la quantité"
                 >
                   <svg
                     className="w-3.5 h-3.5 sm:w-4 sm:h-4 select-none"
@@ -189,7 +190,10 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <button
                   type="button"
                   onClick={handleIncrease}
-                  className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors"
+                  disabled={maxQuantity !== undefined && quantity >= maxQuantity}
+                  title={maxQuantity !== undefined && quantity >= maxQuantity ? `Limite maximale : ${maxQuantity}` : undefined}
+                  aria-label="Augmenter la quantité"
+                  className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <svg
                     className="w-3.5 h-3.5 sm:w-4 sm:h-4 select-none"

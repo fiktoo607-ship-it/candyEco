@@ -72,7 +72,7 @@ export default function OrdersPage() {
   return (
     <div className="flex min-h-screen flex-col bg-surface">
       <SiteHeader />
-      <main className="mx-auto flex max-w-4xl flex-1 flex-col px-gutter py-xl w-full">
+      <main id="main-content" className="mx-auto flex max-w-4xl flex-1 flex-col px-gutter py-xl w-full">
         {/* Page Header */}
         <div className="border-b border-outline-variant/30 pb-md mb-lg">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">Mon espace</p>

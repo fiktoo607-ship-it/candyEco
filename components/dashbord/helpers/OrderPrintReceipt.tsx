@@ -11,6 +11,20 @@ interface OrderPrintReceiptProps {
   onClose: () => void;
 }
 
+export function parseCleanPrice(val: string | number | null | undefined): number {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'number') return isNaN(val) ? 0 : val;
+  const str = String(val).trim();
+  let cleaned = str.replace(/[^\d.,-]/g, '');
+  if (cleaned.includes(',') && !cleaned.includes('.')) {
+    cleaned = cleaned.replace(',', '.');
+  } else if (cleaned.includes(',') && cleaned.includes('.')) {
+    cleaned = cleaned.replace(/,/g, '');
+  }
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
 export function OrderPrintReceipt({ order, onClose }: OrderPrintReceiptProps) {
   const [mounted, setMounted] = React.useState(false);
 
@@ -157,7 +171,7 @@ export function OrderPrintReceipt({ order, onClose }: OrderPrintReceiptProps) {
                 </thead>
                 <tbody>
                   {order.items.map((item) => {
-                    const price = parseFloat(item.priceAtPurchase || '0');
+                    const price = parseCleanPrice(item.priceAtPurchase ?? item.amountAtPurchase);
                     const total = price * item.quantity;
                     return (
                       <tr key={item.id} className="border-b border-gray-200 last:border-0">

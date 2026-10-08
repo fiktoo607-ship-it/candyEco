@@ -206,6 +206,25 @@ export async function POST(
 
     // Verification: Order containing the product must be DELIVERED or COMPLETED
     const user = session.user as any;
+
+    // Enforce uniqueness: allow only one rating per user per product (Issue #11)
+    if (user?.id && typeof prisma.rating?.findFirst === 'function') {
+      const existingRating = await prisma.rating.findFirst({
+        where: {
+          productId: id,
+          userId: user.id,
+        },
+      });
+
+      if (existingRating) {
+        return NextResponse.json(
+          { error: 'Vous avez déjà évalué ce produit.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Verification: Order containing the product must be DELIVERED or COMPLETED
     const conditions: any[] = [{ userId: user.id }];
     if (user.phone) {
       conditions.push({ customerPhone: user.phone });
@@ -237,6 +256,18 @@ export async function POST(
 
       if (!product) {
         return null;
+      }
+
+      if (user?.id && typeof tx.rating?.findFirst === 'function') {
+        const alreadyRated = await tx.rating.findFirst({
+          where: {
+            productId: id,
+            userId: user.id,
+          },
+        });
+        if (alreadyRated) {
+          throw new Error('AlreadyRated');
+        }
       }
 
       await tx.rating.create({
@@ -276,7 +307,10 @@ export async function POST(
       rating: updatedProduct.rating,
       ratingCount: updatedProduct.ratingCount
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message === 'AlreadyRated' || error?.code === 'P2002') {
+      return NextResponse.json({ error: 'Vous avez déjà évalué ce produit.' }, { status: 400 });
+    }
     const errorMessage = error instanceof Error ? error.message : 'Failed to submit rating';
     console.error('Error submitting rating:', error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
