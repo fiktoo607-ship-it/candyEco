@@ -204,9 +204,9 @@ export async function POST(request: NextRequest) {
               }
 
               if (dbProduct.limitBay !== null && dbProduct.limitBay !== undefined && dbProduct.limitBay > 0) {
-                if (quantity > dbProduct.limitBay) {
+                if (quantity < dbProduct.limitBay) {
                   throw new OrderValidationError(
-                    `La quantité pour "${dbProduct.title}" dépasse la limite autorisée (${dbProduct.limitBay}).`
+                    `La quantité pour "${dbProduct.title}" doit être d'au moins ${dbProduct.limitBay}.`
                   );
                 }
               }
@@ -225,18 +225,6 @@ export async function POST(request: NextRequest) {
                 priceAtPurchase: dbProduct.price,
                 amountAtPurchase: numericPrice,
               });
-
-              // Deduct limit / available stock within transaction
-              if (dbProduct.limitBay !== null && dbProduct.limitBay !== undefined && dbProduct.limitBay > 0) {
-                const remainingLimit = dbProduct.limitBay - quantity;
-                await tx.product.update({
-                  where: { id: productId },
-                  data: {
-                    limitBay: remainingLimit,
-                    ...(remainingLimit <= 0 ? { state: 'outofStock' } : {}),
-                  },
-                });
-              }
             }
 
             // 3. Validate delivery method and add delivery fee (Issues #28, #25)

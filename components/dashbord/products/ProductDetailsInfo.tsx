@@ -17,7 +17,7 @@ export function ProductDetailsInfo({
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
       <div className="flex flex-col gap-xs">
         <label className="text-sm font-bold text-on-surface-variant">
-          Limite d'achat
+          Quantité minimum par commande
         </label>
         <input
           type="number"

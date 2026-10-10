@@ -26,15 +26,15 @@ export interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
-  const maxQuantity = product.limitBay && product.limitBay > 0 ? product.limitBay : undefined;
-  const [quantity, setQuantity] = useState(1);
+  const minQuantity = product.limitBay && product.limitBay > 0 ? product.limitBay : 1;
+  const [quantity, setQuantity] = useState(minQuantity);
 
   const handleIncrease = () => {
-    setQuantity((prev) => (!maxQuantity || prev < maxQuantity ? prev + 1 : prev));
+    setQuantity((prev) => (prev < 100 ? prev + 1 : prev));
   };
 
   const handleDecrease = () => {
-    setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+    setQuantity((prev) => (prev > minQuantity ? prev - 1 : minQuantity));
   };
 
   const handleAddToCart = () => {
@@ -165,8 +165,8 @@ export default function ProductCard({ product }: ProductCardProps) {
                   type="button"
                   onClick={handleDecrease}
                   className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  disabled={quantity <= 1}
-                  title="Quantité minimale : 1"
+                  disabled={quantity <= minQuantity}
+                  title={minQuantity > 1 ? `Quantité minimale : ${minQuantity}` : undefined}
                   aria-label="Diminuer la quantité"
                 >
                   <svg
@@ -190,8 +190,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <button
                   type="button"
                   onClick={handleIncrease}
-                  disabled={maxQuantity !== undefined && quantity >= maxQuantity}
-                  title={maxQuantity !== undefined && quantity >= maxQuantity ? `Limite maximale : ${maxQuantity}` : undefined}
+                  disabled={quantity >= 100}
                   aria-label="Augmenter la quantité"
                   className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >

@@ -599,21 +599,21 @@ describe('Orders API', () => {
       expect(prisma.order.create).toHaveBeenCalledTimes(1);
     });
 
-    it('should throw 400 immediately within transaction when product limitBay is exceeded', async () => {
+    it('should throw 400 immediately within transaction when quantity is below product limitBay minimum', async () => {
       const limitedProducts = [
         {
           id: 'prod-1',
           title: 'Limited Cake',
           price: '$10.00',
           state: 'exist',
-          limitBay: 1,
+          limitBay: 5,
         },
       ];
       vi.mocked(prisma.product.findMany).mockResolvedValueOnce(limitedProducts as any);
 
       const payload = {
         ...validPayload,
-        items: [{ productId: 'prod-1', quantity: 5 }],
+        items: [{ productId: 'prod-1', quantity: 2 }],
       };
 
       const req = new NextRequest('http://localhost/api/orders', {
@@ -625,7 +625,7 @@ describe('Orders API', () => {
       const res = await createOrder(req);
       expect(res.status).toBe(400);
       const data = await res.json();
-      expect(data.error).toContain('dépasse la limite autorisée');
+      expect(data.error).toContain("doit être d'au moins 5");
       expect(prisma.order.create).not.toHaveBeenCalled();
     });
 
@@ -763,14 +763,14 @@ describe('Orders API', () => {
       expect(data.error).toBe('La quantité doit être un entier positif entre 1 et 100.');
     });
 
-    it('should reject order when quantity exceeds product limitBay', async () => {
+    it('should reject order when quantity is below product limitBay minimum', async () => {
       const productsWithLimit = [
         {
           id: 'prod-limit',
-          title: 'Limited Edition Cake',
-          price: '$50.00',
+          title: 'Couscous Artisanal Complet',
+          price: '$11.00',
           state: 'exist',
-          limitBay: 2, // Maximum 2 per order
+          limitBay: 9, // Minimum 9 per order
         },
       ];
 
@@ -778,7 +778,7 @@ describe('Orders API', () => {
 
       const payload = {
         ...validPayload,
-        items: [{ productId: 'prod-limit', quantity: 3 }],
+        items: [{ productId: 'prod-limit', quantity: 5 }],
       };
 
       const req = new NextRequest('http://localhost/api/orders', {
@@ -790,8 +790,52 @@ describe('Orders API', () => {
       const response = await createOrder(req);
       expect(response.status).toBe(400);
       const data = await response.json();
-      expect(data.error).toContain('dépasse la limite autorisée (2)');
+      expect(data.error).toContain("doit être d'au moins 9");
       expect(prisma.order.create).not.toHaveBeenCalled();
+    });
+
+    it('should allow order when quantity is greater than or equal to product limitBay (e.g. 12 >= 9)', async () => {
+      const productsWithLimit = [
+        {
+          id: 'prod-limit',
+          title: 'Couscous Artisanal Complet',
+          price: '$11.00',
+          state: 'exist',
+          limitBay: 9, // Minimum 9 per order
+        },
+      ];
+
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(productsWithLimit as any);
+      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(null);
+      vi.mocked(prisma.order.create).mockResolvedValueOnce({
+        id: 'ord-123',
+        customerName: validPayload.customerName,
+        customerPhone: validPayload.customerPhone,
+        shippingAddress: validPayload.shippingAddress,
+        totalPrice: '138.00€',
+        totalAmount: 138,
+        status: 'PENDING',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        items: [],
+      } as any);
+
+      const payload = {
+        ...validPayload,
+        items: [{ productId: 'prod-limit', quantity: 12 }],
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(201);
+      const data = await response.json();
+      expect(data.id).toBe('ord-123');
+      expect(prisma.order.create).toHaveBeenCalled();
     });
 
     it('should reject order containing a product with state "commingSoun" with 400 (Issue #21)', async () => {
