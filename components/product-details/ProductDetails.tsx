@@ -27,9 +27,8 @@ interface ProductData {
 
 export default function ProductDetails({ product }: { product: ProductData }) {
   const addItem = useCartStore((state) => state.addItem);
-  const { data: session, status } = useSession();
-  const maxQuantity = product.limitBay && product.limitBay > 0 ? product.limitBay : undefined;
-  const [quantity, setQuantity] = useState(1);
+  const minQuantity = product.limitBay && product.limitBay > 1 ? product.limitBay : 1;
+  const [quantity, setQuantity] = useState(minQuantity);
   const [hoverRating, setHoverRating] = useState(0);
   const [hasRated, setHasRated] = useState(false);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
@@ -239,16 +238,21 @@ export default function ProductDetails({ product }: { product: ProductData }) {
           {/* Quantity Selector */}
           {isActionable && (
             <div>
-              <label className="text-sm font-bold text-on-surface-variant mb-xs block">
-                Quantité {maxQuantity !== undefined && <span className="text-xs font-normal text-outline">(max. {maxQuantity})</span>}
+              <label className="text-sm font-bold text-on-surface-variant mb-xs flex items-center gap-xs">
+                <span>Quantité</span>
+                {product.limitBay && product.limitBay > 1 && (
+                  <span className="text-xs font-semibold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
+                    Min. {product.limitBay} pièces
+                  </span>
+                )}
               </label>
               <div className="flex items-center border border-outline-variant/60 rounded-full bg-surface-container-low p-0.5 w-40">
                 <button
                   type="button"
-                  onClick={() => setQuantity((prev) => (prev > 1 ? prev - 1 : 1))}
-                  disabled={quantity <= 1}
+                  onClick={() => setQuantity((prev) => (prev > minQuantity ? prev - 1 : minQuantity))}
+                  disabled={quantity <= minQuantity}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  title="Quantité minimale : 1"
+                  title={`Quantité minimale : ${minQuantity}`}
                   aria-label="Diminuer la quantité"
                 >
                   <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -258,9 +262,7 @@ export default function ProductDetails({ product }: { product: ProductData }) {
                 <span className="flex-1 text-center text-sm font-bold text-on-surface">{quantity}</span>
                 <button
                   type="button"
-                  onClick={() => setQuantity((prev) => (!maxQuantity || prev < maxQuantity ? prev + 1 : prev))}
-                  disabled={maxQuantity !== undefined && quantity >= maxQuantity}
-                  title={maxQuantity !== undefined && quantity >= maxQuantity ? `Limite maximale : ${maxQuantity}` : undefined}
+                  onClick={() => setQuantity((prev) => prev + 1)}
                   aria-label="Augmenter la quantité"
                   className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >

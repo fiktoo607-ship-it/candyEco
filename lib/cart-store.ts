@@ -32,12 +32,13 @@ export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
-      addItem: (product, quantity = 1) => {
+      addItem: (product, quantity) => {
         set((state) => {
-          const maxLimit = product.limitBay && product.limitBay > 0 ? product.limitBay : 100;
+          const minLimit = product.limitBay && product.limitBay > 1 ? product.limitBay : 1;
           const existingItem = state.items.find((item) => item.product.id === product.id);
           if (existingItem) {
-            const nextQty = Math.min(maxLimit, existingItem.quantity + quantity);
+            const addQty = quantity !== undefined ? quantity : 1;
+            const nextQty = existingItem.quantity + addQty;
             return {
               items: state.items.map((item) =>
                 item.product.id === product.id
@@ -46,7 +47,7 @@ export const useCartStore = create<CartState>()(
               ),
             };
           }
-          const initialQty = Math.min(maxLimit, Math.max(1, quantity));
+          const initialQty = quantity !== undefined ? Math.max(minLimit, quantity) : minLimit;
           return { items: [...state.items, { product, quantity: initialQty }] };
         });
       },
@@ -59,8 +60,8 @@ export const useCartStore = create<CartState>()(
         set((state) => ({
           items: state.items.map((item) => {
             if (item.product.id !== productId) return item;
-            const maxLimit = item.product.limitBay && item.product.limitBay > 0 ? item.product.limitBay : 100;
-            const clampedQty = Math.min(maxLimit, Math.max(1, quantity));
+            const minLimit = item.product.limitBay && item.product.limitBay > 1 ? item.product.limitBay : 1;
+            const clampedQty = Math.max(minLimit, quantity);
             return { ...item, quantity: clampedQty };
           }),
         }));

@@ -4,9 +4,28 @@ import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
 
+const mockSendMail = vi.fn().mockResolvedValue({ messageId: 'msg-123' });
+const mockCreateTransport = vi.fn().mockReturnValue({
+  sendMail: mockSendMail,
+});
+
+vi.mock('nodemailer', () => {
+  const createTransport = vi.fn((options) => mockCreateTransport(options));
+  return {
+    default: {
+      createTransport,
+    },
+    createTransport,
+  };
+});
+
 describe('SMTP TLS & Email Security (SEC-06)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSendMail.mockResolvedValue({ messageId: 'msg-123' });
+    mockCreateTransport.mockReturnValue({
+      sendMail: mockSendMail,
+    });
     process.env.SMTP_HOST = 'smtp.example.com';
     process.env.SMTP_PORT = '587';
     process.env.SMTP_USER = 'test@example.com';
@@ -14,11 +33,9 @@ describe('SMTP TLS & Email Security (SEC-06)', () => {
   });
 
   it('should enforce strict TLS certificate validation (rejectUnauthorized: true)', () => {
-    const createTransportSpy = vi.spyOn(nodemailer, 'createTransport');
-    
     getTransporter();
 
-    expect(createTransportSpy).toHaveBeenCalledWith(
+    expect(nodemailer.createTransport).toHaveBeenCalledWith(
       expect.objectContaining({
         host: 'smtp.example.com',
         port: 587,
@@ -33,11 +50,10 @@ describe('SMTP TLS & Email Security (SEC-06)', () => {
 
   it('should configure direct SSL (secure: true) when SMTP port is 465', () => {
     process.env.SMTP_PORT = '465';
-    const createTransportSpy = vi.spyOn(nodemailer, 'createTransport');
     
     getTransporter();
 
-    expect(createTransportSpy).toHaveBeenCalledWith(
+    expect(nodemailer.createTransport).toHaveBeenCalledWith(
       expect.objectContaining({
         port: 465,
         secure: true,
@@ -49,11 +65,6 @@ describe('SMTP TLS & Email Security (SEC-06)', () => {
   });
 
   it('should verify sendVerificationEmail encodes token and invokes transporter.sendMail', async () => {
-    const mockSendMail = vi.fn().mockResolvedValue({ messageId: 'msg-123' });
-    vi.spyOn(nodemailer, 'createTransport').mockReturnValue({
-      sendMail: mockSendMail,
-    } as any);
-
     await sendVerificationEmail('recipient@example.com', 'raw-token-123+special');
 
     expect(mockSendMail).toHaveBeenCalledWith(

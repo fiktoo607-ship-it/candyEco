@@ -599,21 +599,21 @@ describe('Orders API', () => {
       expect(prisma.order.create).toHaveBeenCalledTimes(1);
     });
 
-    it('should throw 400 immediately within transaction when product limitBay is exceeded', async () => {
+    it('should throw 400 immediately within transaction when product quantity is below limitBay (minimum purchase)', async () => {
       const limitedProducts = [
         {
           id: 'prod-1',
           title: 'Limited Cake',
           price: '$10.00',
           state: 'exist',
-          limitBay: 1,
+          limitBay: 6,
         },
       ];
       vi.mocked(prisma.product.findMany).mockResolvedValueOnce(limitedProducts as any);
 
       const payload = {
         ...validPayload,
-        items: [{ productId: 'prod-1', quantity: 5 }],
+        items: [{ productId: 'prod-1', quantity: 2 }],
       };
 
       const req = new NextRequest('http://localhost/api/orders', {
@@ -625,7 +625,7 @@ describe('Orders API', () => {
       const res = await createOrder(req);
       expect(res.status).toBe(400);
       const data = await res.json();
-      expect(data.error).toContain('dépasse la limite autorisée');
+      expect(data.error).toContain('La quantité minimum pour "Limited Cake" est de 6');
       expect(prisma.order.create).not.toHaveBeenCalled();
     });
 
@@ -763,14 +763,14 @@ describe('Orders API', () => {
       expect(data.error).toBe('La quantité doit être un entier positif entre 1 et 100.');
     });
 
-    it('should reject order when quantity exceeds product limitBay', async () => {
+    it('should reject order when quantity is less than product limitBay', async () => {
       const productsWithLimit = [
         {
           id: 'prod-limit',
           title: 'Limited Edition Cake',
           price: '$50.00',
           state: 'exist',
-          limitBay: 2, // Maximum 2 per order
+          limitBay: 6, // Minimum 6 per order
         },
       ];
 
@@ -790,7 +790,7 @@ describe('Orders API', () => {
       const response = await createOrder(req);
       expect(response.status).toBe(400);
       const data = await response.json();
-      expect(data.error).toContain('dépasse la limite autorisée (2)');
+      expect(data.error).toContain('La quantité minimum pour "Limited Edition Cake" est de 6');
       expect(prisma.order.create).not.toHaveBeenCalled();
     });
 
