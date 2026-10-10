@@ -16,16 +16,21 @@ export function ProductDetailsInfo({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
       <div className="flex flex-col gap-xs">
-        <label className="text-sm font-bold text-on-surface-variant">
-          Quantité minimum par commande
+        <label className="text-sm font-bold text-on-surface-variant flex items-center justify-between">
+          <span>Limite d'achat (Quantité min)</span>
+          <span className="text-[11px] font-normal text-on-surface-variant/70">Min. à l'achat</span>
         </label>
         <input
           type="number"
-          placeholder="Ex: 5"
+          min="1"
+          placeholder="Ex: 6 (achat de 6 ou plus)"
           value={limitBay}
           onChange={(e) => setLimitBay(e.target.value)}
           className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
+        <span className="text-[11px] text-on-surface-variant/70">
+          Définit la quantité minimum requise par commande (ex: 6 ou plus).
+        </span>
       </div>
       <div className="flex flex-col gap-xs">
         <label className="text-sm font-bold text-on-surface-variant">

@@ -27,8 +27,7 @@ interface ProductData {
 
 export default function ProductDetails({ product }: { product: ProductData }) {
   const addItem = useCartStore((state) => state.addItem);
-  const { data: session, status } = useSession();
-  const minQuantity = product.limitBay && product.limitBay > 0 ? product.limitBay : 1;
+  const minQuantity = product.limitBay && product.limitBay > 1 ? product.limitBay : 1;
   const [quantity, setQuantity] = useState(minQuantity);
   const [hoverRating, setHoverRating] = useState(0);
   const [hasRated, setHasRated] = useState(false);
@@ -239,17 +238,22 @@ export default function ProductDetails({ product }: { product: ProductData }) {
           {/* Quantity Selector */}
           {isActionable && (
             <div>
-              <label className="text-sm font-bold text-on-surface-variant mb-xs block">
-                Quantité {minQuantity > 1 && <span className="text-xs font-normal text-outline">(min. {minQuantity})</span>}
+              <label className="text-sm font-bold text-on-surface-variant mb-xs flex items-center gap-xs">
+                <span>Quantité</span>
+                {product.limitBay && product.limitBay > 1 && (
+                  <span className="text-xs font-semibold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
+                    Min. {product.limitBay} pièces
+                  </span>
+                )}
               </label>
               <div className="flex items-center border border-outline-variant/60 rounded-full bg-surface-container-low p-0.5 w-40">
                 <button
                   type="button"
                   onClick={() => setQuantity((prev) => (prev > minQuantity ? prev - 1 : minQuantity))}
                   disabled={quantity <= minQuantity}
-                  title={minQuantity > 1 ? `Quantité minimale : ${minQuantity}` : "Quantité minimale : 1"}
-                  aria-label="Diminuer la quantité"
                   className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  title={`Quantité minimale : ${minQuantity}`}
+                  aria-label="Diminuer la quantité"
                 >
                   <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
@@ -258,8 +262,7 @@ export default function ProductDetails({ product }: { product: ProductData }) {
                 <span className="flex-1 text-center text-sm font-bold text-on-surface">{quantity}</span>
                 <button
                   type="button"
-                  onClick={() => setQuantity((prev) => (prev < 100 ? prev + 1 : prev))}
-                  disabled={quantity >= 100}
+                  onClick={() => setQuantity((prev) => prev + 1)}
                   aria-label="Augmenter la quantité"
                   className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >

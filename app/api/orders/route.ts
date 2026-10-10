@@ -203,10 +203,10 @@ export async function POST(request: NextRequest) {
                 throw new OrderValidationError(`Product "${dbProduct.title}" is coming soon and cannot be ordered`);
               }
 
-              if (dbProduct.limitBay !== null && dbProduct.limitBay !== undefined && dbProduct.limitBay > 0) {
+              if (dbProduct.limitBay !== null && dbProduct.limitBay !== undefined && dbProduct.limitBay > 1) {
                 if (quantity < dbProduct.limitBay) {
                   throw new OrderValidationError(
-                    `La quantité pour "${dbProduct.title}" doit être d'au moins ${dbProduct.limitBay}.`
+                    `La quantité minimum pour "${dbProduct.title}" est de ${dbProduct.limitBay}. Vous avez commandé ${quantity}.`
                   );
                 }
               }

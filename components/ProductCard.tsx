@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCartStore } from '@/lib/cart-store';
@@ -26,11 +26,15 @@ export interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
-  const minQuantity = product.limitBay && product.limitBay > 0 ? product.limitBay : 1;
+  const minQuantity = product.limitBay && product.limitBay > 1 ? product.limitBay : 1;
   const [quantity, setQuantity] = useState(minQuantity);
 
+  useEffect(() => {
+    setQuantity(minQuantity);
+  }, [minQuantity]);
+
   const handleIncrease = () => {
-    setQuantity((prev) => (prev < 100 ? prev + 1 : prev));
+    setQuantity((prev) => prev + 1);
   };
 
   const handleDecrease = () => {
@@ -132,9 +136,16 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="mt-sm sm:mt-md border-t border-surface-variant pt-sm flex flex-col gap-sm">
           {/* Price and Read More Button */}
           <div className="flex items-center justify-between">
-            <span className="text-base sm:text-xl font-bold text-primary">
-              <PriceDisplay price={product.price} />
-            </span>
+            <div className="flex items-center gap-xs">
+              <span className="text-base sm:text-xl font-bold text-primary">
+                <PriceDisplay price={product.price} />
+              </span>
+              {product.limitBay && product.limitBay > 1 && (
+                <span className="text-[10px] sm:text-xs font-semibold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full whitespace-nowrap">
+                  Min. {product.limitBay}
+                </span>
+              )}
+            </div>
             <Link
               href={`/our-product/${product.slug}`}
               className="group inline-flex items-center text-xs sm:text-sm font-bold text-primary hover:text-surface-tint hover:underline transition-all"
@@ -166,7 +177,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                   onClick={handleDecrease}
                   className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   disabled={quantity <= minQuantity}
-                  title={minQuantity > 1 ? `Quantité minimale : ${minQuantity}` : undefined}
+                  title={`Quantité minimale : ${minQuantity}`}
                   aria-label="Diminuer la quantité"
                 >
                   <svg
@@ -190,7 +201,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <button
                   type="button"
                   onClick={handleIncrease}
-                  disabled={quantity >= 100}
                   aria-label="Augmenter la quantité"
                   className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
