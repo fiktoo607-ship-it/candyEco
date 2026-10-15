@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
-  title: 'Nos Produits',
+  title: 'Catalogue des Produits',
   description: 'Découvrez notre sélection de gourmandises et pâtisseries artisanales.',
 };
 
