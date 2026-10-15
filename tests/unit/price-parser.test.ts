@@ -51,6 +51,17 @@ describe('Price Parser & Decimal Localization (Issues #52, #65)', () => {
     expect(parsePrice('2500 DA')).toBe(2500);
     expect(parsePrice(1.8)).toBe(1.8);
   });
+
+  it('handles edge cases (null, undefined, "0,5", "10.00", whole integers) robustly', () => {
+    expect(parsePrice(null)).toBeNaN();
+    expect(parsePrice(undefined)).toBeNaN();
+    expect(parsePrice('')).toBeNaN();
+    expect(parsePrice('0,5')).toBe(0.5);
+    expect(parsePrice('10.00')).toBe(10);
+    expect(parsePrice('15')).toBe(15);
+    expect(parsePrice('100 €')).toBe(100);
+    expect(parsePrice(50)).toBe(50);
+  });
 });
 
 describe('Fidelity Threshold Validation (Issue #112)', () => {
