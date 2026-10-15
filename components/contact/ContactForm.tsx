@@ -15,6 +15,7 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [serverError, setServerError] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,9 +29,10 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
         return next;
       });
     }
+    if (serverError) setServerError('');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -50,11 +52,27 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
 
     if (Object.keys(newErrors).length === 0) {
       setIsSubmitting(true);
-      setTimeout(() => {
-        setIsSubmitting(false);
+      setServerError('');
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Une erreur est survenue lors de l'envoi de votre message.");
+        }
+
         setIsSubmitted(true);
         if (onSuccess) onSuccess();
-      }, 500);
+      } catch (err: any) {
+        setServerError(err.message || "Une erreur est survenue lors de l'envoi de votre message.");
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -162,6 +180,15 @@ export default function ContactForm({ onSuccess }: ContactFormProps) {
               <p id="message-error" className="text-xs text-error mt-xs">{errors.message}</p>
             )}
           </div>
+
+          {serverError && (
+            <div className="rounded-xl bg-red-50 border border-red-200 p-sm text-red-800 text-sm flex items-center gap-xs">
+              <span className="material-symbols-outlined text-red-600 text-lg" aria-hidden="true">
+                error
+              </span>
+              <p>{serverError}</p>
+            </div>
+          )}
 
           <button
             type="submit"

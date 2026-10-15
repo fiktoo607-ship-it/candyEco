@@ -325,15 +325,15 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
                   />
                   <div className="flex flex-col">
                     <span className="text-sm font-bold text-on-surface">
-                      {method.name.toLowerCase().includes('yalidin')
-                        ? 'Yalidine Express'
-                        : method.name === 'Home Delivery'
-                        ? 'Livraison à domicile'
-                        : method.name === 'Office Pickup'
-                        ? 'Retrait au bureau'
-                        : method.name === 'Store Pickup'
-                        ? 'Retrait en magasin'
-                        : method.name}
+                      {(() => {
+                        let clean = method.name.replace(/\btest(\s+test)*\b/gi, '').replace(/\s{2,}/g, ' ').trim();
+                        if (!clean) clean = method.name;
+                        if (clean.toLowerCase().includes('yalidin')) return 'Yalidine Express';
+                        if (clean === 'Home Delivery') return 'Livraison à domicile';
+                        if (clean === 'Office Pickup') return 'Retrait au bureau';
+                        if (clean === 'Store Pickup') return 'Retrait en magasin';
+                        return clean;
+                      })()}
                     </span>
                     {method.description && (
                       <span className="text-xs text-on-surface-variant mt-[2px]">{method.description}</span>

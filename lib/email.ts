@@ -146,3 +146,34 @@ export async function sendVerificationEmail(toEmail: string, token: string) {
 
   return transporter.sendMail(mailOptions);
 }
+
+export interface ContactEmailPayload {
+  name: string;
+  email: string;
+  phone?: string;
+  message: string;
+}
+
+export async function sendContactEmail(payload: ContactEmailPayload) {
+  const contactRecipient = process.env.CONTACT_EMAIL || process.env.EMAIL_FROM || 'contact@lesdelicesdeva.fr';
+  const fromEmail = process.env.EMAIL_FROM || '"Candy Eco" <noreply@example.com>';
+  const transporter = getTransporter();
+
+  const mailOptions = {
+    from: fromEmail,
+    to: contactRecipient,
+    replyTo: payload.email,
+    subject: `Nouveau message de contact : ${payload.name}`,
+    text: `Nom: ${payload.name}\nEmail: ${payload.email}\nTéléphone: ${payload.phone || 'Non renseigné'}\n\nMessage:\n${payload.message}`,
+    html: `
+      <h2>Nouveau message de contact</h2>
+      <p><strong>Nom :</strong> ${payload.name}</p>
+      <p><strong>Email :</strong> ${payload.email}</p>
+      <p><strong>Téléphone :</strong> ${payload.phone || 'Non renseigné'}</p>
+      <p><strong>Message :</strong></p>
+      <p>${payload.message.replace(/\n/g, '<br>')}</p>
+    `,
+  };
+
+  return transporter.sendMail(mailOptions);
+}
