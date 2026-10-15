@@ -69,7 +69,7 @@ describe('SEO, Sitemap, Caching & Metadata Implementation', () => {
       expect(urls.some((u) => u.endsWith('/our-product'))).toBe(true);
       expect(urls.some((u) => u.endsWith('/about'))).toBe(true);
       expect(urls.some((u) => u.endsWith('/contact'))).toBe(true);
-      expect(urls.some((u) => u.endsWith('/cart'))).toBe(true);
+      expect(urls.some((u) => u.endsWith('/cart'))).toBe(false);
 
       expect(urls.some((u) => u.endsWith('/our-product/croissant-bio'))).toBe(true);
       expect(urls.some((u) => u.endsWith('/our-product/pain-chocolat'))).toBe(true);
@@ -128,7 +128,7 @@ describe('SEO, Sitemap, Caching & Metadata Implementation', () => {
       expect(aboutMetadata.title).toBe('À Propos');
       expect(contactMetadata.title).toBe('Contact');
       expect(ourProductMetadata.title).toBe('Nos Produits');
-      expect(productsMetadata.title).toBe('Nos Produits');
+      expect(productsMetadata.title).toBe('Catalogue des Produits');
       expect(cartMetadata.title).toBe('Panier');
       expect(ordersMetadata.title).toBe('Mes Commandes');
       expect(orderDetailsMetadata.title).toBe('Suivi de Commande');

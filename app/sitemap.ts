@@ -10,44 +10,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     'https://candyeco-production.up.railway.app'
   ).replace(/\/$/, '');
 
-  const now = new Date();
+  // Stable baseline date for core content pages instead of volatile current moment
+  const staticLastModified = new Date('2026-03-01T00:00:00.000Z');
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/`,
-      lastModified: now,
+      lastModified: staticLastModified,
       changeFrequency: 'daily',
       priority: 1.0,
     },
     {
       url: `${baseUrl}/home`,
-      lastModified: now,
+      lastModified: staticLastModified,
       changeFrequency: 'daily',
       priority: 1.0,
     },
     {
       url: `${baseUrl}/our-product`,
-      lastModified: now,
+      lastModified: staticLastModified,
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/about`,
-      lastModified: now,
+      lastModified: staticLastModified,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
       url: `${baseUrl}/contact`,
-      lastModified: now,
+      lastModified: staticLastModified,
       changeFrequency: 'monthly',
       priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/cart`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.5,
     },
   ];
 
@@ -64,7 +59,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
       url: `${baseUrl}/our-product/${product.slug}`,
-      lastModified: product.updatedAt ? new Date(product.updatedAt) : now,
+      lastModified: product.updatedAt ? new Date(product.updatedAt) : staticLastModified,
       changeFrequency: 'weekly',
       priority: 0.8,
     }));
