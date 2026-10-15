@@ -8,52 +8,8 @@ import { handleServerError } from '@/lib/api-error-handler';
 
 import crypto from 'crypto';
 
-/**
- * Generates an atomic, collision-resistant order reference in format: ORD-YYYYMMDD-XXX
- * Uses PostgreSQL sequence (nextval) when connected to Postgres, with a cryptographically
- * collision-resistant fallback when sequences are unavailable or in test environments.
- */
-export async function generateAtomicOrderReference(client: any = prisma, date: Date = new Date()): Promise<string> {
-  const yyyy = date.getUTCFullYear();
-  const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const dd = String(date.getUTCDate()).padStart(2, '0');
-  const datePrefix = `ORD-${yyyy}${mm}${dd}-`;
-
-  // Always use top-level prisma client (or provided standalone client) so that any
-  // initial sequence creation or fallback does NOT poison an active PostgreSQL transaction block.
-  const dbClient = (client && client !== prisma && typeof client.$transaction !== 'function') ? client : prisma;
-
-  try {
-    const result = await dbClient.$queryRaw`SELECT nextval('order_reference_seq') as seq`;
-    if (result && Array.isArray(result) && result.length > 0) {
-      const rawVal = result[0]?.seq ?? result[0]?.nextval;
-      if (rawVal !== undefined && rawVal !== null) {
-        const seqNum = Number(rawVal);
-        if (!isNaN(seqNum)) {
-          const seqStr = seqNum <= 999 ? String(seqNum).padStart(3, '0') : String(seqNum);
-          return `${datePrefix}${seqStr}`;
-        }
-      }
-    }
-  } catch (err: any) {
-    // If sequence does not exist in the database, attempt to create it once on a clean connection
-    try {
-      await dbClient.$executeRawUnsafe(`CREATE SEQUENCE IF NOT EXISTS order_reference_seq START 1`);
-      const retryResult = await dbClient.$queryRaw`SELECT nextval('order_reference_seq') as seq`;
-      if (retryResult && Array.isArray(retryResult) && retryResult.length > 0 && retryResult[0]?.seq !== undefined) {
-        const seqNum = Number(retryResult[0].seq);
-        const seqStr = seqNum <= 999 ? String(seqNum).padStart(3, '0') : String(seqNum);
-        return `${datePrefix}${seqStr}`;
-      }
-    } catch {
-      // In SQLite / in-memory / mock test fallback: use cryptographically secure random bytes
-    }
-  }
-
-  // Cryptographically secure collision-resistant 4-hex-char suffix
-  const randomSuffix = crypto.randomBytes(2).toString('hex').toUpperCase();
-  return `${datePrefix}${randomSuffix}`;
-}
+import { generateAtomicOrderReference } from '@/lib/order-sequence';
+export { generateAtomicOrderReference };
 
 import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
 import { withIdempotency } from '@/lib/idempotency';
@@ -250,9 +206,13 @@ export async function POST(request: NextRequest) {
 
             if (deliveryMethod && typeof deliveryMethod === 'string' && deliveryMethod.trim()) {
               const cleanMethod = deliveryMethod.trim();
-              const deliveryRecord = await (tx.deliveryMethod ? tx.deliveryMethod.findFirst({
+              const deliveryModel = tx.deliveryMethod || prisma.deliveryMethod;
+              const deliveryRecord = await (deliveryModel ? deliveryModel.findFirst({
                 where: {
-                  name: { equals: cleanMethod, mode: 'insensitive' },
+                  OR: [
+                    { name: { equals: cleanMethod, mode: 'insensitive' } },
+                    { id: cleanMethod },
+                  ],
                   active: true,
                 },
               }) : null);
