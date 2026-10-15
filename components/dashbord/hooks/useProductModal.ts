@@ -20,7 +20,7 @@ export function useProductModal() {
   const [state, setState] = useState<'exist' | 'outofStock' | 'commingSoun'>("exist");
   const [publishedAt, setPublishedAt] = useState("");
   const [category, setCategory] = useState("");
-  const [visibility, setVisibility] = useState("0");
+  const [visibility, setVisibility] = useState("1");
   const [rating, setRating] = useState("0.0");
   const [tags, setTags] = useState<string[]>([]);
   const [newTagInput, setNewTagInput] = useState("");
@@ -77,7 +77,7 @@ export function useProductModal() {
         setState('exist');
         setPublishedAt(new Date().toISOString().substring(0, 10));
         setCategory(store.defaultCategory || 'gâteau');
-        setVisibility('0');
+        setVisibility('1');
         setRating('0.0');
         setTags([]);
         
@@ -166,7 +166,7 @@ export function useProductModal() {
       category,
       limitBay: limitBay.trim() === '' ? null : Number(limitBay),
       state,
-      visibility: visibility.trim() === '' ? 0 : Number(visibility),
+      visibility: visibility.trim() === '' ? 1 : Number(visibility),
       rating: rating.trim() === '' ? 0.0 : Number(rating),
       tags,
       publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
