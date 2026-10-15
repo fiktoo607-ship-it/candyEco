@@ -18,6 +18,7 @@ model Product {
   limitBay    Int?
   state       String      @default("exist")
   visibility  Int         @default(0)
+  isPublished Boolean?    @default(true)
   rating      Float       @default(0.0)
   ratingCount Int         @default(0)
   tags        Tag[]
