@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { vipThreshold, fideleThreshold } = body;
+    const vipThreshold = body.vipThreshold !== undefined ? body.vipThreshold : body.fidelity_vip_threshold;
+    const fideleThreshold = body.fideleThreshold !== undefined ? body.fideleThreshold : body.fidelity_fidele_threshold;
 
     if (vipThreshold === undefined && fideleThreshold === undefined) {
       return NextResponse.json(

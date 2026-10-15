@@ -3,6 +3,7 @@ import { useCartStore } from '@/lib/cart-store';
 import dictionary from '@/lib/copy-dictionary.json';
 import PriceDisplay from '@/components/PriceDisplay';
 import { containsArabic } from '@/lib/a11y';
+import { parsePrice } from '@/lib/utils';
 
 export default function CartItemsList() {
   const { items, removeItem, updateQuantity } = useCartStore();
@@ -50,7 +51,7 @@ export default function CartItemsList() {
             <div className="flex items-center justify-between sm:justify-end gap-sm sm:gap-md w-full sm:w-auto border-t border-outline-variant/20 pt-sm sm:border-t-0 sm:pt-0">
               {/* Item Total Price */}
               {(() => {
-                const priceNum = parseFloat(item.product.price.replace(/[^0-9.]/g, ''));
+                const priceNum = parsePrice(item.product.price);
                 const itemTotal = (isNaN(priceNum) ? 0 : priceNum) * item.quantity;
                 return (
                   <div className="flex flex-col items-start sm:items-end sm:min-w-[120px] mr-0 sm:mr-sm">

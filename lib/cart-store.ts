@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { parsePrice } from '@/lib/utils';
 
 export interface CartProduct {
   id: string;
@@ -69,7 +70,7 @@ export const useCartStore = create<CartState>()(
       clearCart: () => set({ items: [] }),
       getTotalPrice: () => {
         return get().items.reduce((total, item) => {
-          const priceNum = parseFloat(item.product.price.replace(/[^0-9.]/g, ''));
+          const priceNum = parsePrice(item.product.price);
           return total + (isNaN(priceNum) ? 0 : priceNum) * item.quantity;
         }, 0);
       },
