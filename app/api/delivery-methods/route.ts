@@ -34,10 +34,12 @@ export async function GET() {
     });
 
     const sanitizedMethods = methods.map((m) => {
-      if (m.name.toLowerCase().includes('yalidin')) {
-        return { ...m, name: 'Yalidine Express' };
+      let cleanName = m.name.replace(/\btest(\s+test)*\b/gi, '').replace(/\s{2,}/g, ' ').trim();
+      if (!cleanName) cleanName = m.name;
+      if (cleanName.toLowerCase().includes('yalidin')) {
+        cleanName = 'Yalidine Express';
       }
-      return m;
+      return { ...m, name: cleanName };
     });
 
     return NextResponse.json(sanitizedMethods);

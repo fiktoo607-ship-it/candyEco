@@ -4,6 +4,7 @@ import SiteHeader from '@/components/site-header';
 import ContactHero from '@/components/contact/ContactHero';
 import ContactLinksCard from '@/components/contact/ContactLinksCard';
 import BakeryVisitCard from '@/components/contact/BakeryVisitCard';
+import ContactForm from '@/components/contact/ContactForm';
 
 export const metadata: Metadata = {
   title: 'Contact',
@@ -18,8 +19,13 @@ export default function ContactPage() {
         <ContactHero />
 
         <section className="mt-xl grid gap-xl md:grid-cols-2">
-          <BakeryVisitCard />
-          <ContactLinksCard />
+          <div className="space-y-xl">
+            <BakeryVisitCard />
+            <ContactLinksCard />
+          </div>
+          <div>
+            <ContactForm />
+          </div>
         </section>
       </main>
       <SiteFooter />
