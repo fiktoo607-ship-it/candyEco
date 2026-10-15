@@ -7,7 +7,7 @@ on:
     branches: [main, master]
 
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -34,3 +34,11 @@ jobs:
 
       - name: Run test suite
         run: npm test
+
+      - name: Build production application
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          NEXTAUTH_SECRET: "dummy_secret_for_ci_build_minimum_32_characters"
+          NEXTAUTH_URL: "http://localhost:3000"
