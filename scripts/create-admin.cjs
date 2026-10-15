@@ -9,8 +9,13 @@ async function run() {
     ssl: { rejectUnauthorized: false }
   });
 
-  const phone = '0701010101';
-  const plainPassword = 'pass012';
+  const plainPassword = process.env.ADMIN_INIT_PASSWORD;
+  if (!plainPassword) {
+    console.error('Security Error: process.env.ADMIN_INIT_PASSWORD must be explicitly set.');
+    process.exit(1);
+  }
+
+  const phone = process.env.ADMIN_INIT_PHONE || '0701010101';
   const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
   try {

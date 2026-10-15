@@ -304,6 +304,27 @@ describe('Admin Multi-Device & 2-Admin Concurrency Management', () => {
       const data = await blockedRes.json();
       expect(data.error).toContain('Trop de tentatives');
     });
+
+    it('enforces rate limiting (429) under concurrent burst requests to POST /api/admin/session/active (Issue #39)', async () => {
+      resetRateLimiter();
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+
+      const burstRequests = Array.from({ length: 15 }, () => {
+        const req = {
+          headers: { get: () => '198.51.100.25' },
+          json: vi.fn().mockResolvedValue({ phone: '0888888888', password: 'probe-password' }),
+        } as any;
+        return postActiveSessionsRoute(req);
+      });
+
+      const responses = await Promise.all(burstRequests);
+      const rateLimited = responses.filter((r) => r.status === 429);
+      const passed = responses.filter((r) => r.status !== 429);
+
+      // Maximum 5 allowed per 15 minutes; remainder must be blocked with 429
+      expect(passed.length).toBeLessThanOrEqual(5);
+      expect(rateLimited.length).toBeGreaterThanOrEqual(10);
+    });
   });
 
   describe('TOCTOU Concurrency & Default Device Bypass Security (Issues #43, #45)', () => {
@@ -396,4 +417,40 @@ describe('Admin Multi-Device & 2-Admin Concurrency Management', () => {
       mathRandomSpy.mockRestore();
     });
   });
+
+  describe('Hardcoded Credentials Security Audit (Issue #114)', () => {
+    it('verifies absence of hardcoded passwords in scripts and seed files (Issue #114)', async () => {
+      const fs = await import('fs');
+      const path = await import('path');
+      const rootDir = path.resolve(__dirname, '../..');
+
+      const targetFiles = [
+        path.join(rootDir, 'prisma', 'seed.ts'),
+        path.join(rootDir, 'scripts', 'create-admin.ts'),
+        path.join(rootDir, 'scripts', 'create-admin.cjs'),
+      ];
+
+      const forbiddenLiterals = [
+        'pass012',
+        'password123',
+      ];
+
+      for (const filePath of targetFiles) {
+        expect(fs.existsSync(filePath)).toBe(true);
+        const content = fs.readFileSync(filePath, 'utf8');
+
+        // Check that forbidden literal credentials do not exist
+        for (const literal of forbiddenLiterals) {
+          expect(content).not.toContain(literal);
+        }
+
+        // Check that ADMIN_INIT_PASSWORD is used without hardcoded default fallback string
+        if (filePath.endsWith('create-admin.ts') || filePath.endsWith('seed.ts')) {
+          expect(content).toContain('ADMIN_INIT_PASSWORD');
+          expect(content).not.toMatch(/process\.env\.ADMIN_INIT_PASSWORD\s*\|\|\s*['"][^'"]+['"]/);
+        }
+      }
+    });
+  });
 });
+

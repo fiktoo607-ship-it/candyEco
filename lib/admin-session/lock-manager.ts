@@ -182,9 +182,19 @@ export async function withAdminSessionMutex<T>(fn: () => Promise<T>): Promise<T>
           }
           await new Promise((resolve) => setTimeout(resolve, 50));
         }
+        if (!hasRedisLock) {
+          throw new Error('AdminLockAcquisitionTimeout');
+        }
       } catch (err) {
-        // Fall back to in-memory mutex
+        if (err instanceof Error && err.message === 'AdminLockAcquisitionTimeout') {
+          throw err;
+        }
+        if (process.env.NODE_ENV === 'production') {
+          console.warn('[AdminSession Security Warning] Redis connection error during mutex acquisition:', err);
+        }
       }
+    } else if (process.env.NODE_ENV === 'production') {
+      console.warn('[AdminSession Security Warning] Redis is not configured in production. Concurrency lock is operating in single-process mode.');
     }
 
     try {
