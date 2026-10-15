@@ -67,9 +67,7 @@ export async function PUT(
       !!claimToken &&
       (
         existingOrder.sessionId === claimToken ||
-        (existingOrder.sessionId && existingOrder.sessionId.toLowerCase() === claimToken.toLowerCase()) ||
-        (existingOrder.customerPhone && existingOrder.customerPhone === claimToken) ||
-        (existingOrder.customerEmail && existingOrder.customerEmail.toLowerCase() === claimToken.toLowerCase())
+        (existingOrder.sessionId && existingOrder.sessionId.toLowerCase() === claimToken.toLowerCase())
       );
 
     const currentStatus = existingOrder.status.toUpperCase();
@@ -232,9 +230,7 @@ export async function GET(
       !!claimToken &&
       (
         order.sessionId === claimToken ||
-        (order.sessionId && order.sessionId.toLowerCase() === claimToken.toLowerCase()) ||
-        (order.customerPhone && order.customerPhone === claimToken) ||
-        (order.customerEmail && order.customerEmail.toLowerCase() === claimToken.toLowerCase())
+        (order.sessionId && order.sessionId.toLowerCase() === claimToken.toLowerCase())
       );
 
     if (!isAdmin && !isOwner && !isAuthorizedGuest) {
