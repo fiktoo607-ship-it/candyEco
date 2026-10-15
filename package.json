@@ -20,7 +20,7 @@
     "@types/ioredis": "^4.28.10",
     "bcryptjs": "^3.0.3",
     "ioredis": "^5.11.1",
-    "next": "^16.2.7",
+    "next": "^16.4.0",
     "next-auth": "^4.24.15",
     "nodemailer": "^7.0.13",
     "pg": "^8.23.1",
