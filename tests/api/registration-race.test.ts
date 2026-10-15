@@ -140,4 +140,95 @@ describe('Registration & First-User Bootstrap Security (Issue #42)', () => {
     expect(data.error).toBe('Ce numéro de téléphone est déjà utilisé.');
     expect(txMock.user.create).not.toHaveBeenCalled();
   });
+
+  it('does not grant admin role to first user in production when email is not in ADMIN_EMAILS', async () => {
+    const originalEnv = process.env.NODE_ENV;
+    (process.env as any).NODE_ENV = 'production';
+    try {
+      const txMock = {
+        user: {
+          findFirst: vi.fn().mockResolvedValue(null),
+          count: vi.fn().mockResolvedValue(0),
+          create: vi.fn().mockImplementation(async ({ data }) => ({
+            id: 'u-prod-1',
+            ...data,
+          })),
+        },
+        order: {
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        },
+      };
+
+      vi.mocked(prisma.$transaction).mockImplementation(async (cb: any) => cb(txMock));
+
+      const req = {
+        headers: { get: () => '127.0.0.1' },
+        json: vi.fn().mockResolvedValue({
+          name: 'First User In Prod',
+          phone: '+213555000099',
+          password: 'ValidPassword123!',
+        }),
+      } as any;
+
+      const res = await registerRoute(req);
+      expect(res.status).toBe(201);
+      expect(txMock.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            role: 'user',
+          }),
+        })
+      );
+    } finally {
+      (process.env as any).NODE_ENV = originalEnv;
+    }
+  });
+
+  it('grants admin role in production when user email matches ADMIN_EMAILS', async () => {
+    const originalEnv = process.env.NODE_ENV;
+    const originalAdminEmails = process.env.ADMIN_EMAILS;
+    (process.env as any).NODE_ENV = 'production';
+    process.env.ADMIN_EMAILS = 'admin@candyele.com';
+    try {
+      const txMock = {
+        user: {
+          findFirst: vi.fn().mockResolvedValue(null),
+          count: vi.fn().mockResolvedValue(5),
+          create: vi.fn().mockImplementation(async ({ data }) => ({
+            id: 'u-prod-admin',
+            ...data,
+          })),
+        },
+        order: {
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        },
+      };
+
+      vi.mocked(prisma.$transaction).mockImplementation(async (cb: any) => cb(txMock));
+
+      const req = {
+        headers: { get: () => '127.0.0.1' },
+        json: vi.fn().mockResolvedValue({
+          name: 'Designated Admin',
+          phone: '+213555000088',
+          email: 'admin@candyele.com',
+          password: 'ValidPassword123!',
+        }),
+      } as any;
+
+      const res = await registerRoute(req);
+      expect(res.status).toBe(201);
+      expect(txMock.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            role: 'admin',
+          }),
+        })
+      );
+    } finally {
+      (process.env as any).NODE_ENV = originalEnv;
+      process.env.ADMIN_EMAILS = originalAdminEmails;
+    }
+  });
 });
+

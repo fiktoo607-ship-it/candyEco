@@ -13,6 +13,7 @@ export default function CartPage() {
   const { items } = useCartStore();
   const [isSuccess, setIsSuccess] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+  const [trackingUrl, setTrackingUrl] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   // Prevent SSR hydration issues
@@ -34,8 +35,15 @@ export default function CartPage() {
     );
   }
 
-  const handleCheckoutSuccess = (orderId: string) => {
+  const handleCheckoutSuccess = (orderId: string, customTrackingUrl?: string, token?: string) => {
     setCreatedOrderId(orderId);
+    if (customTrackingUrl) {
+      setTrackingUrl(customTrackingUrl);
+    } else if (token) {
+      setTrackingUrl(`/orders/${orderId}?token=${encodeURIComponent(token)}`);
+    } else {
+      setTrackingUrl(`/orders/${orderId}`);
+    }
     setIsSuccess(true);
   };
 
@@ -70,7 +78,7 @@ export default function CartPage() {
             <div className="mt-lg flex flex-col sm:flex-row justify-center gap-sm">
               {createdOrderId && (
                 <Link
-                  href={`/orders/${createdOrderId}`}
+                  href={trackingUrl || `/orders/${createdOrderId}`}
                   className="flex items-center justify-center rounded-xl bg-primary px-md py-sm text-sm sm:text-base font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint w-full sm:w-auto"
                 >
                   Suivre ma commande

@@ -1,0 +1,93 @@
+version: "3.8"
+
+services:
+  # Database Service (PostgreSQL)
+  db:
+    image: postgres:16-alpine
+    container_name: candy_eco_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-candy_eco}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-candy_eco}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Cache & Pub/Sub Service (Redis)
+  redis:
+    image: redis:7-alpine
+    container_name: candy_eco_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Web Application Service (Next.js Standalone)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: candy_eco_web
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: "0.0.0.0"
+
+      # Database & Redis URLs
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/candy_eco?schema=public}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+
+      # NextAuth Configuration
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-changeme_minimum_32_characters_secret_for_production}
+
+      # Admin Configuration
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-admin@example.com}
+
+      # Google OAuth Credentials (Optional)
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+
+      # Cloudinary Credentials (Optional / for uploads)
+      CLOUDINARY_NAME: ${CLOUDINARY_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+
+      # SMTP Configuration (for Nodemailer)
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+
+      # Web Push VAPID Configurations
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

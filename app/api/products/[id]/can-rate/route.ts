@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { handleServerError } from '@/lib/api-error-handler';
 
 export async function GET(
   request: NextRequest,
@@ -31,31 +32,11 @@ export async function GET(
       }
     }
 
-    // 2. Exact user/order ownership verification (Issue #10)
-    // Replace loose phone/email OR matching with exact ownership check
-    const ownershipConditions: any[] = [{ userId: user.id }];
-
-    if (user.phone && user.email) {
-      ownershipConditions.push({
-        customerPhone: user.phone,
-        customerEmail: user.email,
-        OR: [{ userId: null }, { userId: user.id }],
-      });
-    } else if (user.phone) {
-      ownershipConditions.push({
-        customerPhone: user.phone,
-        OR: [{ userId: null }, { userId: user.id }],
-      });
-    } else if (user.email) {
-      ownershipConditions.push({
-        customerEmail: user.email,
-        OR: [{ userId: null }, { userId: user.id }],
-      });
-    }
-
+    // 2. Strict user ownership verification (Issue #19)
+    // Rating eligibility is strictly bound to delivered orders owned by the authenticated userId
     const deliveredOrder = await prisma.order.findFirst({
       where: {
-        OR: ownershipConditions,
+        userId: user.id,
         status: { in: ['DELIVERED', 'COMPLETED'] },
         items: {
           some: {
@@ -67,7 +48,6 @@ export async function GET(
 
     return NextResponse.json({ canRate: !!deliveredOrder });
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : 'Internal error';
-    return NextResponse.json({ canRate: false, error: errMsg }, { status: 500 });
+    return handleServerError(error, '[CanRate API]', 'Une erreur interne est survenue.');
   }
 }

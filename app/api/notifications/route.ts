@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { handleServerError } from '@/lib/api-error-handler';
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,9 +36,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(notifications);
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : 'Failed to fetch notifications';
-    console.error('[Notifications API] Error fetching notifications:', error);
-    return NextResponse.json({ error: errMsg }, { status: 500 });
+    return handleServerError(error, '[Notifications API GET]', 'Une erreur interne est survenue.');
   }
 }
 
@@ -73,9 +72,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json(updated);
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : 'Failed to update notifications';
-    console.error('[Notifications API] Error updating notifications:', error);
-    return NextResponse.json({ error: errMsg }, { status: 500 });
+    return handleServerError(error, '[Notifications API PATCH]', 'Une erreur interne est survenue.');
   }
 }
 
@@ -89,8 +86,6 @@ export async function DELETE(request: NextRequest) {
     await prisma.orderNotification.deleteMany({});
     return NextResponse.json({ success: true });
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : 'Failed to delete notifications';
-    console.error('[Notifications API] Error deleting notifications:', error);
-    return NextResponse.json({ error: errMsg }, { status: 500 });
+    return handleServerError(error, '[Notifications API DELETE]', 'Une erreur interne est survenue.');
   }
 }

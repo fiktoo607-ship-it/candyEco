@@ -85,6 +85,7 @@ export function UsersTable({
                         onClick={() => onDeleteUser(user.id)}
                         className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-sm py-[8px] text-xs font-bold text-error hover:bg-rose-500/10 transition-colors flex items-center gap-xs"
                         title="Supprimer le client"
+                        aria-label="Supprimer le client"
                       >
                         <span className="material-symbols-outlined text-sm">delete</span>
                         Supprimer
@@ -157,6 +158,7 @@ export function UsersTable({
                         onClick={() => onDeleteUser(user.id)}
                         className="inline-flex items-center justify-center h-8 w-8 rounded-xl border border-rose-500/20 text-on-surface-variant hover:text-error hover:bg-rose-500/5 transition-colors"
                         title="Supprimer le client"
+                        aria-label="Supprimer le client"
                       >
                         <span className="material-symbols-outlined text-lg select-none">delete</span>
                       </button>

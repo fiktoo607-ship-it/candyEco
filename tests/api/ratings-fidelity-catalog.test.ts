@@ -185,18 +185,12 @@ describe('Prompt 7 Verification Suite', () => {
       const req = new NextRequest('http://localhost/api/products/prod-test/can-rate');
       await checkCanRate(req, { params: Promise.resolve({ id: 'prod-test' }) });
 
-      // Verify that query requires exact ownership, not loose independent OR phone / OR email
+      // Verify that query requires exact userId ownership, not loose OR phone/email (Issue #19)
       expect(prisma.order.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            OR: [
-              { userId: 'user-1' },
-              {
-                customerPhone: '0555112233',
-                customerEmail: 'user1@example.com',
-                OR: [{ userId: null }, { userId: 'user-1' }],
-              },
-            ],
+            userId: 'user-1',
+            status: { in: ['DELIVERED', 'COMPLETED'] },
           }),
         })
       );

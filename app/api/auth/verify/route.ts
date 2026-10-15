@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
+import { handleServerError } from '@/lib/api-error-handler';
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,8 +62,6 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Verification failed';
-    console.error('Verification API Error:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Verification API]', 'Une erreur interne est survenue.');
   }
 }

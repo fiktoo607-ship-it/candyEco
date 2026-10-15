@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import SiteHeader from '@/components/site-header';
 import SiteFooter from '@/components/site-footer';
@@ -10,24 +10,51 @@ import PriceDisplay from '@/components/PriceDisplay';
 import { ORDER_STATUS_CONFIG, isValidStatusTransition } from '@/types/orderStatusConfig';
 import { containsArabic } from '@/lib/a11y';
 
-export default function OrderTrackingPage() {
+function OrderTrackingContent() {
   const params = useParams();
-  const id = params.id as string;
+  const searchParams = useSearchParams();
+  const id = params?.id as string;
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [cancelling, setCancelling] = useState(false);
 
+  const getGuestToken = () => {
+    const urlToken = searchParams?.get('token') || searchParams?.get('claimToken') || searchParams?.get('guestToken');
+    if (urlToken) {
+      if (typeof window !== 'undefined' && id) {
+        try {
+          sessionStorage.setItem(`guest_token_${id}`, urlToken);
+        } catch {}
+      }
+      return urlToken;
+    }
+    if (typeof window !== 'undefined' && id) {
+      try {
+        const stored = sessionStorage.getItem(`guest_token_${id}`);
+        if (stored) return stored;
+      } catch {}
+    }
+    return '';
+  };
+
   useEffect(() => {
     if (!id) return;
 
     const fetchOrder = async () => {
       try {
-        const res = await fetch(`/api/orders/${id}`);
+        const token = getGuestToken();
+        const url = token ? `/api/orders/${id}?token=${encodeURIComponent(token)}` : `/api/orders/${id}`;
+        const headers: HeadersInit = token ? { 'x-guest-token': token } : {};
+
+        const res = await fetch(url, { headers });
         if (!res.ok) {
           if (res.status === 404) {
             throw new Error('Commande introuvable');
+          }
+          if (res.status === 401 || res.status === 403) {
+            throw new Error('Accès refusé. Vous devez être connecté ou disposer d\'un lien de suivi valide pour consulter cette commande.');
           }
           throw new Error('Impossible de charger les détails de la commande');
         }
@@ -45,7 +72,7 @@ export default function OrderTrackingPage() {
     fetchOrder();
 
     return () => clearInterval(interval);
-  }, [id]);
+  }, [id, searchParams]);
 
   const handleCancelOrder = async () => {
     if (order && !isValidStatusTransition(order.status, 'CANCELLED')) {
@@ -57,11 +84,18 @@ export default function OrderTrackingPage() {
     }
     setCancelling(true);
     try {
-      const res = await fetch(`/api/orders/${id}`, {
+      const token = getGuestToken();
+      const url = token ? `/api/orders/${id}?token=${encodeURIComponent(token)}` : `/api/orders/${id}`;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['x-guest-token'] = token;
+      }
+
+      const res = await fetch(url, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ status: 'CANCELLED' }),
       });
       if (!res.ok) {
@@ -378,5 +412,28 @@ export default function OrderTrackingPage() {
 
       <SiteFooter />
     </div>
+  );
+}
+
+export default function OrderTrackingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col bg-surface">
+          <SiteHeader />
+          <main id="main-content" className="mx-auto flex max-w-4xl flex-1 flex-col items-center justify-center px-gutter py-20 w-full">
+            <span className="material-symbols-outlined text-4xl text-primary animate-spin">
+              sync
+            </span>
+            <p className="text-on-surface-variant mt-sm">
+              Chargement des détails du suivi...
+            </p>
+          </main>
+          <SiteFooter />
+        </div>
+      }
+    >
+      <OrderTrackingContent />
+    </Suspense>
   );
 }

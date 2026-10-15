@@ -31,11 +31,36 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
   const [dragStartX, setDragStartX] = useState<number | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
     
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (mediaQuery.matches) {
+        setReducedMotion(true);
+        setIsPlaying(false);
+      }
+      const handleChange = (e: MediaQueryListEvent) => {
+        if (e.matches) {
+          setReducedMotion(true);
+          setIsPlaying(false);
+        } else {
+          setReducedMotion(false);
+        }
+      };
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
+      } else if ('addListener' in mediaQuery) {
+        (mediaQuery as any).addListener(handleChange);
+        return () => (mediaQuery as any).removeListener(handleChange);
+      }
+    }
+
     const getItemsPerView = () => {
       if (typeof window === 'undefined') return 3;
       if (window.innerWidth < 640) return 1;
@@ -60,7 +85,7 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
 
   const startAutoCycle = () => {
     stopAutoCycle();
-    if (N <= currentItemsPerView) return;
+    if (N <= currentItemsPerView || !isPlaying || reducedMotion) return;
     timerRef.current = setInterval(() => {
       setCurrentSlide((prev) => prev + 1);
     }, 5000);
@@ -74,9 +99,13 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
   };
 
   useEffect(() => {
-    startAutoCycle();
+    if (isPlaying && !reducedMotion) {
+      startAutoCycle();
+    } else {
+      stopAutoCycle();
+    }
     return () => stopAutoCycle();
-  }, [N, currentItemsPerView]);
+  }, [N, currentItemsPerView, isPlaying, reducedMotion]);
 
   const handleTransitionEnd = () => {
     if (N <= currentItemsPerView) return;
@@ -243,9 +272,27 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
         </div>
       </div>
 
-      {/* Dotted Slide Indicators */}
+      {/* Dotted Slide Indicators & Pause/Play Control */}
       {N > 1 && (
-        <div className="mt-lg flex gap-3 justify-center items-center z-20 relative">
+        <div suppressHydrationWarning className="mt-lg flex gap-3 justify-center items-center z-20 relative">
+          <button
+            type="button"
+            onClick={() => setIsPlaying((prev) => !prev)}
+            aria-label={isPlaying ? "Mettre en pause le carrousel" : "Lancer le carrousel"}
+            aria-pressed={!isPlaying}
+            title={isPlaying ? "Mettre en pause le carrousel" : "Lancer le carrousel"}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            {isPlaying ? (
+              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            )}
+          </button>
           {isMounted && Array.from({ length: N }).map((_, index) => {
             const isActive = index === activeIndicatorIndex;
             return (
@@ -253,7 +300,9 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
                 key={index}
                 onClick={() => {
                   setCurrentSlide(currentItemsPerView + index);
-                  startAutoCycle();
+                  if (isPlaying && !reducedMotion) {
+                    startAutoCycle();
+                  }
                 }}
                 className={`h-3 rounded-full transition-all duration-300 ease-out ${
                   isActive
@@ -261,6 +310,7 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
                     : "w-3 bg-neutral-300 hover:bg-neutral-400 hover:scale-105"
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
+                aria-current={isActive ? "true" : undefined}
               />
             );
           })}

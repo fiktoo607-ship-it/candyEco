@@ -215,6 +215,7 @@ export function OrdersTable({
                         onClick={() => onPrintOrder(order)}
                         className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-[8px] text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors flex items-center justify-center gap-xs h-[34px]"
                         title="Imprimer la commande"
+                        aria-label="Imprimer la commande"
                       >
                         <svg className="w-4 h-4 text-on-surface" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.821V21h10.56v-7.179m-10.56 0h10.56m-10.56 0V11.25M17.28 13.821V11.25M17.28 11.25a2.25 2.25 0 00-2.25-2.25h-6.06a2.25 2.25 0 00-2.25 2.25m10.56 0V6a2.25 2.25 0 00-2.25-2.25H8.25A2.25 2.25 0 006 6v5.25m11.25 0h.008v.008h-.008V11.25zm-12 0h.008v.008H5.25V11.25z" />
@@ -328,6 +329,7 @@ export function OrdersTable({
                         onClick={() => onPrintOrder(order)}
                         className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors h-[34px] flex items-center justify-center gap-xs"
                         title="Imprimer la commande"
+                        aria-label="Imprimer la commande"
                       >
                         <svg className="w-4 h-4 text-on-surface" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.821V21h10.56v-7.179m-10.56 0h10.56m-10.56 0V11.25M17.28 13.821V11.25M17.28 11.25a2.25 2.25 0 00-2.25-2.25h-6.06a2.25 2.25 0 00-2.25 2.25m10.56 0V6a2.25 2.25 0 00-2.25-2.25H8.25A2.25 2.25 0 006 6v5.25m11.25 0h.008v.008h-.008V11.25zm-12 0h.008v.008H5.25V11.25z" />

@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { handleServerError } from '@/lib/api-error-handler';
 
 export async function GET() {
   try {
@@ -10,9 +11,7 @@ export async function GET() {
     });
     return NextResponse.json(slides);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch carousel slides';
-    console.error('Error fetching carousel slides:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Carousel Slides API GET]', 'Une erreur interne est survenue.');
   }
 }
 
@@ -51,8 +50,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newSlide, { status: 201 });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create carousel slide';
-    console.error('Error creating carousel slide:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Carousel Slides API POST]', 'Une erreur interne est survenue.');
   }
 }

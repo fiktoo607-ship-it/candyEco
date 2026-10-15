@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { deleteImage } from '@/lib/cloudinary';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { handleServerError } from '@/lib/api-error-handler';
 
 export async function PUT(
   request: NextRequest,
@@ -48,9 +49,7 @@ export async function PUT(
 
     return NextResponse.json(updatedSlide);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update carousel slide';
-    console.error('Error updating carousel slide:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Carousel Slides API PUT]', 'Une erreur interne est survenue.');
   }
 }
 
@@ -88,8 +87,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to delete carousel slide';
-    console.error('Error deleting carousel slide:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Carousel Slides API DELETE]', 'Une erreur interne est survenue.');
   }
 }

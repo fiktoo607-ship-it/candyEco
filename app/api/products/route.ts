@@ -122,13 +122,14 @@ export async function GET(request?: NextRequest) {
       return mapped;
     });
 
-    // By default, filter public catalog queries so only published/active products are returned to non-admin visitors (Issue #30)
+    // By default, filter public catalog queries so only published/active products are returned to non-admin visitors (Issue #10)
     const resultProducts = isDashboard
       ? mappedProducts
       : mappedProducts.filter((p: any) => {
-          const isActive = !p.state || p.state === 'exist' || p.state === 'AVAILABLE' || p.state === 'active';
+          const hasValidVisibility = p.visibility !== undefined && p.visibility !== null ? p.visibility > 0 : true;
+          const isNotDraft = p.state !== 'draft';
           const isPublished = !p.publishedAt || new Date(p.publishedAt) <= new Date();
-          return isActive && isPublished;
+          return hasValidVisibility && isNotDraft && isPublished;
         });
 
     let hasNextPage = false;
@@ -210,8 +211,6 @@ export async function POST(request: NextRequest) {
         : []
     }, { status: 201 });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create product';
-    console.error('Error creating product:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Products API] Error creating product:', 'Une erreur interne est survenue.');
   }
 }

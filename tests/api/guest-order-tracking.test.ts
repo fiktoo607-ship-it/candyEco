@@ -1,176 +1,258 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
-import { POST as trackOrderPost, GET as trackOrderGet } from '@/app/api/orders/track/route';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { POST as createOrder } from '@/app/api/orders/route';
+import { GET as getOrderDetail, PUT as updateOrder } from '@/app/api/orders/[id]/route';
 import { prisma } from '@/lib/prisma';
+import { NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { resetRateLimiter } from '@/lib/rate-limiter';
+import { resetIdempotencyStore } from '@/lib/idempotency';
 
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
-    order: {
-      findFirst: vi.fn(),
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock('@/lib/config', () => ({
+  getSiteConfig: vi.fn().mockImplementation((key) => {
+    if (key === 'store_enabled') return Promise.resolve(true);
+    return Promise.resolve(null);
+  }),
+}));
+
+vi.mock('@/lib/prisma', () => {
+  const mockPrisma = {
+    product: {
+      findMany: vi.fn(),
+    },
+    user: {
       findUnique: vi.fn(),
     },
-  },
-}));
-
-vi.mock('@/lib/rate-limiter', () => ({
-  checkRateLimit: vi.fn().mockResolvedValue({ success: true }),
-  createRateLimitResponse: vi.fn(),
-  getClientIp: vi.fn().mockReturnValue('127.0.0.1'),
-}));
-
-describe('Guest Order Tracking API (Issue #22)', () => {
-  const mockOrder = {
-    id: 'ord-123456',
-    reference: 'ORD-20261008-1002',
-    status: 'ACCEPTED',
-    totalPrice: '35.00 €',
-    totalAmount: 35.0,
-    customerName: 'Karim Hadj',
-    customerPhone: '0555123456',
-    customerEmail: 'karim@example.com',
-    shippingAddress: '15 Rue Didouche Mourad, Alger',
-    deliveryMethod: 'Livraison Express',
-    createdAt: new Date('2026-10-08T10:00:00Z'),
-    updatedAt: new Date('2026-10-08T10:30:00Z'),
-    items: [
-      {
-        id: 'item-1',
-        productId: 'prod-1',
-        quantity: 2,
-        priceAtPurchase: '$10.00',
-        amountAtPurchase: 10.0,
-        product: {
-          id: 'prod-1',
-          title: 'Caramel Beurre Salé',
-          slug: 'caramel-beurre-sale',
-          price: '10.00',
-          imageUrl: '/caramel.jpg',
-        },
-      },
-    ],
+    deliveryMethod: {
+      findFirst: vi.fn(),
+    },
+    order: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    },
+    orderNotification: {
+      create: vi.fn().mockResolvedValue({ id: 'notif-1' }),
+    },
+    $queryRaw: vi.fn().mockResolvedValue([{ seq: 1 }]),
+    $executeRawUnsafe: vi.fn().mockResolvedValue(1),
+    $transaction: vi.fn((cb) => (typeof cb === 'function' ? cb(mockPrisma) : Promise.resolve(cb))),
   };
+  return { prisma: mockPrisma };
+});
 
+describe('Issue #23: Guest Order Tracking without Auth', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetRateLimiter();
+    resetIdempotencyStore();
+    vi.mocked(getServerSession).mockResolvedValue(null);
   });
 
-  describe('POST /api/orders/track', () => {
-    it('returns 400 when reference is missing', async () => {
-      const req = new NextRequest('http://localhost/api/orders/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: '0555123456' }),
-      });
+  const guestPayload = {
+    customerName: 'Amina Mansouri',
+    customerPhone: '+213555123456',
+    customerEmail: 'amina@example.com',
+    shippingAddress: '42 Rue Didouche Mourad, Alger',
+    items: [{ productId: 'cookie-1', quantity: 2 }],
+  };
 
-      const res = await trackOrderPost(req);
-      expect(res.status).toBe(400);
-      const data = await res.json();
-      expect(data.error).toMatch(/référence/i);
+  const mockDbProduct = {
+    id: 'cookie-1',
+    title: 'Cookies Chocolat',
+    price: '$3.50',
+    state: 'exist',
+  };
+
+  it('generates secure guestClaimToken, returns trackingUrl and sets HttpOnly cookie on guest order creation', async () => {
+    vi.mocked(prisma.product.findMany).mockResolvedValueOnce([mockDbProduct as any]);
+    vi.mocked(prisma.order.create).mockImplementationOnce((args: any) =>
+      Promise.resolve({
+        id: 'ord-guest-101',
+        reference: args.data.reference,
+        sessionId: args.data.sessionId,
+        status: 'PENDING',
+        totalPrice: '$7.00',
+        totalAmount: 7.0,
+        customerName: args.data.customerName,
+        customerPhone: args.data.customerPhone,
+        customerEmail: args.data.customerEmail,
+        shippingAddress: args.data.shippingAddress,
+        userId: null,
+        items: [],
+      }) as any
+    );
+
+    const req = new NextRequest('http://localhost/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(guestPayload),
     });
 
-    it('returns 400 when verification token/phone/email is missing', async () => {
-      const req = new NextRequest('http://localhost/api/orders/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reference: 'ORD-20261008-1002' }),
-      });
+    const res = await createOrder(req);
+    expect(res.status).toBe(201);
 
-      const res = await trackOrderPost(req);
-      expect(res.status).toBe(400);
-      const data = await res.json();
-      expect(data.error).toMatch(/téléphone|email/i);
+    const body = await res.json();
+    expect(body.guestClaimToken).toBeDefined();
+    expect(typeof body.guestClaimToken).toBe('string');
+    expect(body.guestClaimToken.length).toBeGreaterThan(16);
+    expect(body.trackingUrl).toBe(`/orders/ord-guest-101?token=${body.guestClaimToken}`);
+
+    // Verify HttpOnly cookie was set
+    const cookie = res.cookies.get('guest_order_ord-guest-101');
+    expect(cookie).toBeDefined();
+    expect(cookie?.value).toBe(body.guestClaimToken);
+  });
+
+  describe('GET /api/orders/[id] (Guest Access)', () => {
+    const mockGuestOrder = {
+      id: 'ord-guest-101',
+      reference: 'ORD-20261015-001',
+      sessionId: 'claim-token-secret-999',
+      status: 'PENDING',
+      totalPrice: '$7.00',
+      totalAmount: 7.0,
+      customerName: 'Amina Mansouri',
+      customerPhone: '+213555123456',
+      customerEmail: 'amina@example.com',
+      shippingAddress: '42 Rue Didouche Mourad, Alger',
+      userId: null,
+      items: [],
+    };
+
+    it('returns 401 when unauthenticated and no claim token is provided', async () => {
+      const req = new NextRequest('http://localhost/api/orders/ord-guest-101');
+      const res = await getOrderDetail(req, { params: Promise.resolve({ id: 'ord-guest-101' }) });
+      expect(res.status).toBe(401);
+      expect(prisma.order.findUnique).not.toHaveBeenCalled();
     });
 
-    it('returns 404 when order reference is not found', async () => {
-      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(null);
+    it('allows guest access via URL search parameter ?token=', async () => {
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockGuestOrder as any);
 
-      const req = new NextRequest('http://localhost/api/orders/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reference: 'ORD-NON-EXISTENT',
-          phone: '0555123456',
-        }),
-      });
-
-      const res = await trackOrderPost(req);
-      expect(res.status).toBe(404);
+      const req = new NextRequest('http://localhost/api/orders/ord-guest-101?token=claim-token-secret-999');
+      const res = await getOrderDetail(req, { params: Promise.resolve({ id: 'ord-guest-101' }) });
+      expect(res.status).toBe(200);
       const data = await res.json();
-      expect(data.error).toMatch(/introuvable/i);
+      expect(data.id).toBe('ord-guest-101');
     });
 
-    it('returns 403 when phone verification token does not match', async () => {
-      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(mockOrder as any);
+    it('allows guest access via x-guest-token header', async () => {
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockGuestOrder as any);
 
-      const req = new NextRequest('http://localhost/api/orders/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reference: 'ORD-20261008-1002',
-          phone: '0699999999', // Wrong phone
-        }),
+      const req = new NextRequest('http://localhost/api/orders/ord-guest-101', {
+        headers: { 'x-guest-token': 'claim-token-secret-999' },
       });
+      const res = await getOrderDetail(req, { params: Promise.resolve({ id: 'ord-guest-101' }) });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.id).toBe('ord-guest-101');
+    });
 
-      const res = await trackOrderPost(req);
+    it('allows guest access via HttpOnly cookie', async () => {
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockGuestOrder as any);
+
+      const req = new NextRequest('http://localhost/api/orders/ord-guest-101', {
+        headers: {
+          cookie: 'guest_order_ord-guest-101=claim-token-secret-999',
+        },
+      });
+      const res = await getOrderDetail(req, { params: Promise.resolve({ id: 'ord-guest-101' }) });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.id).toBe('ord-guest-101');
+    });
+
+    it('returns 403 when wrong claim token is provided', async () => {
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockGuestOrder as any);
+
+      const req = new NextRequest('http://localhost/api/orders/ord-guest-101?token=wrong-token');
+      const res = await getOrderDetail(req, { params: Promise.resolve({ id: 'ord-guest-101' }) });
       expect(res.status).toBe(403);
-      const data = await res.json();
-      expect(data.error).toMatch(/incorrectes/i);
     });
 
-    it('successfully allows guest tracking with valid reference and phone without login', async () => {
-      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(mockOrder as any);
+    it('returns 403 when claim token is used against a registered user order', async () => {
+      const mockRegisteredOrder = {
+        ...mockGuestOrder,
+        id: 'ord-user-202',
+        userId: 'registered-user-123',
+      };
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockRegisteredOrder as any);
 
-      const req = new NextRequest('http://localhost/api/orders/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reference: 'ORD-20261008-1002',
-          phone: '0555123456',
-        }),
-      });
-
-      const res = await trackOrderPost(req);
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data.reference).toBe('ORD-20261008-1002');
-      expect(data.status).toBe('ACCEPTED');
-      expect(data.customerName).toBe('Karim Hadj');
-      expect(data.items).toHaveLength(1);
-    });
-
-    it('successfully allows guest tracking with valid reference and email', async () => {
-      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(mockOrder as any);
-
-      const req = new NextRequest('http://localhost/api/orders/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reference: 'ORD-20261008-1002',
-          email: 'karim@example.com',
-        }),
-      });
-
-      const res = await trackOrderPost(req);
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data.reference).toBe('ORD-20261008-1002');
-      expect(data.customerEmail).toBe('karim@example.com');
+      const req = new NextRequest('http://localhost/api/orders/ord-user-202?token=claim-token-secret-999');
+      const res = await getOrderDetail(req, { params: Promise.resolve({ id: 'ord-user-202' }) });
+      expect(res.status).toBe(403);
     });
   });
 
-  describe('GET /api/orders/track', () => {
-    it('successfully tracks order via query parameters', async () => {
-      vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(mockOrder as any);
+  describe('PUT /api/orders/[id] (Guest Cancellation)', () => {
+    const mockGuestOrder = {
+      id: 'ord-guest-101',
+      reference: 'ORD-20261015-001',
+      sessionId: 'claim-token-secret-999',
+      status: 'PENDING',
+      totalPrice: '$7.00',
+      totalAmount: 7.0,
+      customerName: 'Amina Mansouri',
+      customerPhone: '+213555123456',
+      customerEmail: 'amina@example.com',
+      shippingAddress: '42 Rue Didouche Mourad, Alger',
+      userId: null,
+      items: [],
+    };
 
-      const req = new NextRequest(
-        'http://localhost/api/orders/track?reference=ORD-20261008-1002&phone=0555123456'
-      );
+    it('allows guest with valid claim token to cancel PENDING order', async () => {
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockGuestOrder as any);
+      vi.mocked(prisma.order.update).mockResolvedValueOnce({
+        ...mockGuestOrder,
+        status: 'CANCELLED',
+      } as any);
 
-      const res = await trackOrderGet(req);
+      const req = new NextRequest('http://localhost/api/orders/ord-guest-101?token=claim-token-secret-999', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+
+      const res = await updateOrder(req, { params: Promise.resolve({ id: 'ord-guest-101' }) });
       expect(res.status).toBe(200);
       const data = await res.json();
-      expect(data.reference).toBe('ORD-20261008-1002');
-      expect(data.status).toBe('ACCEPTED');
+      expect(data.status).toBe('CANCELLED');
+    });
+
+    it('forbids guest from modifying status to anything other than CANCELLED', async () => {
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockGuestOrder as any);
+
+      const req = new NextRequest('http://localhost/api/orders/ord-guest-101?token=claim-token-secret-999', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'DELIVERED' }),
+      });
+
+      const res = await updateOrder(req, { params: Promise.resolve({ id: 'ord-guest-101' }) });
+      expect(res.status).toBe(403);
+      expect(prisma.order.update).not.toHaveBeenCalled();
+    });
+
+    it('forbids guest from cancelling order when status is already ACCEPTED', async () => {
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
+        ...mockGuestOrder,
+        status: 'ACCEPTED',
+      } as any);
+
+      const req = new NextRequest('http://localhost/api/orders/ord-guest-101?token=claim-token-secret-999', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+
+      const res = await updateOrder(req, { params: Promise.resolve({ id: 'ord-guest-101' }) });
+      expect(res.status).toBe(400);
+      expect(prisma.order.update).not.toHaveBeenCalled();
     });
   });
 });

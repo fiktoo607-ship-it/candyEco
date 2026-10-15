@@ -214,6 +214,9 @@ describe('Orders API', () => {
         customerPhone: validPayload.customerPhone,
         customerEmail: validPayload.customerEmail,
         shippingAddress: validPayload.shippingAddress,
+        guestClaimToken: validPayload.sessionId,
+        secureToken: validPayload.sessionId,
+        trackingUrl: `/orders/order-uuid-123?token=${validPayload.sessionId}`,
         items: [
           {
             id: 'item-1',
@@ -244,6 +247,7 @@ describe('Orders API', () => {
 
       const response = await createOrder(req);
       expect(response.status).toBe(201);
+      expect(response.cookies.get('guest_order_order-uuid-123')?.value).toBe(validPayload.sessionId);
 
       const data = await response.json();
       expect(data).toEqual(expectedOrder);

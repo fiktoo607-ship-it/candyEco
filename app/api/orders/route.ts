@@ -262,10 +262,18 @@ export async function POST(request: NextRequest) {
               }
             }
 
+            const isGuest = !finalUserId;
+            const guestClaimToken = isGuest
+              ? (sessionId && typeof sessionId === 'string' && sessionId.trim().length >= 8
+                  ? sessionId.trim()
+                  : crypto.randomBytes(24).toString('hex'))
+              : null;
+            const finalSessionId = guestClaimToken || sessionId || idempotencyKey || null;
+
             const order = await tx.order.create({
               data: {
                 reference,
-                sessionId: sessionId || idempotencyKey || null,
+                sessionId: finalSessionId,
                 status: 'PENDING',
                 totalPrice,
                 totalAmount,
@@ -297,7 +305,16 @@ export async function POST(request: NextRequest) {
               },
             });
 
-            return { newOrder: order, notification: notif };
+            const responseOrder = {
+              ...order,
+              ...(guestClaimToken ? {
+                guestClaimToken,
+                secureToken: guestClaimToken,
+                trackingUrl: `/orders/${order.id}?token=${guestClaimToken}`,
+              } : {}),
+            };
+
+            return { newOrder: responseOrder, notification: notif };
           });
           break; // Success!
         } catch (err: any) {
@@ -352,21 +369,38 @@ export async function POST(request: NextRequest) {
 
     if (idempotencyKey) {
       const idempotentResult = await withIdempotency(idempotencyKey, executeOrderCreation);
-      return NextResponse.json(idempotentResult.body, { status: idempotentResult.status });
+      const res = NextResponse.json(idempotentResult.body, { status: idempotentResult.status });
+      const guestClaimToken = idempotentResult.body?.guestClaimToken;
+      const orderId = idempotentResult.body?.id;
+      if (guestClaimToken && orderId) {
+        res.cookies.set(`guest_order_${orderId}`, guestClaimToken, {
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 30 * 24 * 60 * 60,
+        });
+      }
+      return res;
     }
 
     const result = await executeOrderCreation();
-    return NextResponse.json(result.body, { status: result.status });
+    const res = NextResponse.json(result.body, { status: result.status });
+    const guestClaimToken = result.body?.guestClaimToken;
+    const orderId = result.body?.id;
+    if (guestClaimToken && orderId) {
+      res.cookies.set(`guest_order_${orderId}`, guestClaimToken, {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 30 * 24 * 60 * 60,
+      });
+    }
+    return res;
   } catch (error) {
     if (error instanceof OrderValidationError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    let errMsg = error instanceof Error ? error.message : 'Failed to submit order';
-    if (errMsg.includes("Can't reach database server") || errMsg.includes("prisma") || errMsg.includes("pooled.db.prisma.io")) {
-      errMsg = "Impossible de contacter le serveur de base de données. Veuillez vérifier votre connexion Internet.";
-    }
-    console.error('[Orders API] Error creating order:', error);
-    return NextResponse.json({ error: errMsg }, { status: 500 });
+    return handleServerError(error, '[Orders API] Error creating order:', 'Une erreur interne est survenue.');
   }
 }
 

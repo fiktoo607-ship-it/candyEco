@@ -7,7 +7,7 @@ import { useConfig } from '@/lib/hooks/use-config';
 import PriceDisplay from '@/components/PriceDisplay';
 
 interface CheckoutFormProps {
-  onSuccess: (orderId: string) => void;
+  onSuccess: (orderId: string, trackingUrl?: string, guestClaimToken?: string) => void;
 }
 
 interface DeliveryMethod {
@@ -163,7 +163,13 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
     try {
       const createdOrder = await submitOrderMutation.mutateAsync(payload);
       clearCart();
-      onSuccess(createdOrder.id);
+      const token = createdOrder?.guestClaimToken || createdOrder?.sessionId;
+      if (token && typeof window !== 'undefined' && createdOrder?.id) {
+        try {
+          sessionStorage.setItem(`guest_token_${createdOrder.id}`, token);
+        } catch {}
+      }
+      onSuccess(createdOrder?.id, createdOrder?.trackingUrl, token);
     } catch (err) {
       console.error(err);
       setFormError(err instanceof Error ? err.message : dictionary.cart.form.submitError);
@@ -183,7 +189,11 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
 
       {/* Inline Form Error Banner */}
       {formError && (
-        <div className="mb-sm rounded-xl bg-error-container/40 border border-error/20 p-sm text-sm font-medium text-error flex items-start gap-xs animate-fade-in">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="mb-sm rounded-xl bg-error-container/40 border border-error/20 p-sm text-sm font-medium text-error flex items-start gap-xs animate-fade-in"
+        >
           <span className="material-symbols-outlined text-base select-none shrink-0 mt-[2px]">error</span>
           <span>{formError}</span>
         </div>

@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { handleServerError } from '@/lib/api-error-handler';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,9 +13,7 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.json(faqs);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch FAQs';
-    console.error('Error fetching FAQs:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Faqs API GET]', 'Une erreur interne est survenue.');
   }
 }
 
@@ -41,8 +40,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newFaq, { status: 201 });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create FAQ';
-    console.error('Error creating FAQ:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Faqs API POST]', 'Une erreur interne est survenue.');
   }
 }

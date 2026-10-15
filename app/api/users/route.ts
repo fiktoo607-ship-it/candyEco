@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { handleServerError } from '@/lib/api-error-handler';
 
 export async function GET(request: NextRequest) {
   try {
@@ -106,8 +107,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(mappedUsers);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch users';
-    console.error('Error fetching users:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Users API]', 'Une erreur interne est survenue.');
   }
 }

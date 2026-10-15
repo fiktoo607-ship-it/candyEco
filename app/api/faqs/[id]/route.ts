@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { handleServerError } from '@/lib/api-error-handler';
 
 export async function PUT(
   request: NextRequest,
@@ -39,9 +40,7 @@ export async function PUT(
 
     return NextResponse.json(updatedFaq);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update FAQ';
-    console.error('Error updating FAQ:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Faqs API PUT]', 'Une erreur interne est survenue.');
   }
 }
 
@@ -71,8 +70,6 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'FAQ deleted successfully' });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to delete FAQ';
-    console.error('Error deleting FAQ:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Faqs API DELETE]', 'Une erreur interne est survenue.');
   }
 }

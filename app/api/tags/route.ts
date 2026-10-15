@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { handleServerError } from '@/lib/api-error-handler';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,8 +38,6 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.json(dbTags.map((t) => t.name));
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch tags';
-    console.error('Error fetching tags:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Tags API]', 'Une erreur interne est survenue.');
   }
 }

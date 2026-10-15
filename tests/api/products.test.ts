@@ -501,6 +501,68 @@ describe('Products API', () => {
       const data = await response.json();
       expect(data).toEqual({ error: 'Database error' });
     });
+
+    it('should return 404 for non-admin customer when product is draft (Issue #10)', async () => {
+      vi.mocked(prisma.product.findUnique).mockResolvedValueOnce({
+        ...mockProduct,
+        state: 'draft',
+      });
+
+      const req = new NextRequest(`http://localhost/api/products/${mockProduct.id}`);
+      const response = await getProduct(req, { params: Promise.resolve({ id: mockProduct.id }) });
+
+      expect(response.status).toBe(404);
+      const data = await response.json();
+      expect(data).toEqual({ error: 'Product not found' });
+    });
+
+    it('should return 404 for non-admin customer when product has visibility <= 0 (Issue #10)', async () => {
+      vi.mocked(prisma.product.findUnique).mockResolvedValueOnce({
+        ...mockProduct,
+        visibility: 0,
+      });
+
+      const req = new NextRequest(`http://localhost/api/products/${mockProduct.id}`);
+      const response = await getProduct(req, { params: Promise.resolve({ id: mockProduct.id }) });
+
+      expect(response.status).toBe(404);
+      const data = await response.json();
+      expect(data).toEqual({ error: 'Product not found' });
+    });
+
+    it('should return 404 for non-admin customer when product publishedAt is in the future (Issue #10)', async () => {
+      vi.mocked(prisma.product.findUnique).mockResolvedValueOnce({
+        ...mockProduct,
+        publishedAt: new Date(Date.now() + 86400000), // Tomorrow
+      });
+
+      const req = new NextRequest(`http://localhost/api/products/${mockProduct.id}`);
+      const response = await getProduct(req, { params: Promise.resolve({ id: mockProduct.id }) });
+
+      expect(response.status).toBe(404);
+      const data = await response.json();
+      expect(data).toEqual({ error: 'Product not found' });
+    });
+
+    it('should return 200 for admin when product is unpublished but requested with dashboard=true (Issue #10)', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({
+        user: { id: 'admin-1', role: 'admin' },
+      } as any);
+
+      vi.mocked(prisma.product.findUnique).mockResolvedValueOnce({
+        ...mockProduct,
+        state: 'draft',
+        visibility: 0,
+      });
+
+      const req = new NextRequest(`http://localhost/api/products/${mockProduct.id}?dashboard=true`);
+      const response = await getProduct(req, { params: Promise.resolve({ id: mockProduct.id }) });
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.id).toBe(mockProduct.id);
+      expect(data.state).toBe('draft');
+    });
   });
 
   describe('PUT /api/products/[id]', () => {
@@ -757,7 +819,7 @@ describe('Products API', () => {
       expect(data.error).toBe('Product not found');
     });
 
-    it('should query order with correct user profile OR conditions (including phone and email)', async () => {
+    it('should query order strictly with authenticated userId to prevent cross-account rating hijacking (Issue #19)', async () => {
       vi.mocked(getServerSession).mockResolvedValueOnce({
         user: { id: 'user-id-123', email: 'test@example.com', role: 'user', phone: '+123456789' },
       } as any);
@@ -782,11 +844,7 @@ describe('Products API', () => {
 
       expect(prisma.order.findFirst).toHaveBeenCalledWith({
         where: {
-          OR: [
-            { userId: 'user-id-123' },
-            { customerPhone: '+123456789' },
-            { customerEmail: 'test@example.com' }
-          ],
+          userId: 'user-id-123',
           status: { in: ['DELIVERED', 'COMPLETED'] },
           items: {
             some: {

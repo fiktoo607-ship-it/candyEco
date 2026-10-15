@@ -231,13 +231,13 @@ export const authOptions: NextAuthOptions = {
           // Do NOT silently elevate existing users to admin on every sign-in.
           (user as any).role = dbUser.role;
         } else {
-          // First-time signup / bootstrap: check if user qualifies for initial admin role
+          // First-time signup / bootstrap: check if user qualifies for initial admin role (Issue #5)
           let shouldBeAdmin = false;
           if (email) {
             shouldBeAdmin = adminEmails.includes(email.toLowerCase());
           }
-          if (!shouldBeAdmin) {
-            // Check if this is the first user in the database
+          if (!shouldBeAdmin && (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test')) {
+            // Check if this is the first user in the database (allowed only in dev/test)
             const userCount = await prisma.user.count();
             if (userCount === 0) {
               shouldBeAdmin = true;

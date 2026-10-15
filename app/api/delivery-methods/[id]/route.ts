@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { handleServerError } from '@/lib/api-error-handler';
 import { z } from 'zod';
 
 const updateDeliveryMethodSchema = z.object({
@@ -78,8 +79,7 @@ export async function PUT(
 
     return NextResponse.json(updated);
   } catch (error) {
-    const err = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: err }, { status: 500 });
+    return handleServerError(error, '[Delivery Methods API PUT]', 'Une erreur interne est survenue.');
   }
 }
 
@@ -110,7 +110,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const err = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: err }, { status: 500 });
+    return handleServerError(error, '[Delivery Methods API DELETE]', 'Une erreur interne est survenue.');
   }
 }

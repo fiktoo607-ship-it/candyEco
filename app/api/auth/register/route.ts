@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
 import { MAX_PASSWORD_LENGTH } from '@/lib/validations/auth';
+import { handleServerError } from '@/lib/api-error-handler';
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,9 +65,17 @@ export async function POST(request: NextRequest) {
         throw new Error('PhoneAlreadyUsed');
       }
 
-      // Determine role atomically
+      // Determine role safely (Issue #5)
       const userCount = await tx.user.count();
-      const role = userCount === 0 ? 'admin' : 'user';
+      const adminEmailsEnv = process.env.ADMIN_EMAILS || "";
+      const adminEmails = adminEmailsEnv
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+
+      const isDevOrTest = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+      const isEmailAdmin = (body as any)?.email && adminEmails.includes(String((body as any).email).trim().toLowerCase());
+      const role = (isEmailAdmin || (isDevOrTest && userCount === 0)) ? 'admin' : 'user';
 
       // Create the user (phone-only registration without email: emailVerified is null)
       const createdUser = await tx.user.create({
@@ -104,8 +113,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Ce numéro de téléphone est déjà utilisé.' }, { status: 400 });
     }
 
-    const errorMessage = error instanceof Error ? error.message : 'Registration failed';
-    console.error('Registration API Error:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Registration API]', 'Une erreur interne est survenue.');
   }
 }

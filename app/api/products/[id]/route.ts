@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
 import { normalizePrice } from '@/lib/utils/currency';
+import { handleServerError } from '@/lib/api-error-handler';
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +14,15 @@ export async function GET(
   try {
     const { id } = await params;
     const { searchParams } = new URL(request.url);
-    const isDashboard = searchParams.get('dashboard') === 'true';
+    const isDashboardParam = searchParams.get('dashboard') === 'true';
+    let isDashboard = false;
+
+    if (isDashboardParam) {
+      const session = await getServerSession(authOptions);
+      if (session && (session.user as any)?.role === 'admin') {
+        isDashboard = true;
+      }
+    }
 
     const product = await prisma.product.findUnique({
       where: { id },
@@ -22,6 +31,18 @@ export async function GET(
 
     if (!product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    // Hide unpublished products from non-admin visitors (Issue #10)
+    if (!isDashboard) {
+      const isUnpublished =
+        (product.visibility !== undefined && product.visibility !== null && product.visibility <= 0) ||
+        product.state === 'draft' ||
+        (product.publishedAt && new Date(product.publishedAt) > new Date());
+
+      if (isUnpublished) {
+        return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      }
     }
 
     const mappedProduct = {
@@ -38,9 +59,7 @@ export async function GET(
 
     return NextResponse.json(mappedProduct);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch product';
-    console.error('Error fetching product:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Products API GET]', 'Une erreur interne est survenue.');
   }
 }
 
@@ -122,9 +141,7 @@ export async function PUT(
         : []
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update product';
-    console.error('Error updating product:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Products API PUT]', 'Une erreur interne est survenue.');
   }
 }
 
@@ -165,9 +182,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Product deleted successfully' });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to delete product';
-    console.error('Error deleting product:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Products API DELETE]', 'Une erreur interne est survenue.');
   }
 }
 
@@ -225,17 +240,10 @@ export async function POST(
     }
 
     // Verification: Order containing the product must be DELIVERED or COMPLETED
-    const conditions: any[] = [{ userId: user.id }];
-    if (user.phone) {
-      conditions.push({ customerPhone: user.phone });
-    }
-    if (user.email) {
-      conditions.push({ customerEmail: user.email });
-    }
-
+    // Strictly bound to authenticated userId to prevent cross-account rating hijacking (Issue #19)
     const deliveredOrder = await prisma.order.findFirst({
       where: {
-        OR: conditions,
+        userId: user.id,
         status: { in: ['DELIVERED', 'COMPLETED'] },
         items: {
           some: {
@@ -311,8 +319,6 @@ export async function POST(
     if (error?.message === 'AlreadyRated' || error?.code === 'P2002') {
       return NextResponse.json({ error: 'Vous avez déjà évalué ce produit.' }, { status: 400 });
     }
-    const errorMessage = error instanceof Error ? error.message : 'Failed to submit rating';
-    console.error('Error submitting rating:', error);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleServerError(error, '[Products API Rating]', 'Une erreur interne est survenue.');
   }
 }

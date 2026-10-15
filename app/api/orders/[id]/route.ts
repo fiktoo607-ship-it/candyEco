@@ -4,17 +4,41 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { isValidStatusTransition, isValidOrderStatus, OrderStatus } from '@/types/orderStatusConfig';
 
+function getClaimToken(request: NextRequest, orderId: string): string | null {
+  const queryToken =
+    request.nextUrl.searchParams.get('token') ||
+    request.nextUrl.searchParams.get('claimToken') ||
+    request.nextUrl.searchParams.get('guestClaimToken') ||
+    request.nextUrl.searchParams.get('guestToken');
+  if (queryToken && queryToken.trim()) return queryToken.trim();
+
+  const headerToken =
+    request.headers.get('x-guest-token') ||
+    request.headers.get('x-claim-token') ||
+    request.headers.get('x-guest-claim-token');
+  if (headerToken && headerToken.trim()) return headerToken.trim();
+
+  const cookieToken =
+    request.cookies.get(`guest_order_${orderId}`)?.value ||
+    request.cookies.get('guest_claim_token')?.value;
+  if (cookieToken && cookieToken.trim()) return cookieToken.trim();
+
+  return null;
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
+    const claimToken = getClaimToken(request, id);
+
+    if ((!session || !session.user) && !claimToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
     const body = await request.json();
     const { status } = body;
 
@@ -36,13 +60,23 @@ export async function PUT(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    const isAdmin = session.user.role === 'admin';
-    const isOwner = existingOrder.userId === session.user.id;
+    const isAdmin = session?.user?.role === 'admin';
+    const isOwner = !!(session?.user?.id && existingOrder.userId && existingOrder.userId === session.user.id);
+    const isAuthorizedGuest =
+      !existingOrder.userId &&
+      !!claimToken &&
+      (
+        existingOrder.sessionId === claimToken ||
+        (existingOrder.sessionId && existingOrder.sessionId.toLowerCase() === claimToken.toLowerCase()) ||
+        (existingOrder.customerPhone && existingOrder.customerPhone === claimToken) ||
+        (existingOrder.customerEmail && existingOrder.customerEmail.toLowerCase() === claimToken.toLowerCase())
+      );
+
     const currentStatus = existingOrder.status.toUpperCase();
 
-    // Customer rules: Can cancel own order only while status is Pending.
+    // Customer / Guest rules: Can cancel own order only while status is Pending.
     if (!isAdmin) {
-      if (!isOwner) {
+      if (!isOwner && !isAuthorizedGuest) {
         return NextResponse.json({ error: 'Access denied' }, { status: 403 });
       }
       if (targetStatus !== 'CANCELLED') {
@@ -140,12 +174,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
+    const claimToken = getClaimToken(request, id);
+
+    if ((!session || !session.user) && !claimToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const { id } = await params;
 
     const order = await prisma.order.findUnique({
       where: { id },
@@ -190,10 +225,19 @@ export async function GET(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    const isAdmin = session.user.role === 'admin';
-    const isOwner = order.userId === session.user.id;
+    const isAdmin = session?.user?.role === 'admin';
+    const isOwner = !!(session?.user?.id && order.userId && order.userId === session.user.id);
+    const isAuthorizedGuest =
+      !order.userId &&
+      !!claimToken &&
+      (
+        order.sessionId === claimToken ||
+        (order.sessionId && order.sessionId.toLowerCase() === claimToken.toLowerCase()) ||
+        (order.customerPhone && order.customerPhone === claimToken) ||
+        (order.customerEmail && order.customerEmail.toLowerCase() === claimToken.toLowerCase())
+      );
 
-    if (!isAdmin && !isOwner) {
+    if (!isAdmin && !isOwner && !isAuthorizedGuest) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 

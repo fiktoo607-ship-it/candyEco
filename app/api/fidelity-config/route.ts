@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { handleServerError } from '@/lib/api-error-handler';
 
 export async function getFidelityThresholds(): Promise<{ vipThreshold: number; fideleThreshold: number }> {
   try {
@@ -105,7 +106,6 @@ export async function POST(request: NextRequest) {
       fideleThreshold: parsedFidele,
     });
   } catch (error) {
-    const err = error instanceof Error ? error.message : 'Failed to update fidelity config';
-    return NextResponse.json({ error: err }, { status: 500 });
+    return handleServerError(error, '[Fidelity Config API]', 'Une erreur interne est survenue.');
   }
 }
