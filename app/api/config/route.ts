@@ -33,12 +33,12 @@ export const ALLOWED_CONFIG_KEYS = new Set([
   'fideleThreshold',
 ]);
 
+export const PUBLIC_CONFIG_KEYS = ALLOWED_CONFIG_KEYS;
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const isAdmin = session?.user?.role === 'admin';
 
     const config = await getAllSiteConfigs();
 
@@ -57,7 +57,9 @@ export async function GET() {
     const sanitizedConfig: Record<string, any> = {};
     for (const [k, v] of Object.entries(config)) {
       if (!SENSITIVE_KEY_PATTERNS.some((pat) => pat.test(k))) {
-        sanitizedConfig[k] = v;
+        if (isAdmin || PUBLIC_CONFIG_KEYS.has(k)) {
+          sanitizedConfig[k] = v;
+        }
       }
     }
 
