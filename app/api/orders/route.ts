@@ -203,6 +203,23 @@ export async function POST(request: NextRequest) {
                 throw new OrderValidationError(`Product "${dbProduct.title}" is coming soon and cannot be ordered`);
               }
 
+              // Guard inventory and atomically deduct stock inside transaction (Issue #60)
+              if ((dbProduct as any).stock !== undefined && (dbProduct as any).stock !== null) {
+                const availableStock = Number((dbProduct as any).stock);
+                if (availableStock < quantity || availableStock <= 0) {
+                  throw new OrderValidationError(`Product "${dbProduct.title}" is out of stock`);
+                }
+
+                const remainingStock = availableStock - quantity;
+                await (tx.product as any).update({
+                  where: { id: productId },
+                  data: {
+                    stock: remainingStock,
+                    ...(remainingStock <= 0 ? { state: 'outofStock' } : {}),
+                  },
+                });
+              }
+
               if (dbProduct.limitBay !== null && dbProduct.limitBay !== undefined && dbProduct.limitBay > 1) {
                 if (quantity < dbProduct.limitBay) {
                   throw new OrderValidationError(
@@ -368,7 +385,12 @@ export async function POST(request: NextRequest) {
     };
 
     if (idempotencyKey) {
-      const idempotentResult = await withIdempotency(idempotencyKey, executeOrderCreation);
+      const clientScope = userId
+        ? `user:${userId}`
+        : `guest:${clientIp}:${sessionId || customerPhone || 'anon'}`;
+      const scopedKey = `orders:${clientScope}:${idempotencyKey}`;
+
+      const idempotentResult = await withIdempotency(scopedKey, executeOrderCreation);
       const res = NextResponse.json(idempotentResult.body, { status: idempotentResult.status });
       const guestClaimToken = idempotentResult.body?.guestClaimToken;
       const orderId = idempotentResult.body?.id;
