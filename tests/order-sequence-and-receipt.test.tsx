@@ -10,6 +10,92 @@ import { Order } from '@/lib/hooks/use-orders';
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock('@/lib/config', () => ({
+  getSiteConfig: vi.fn().mockImplementation((key) => {
+    if (key === 'store_enabled') return Promise.resolve(true);
+    if (key === 'store_message') return Promise.resolve('Le magasin est temporairement fermé.');
+    return Promise.resolve(null);
+  }),
+}));
+
+vi.mock('@/lib/prisma', () => {
+  const mockSequenceStore = new Map<string, number>();
+  const mockPrisma: any = {
+    _mockSequenceStore: mockSequenceStore,
+    product: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    deliveryMethod: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    order: {
+      count: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      findFirst: vi.fn(),
+      groupBy: vi.fn().mockResolvedValue([]),
+    },
+    orderNotification: {
+      create: vi.fn().mockImplementation((args) => Promise.resolve({
+        id: 'notif-uuid-123',
+        orderId: args.data.orderId,
+        read: false,
+        createdAt: new Date(),
+      })),
+    },
+    setting: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+      upsert: vi.fn(),
+    },
+    $queryRaw: vi.fn().mockImplementation((strings: any, ...values: any[]) => {
+      const queryStr = typeof strings === 'string'
+        ? strings
+        : Array.isArray(strings)
+          ? strings.join('?')
+          : (strings?.raw ? strings.raw.join('?') : String(strings));
+      if (queryStr.includes('nextval') || values.length > 0) {
+        const seqName = String(values[0] || 'default_seq');
+        const nextVal = (mockSequenceStore.get(seqName) || 0) + 1;
+        mockSequenceStore.set(seqName, nextVal);
+        return Promise.resolve([{ seq: nextVal }]);
+      }
+      return Promise.resolve([{ seq: 1 }]);
+    }),
+    $queryRawUnsafe: vi.fn().mockResolvedValue([{ seq: 1 }]),
+    $executeRawUnsafe: vi.fn().mockResolvedValue(1),
+    $transaction: vi.fn((arg) => {
+      if (typeof arg === 'function') {
+        return arg(mockPrisma);
+      }
+      if (Array.isArray(arg)) {
+        return Promise.all(arg);
+      }
+      return Promise.resolve(arg);
+    }),
+  };
+
+  return {
+    prisma: mockPrisma,
+    default: mockPrisma,
+  };
+});
+
 describe('Order Reference Sequence Wrap Collision Fix (Issue #35)', () => {
   it('formats low sequences with 3-digit zero-padding', async () => {
     const fixedDate = new Date('2026-10-08T00:00:00Z');
@@ -198,3 +284,126 @@ describe('Preserve Historical OrderItems on Product Deletion (Issue #23)', () =>
     expect(orderItemBlock).toMatch(/product\s+Product\s+@relation\([^)]*onDelete:\s*Restrict[^)]*\)/);
   });
 });
+
+describe('Delivery Method Validation & Server-Side Pricing (Issues #8, #28)', () => {
+  it('includes delivery fee in total price and total amount when paid delivery method is selected', async () => {
+    const { POST: createOrder } = await import('@/app/api/orders/route');
+    const { NextRequest } = await import('next/server');
+    const { prisma } = await import('@/lib/prisma');
+
+    vi.spyOn(prisma.product, 'findMany').mockResolvedValueOnce([
+      {
+        id: 'prod-cookie-1',
+        title: 'Choco Cookie',
+        price: '$10.00',
+        state: 'exist',
+      } as any,
+    ]);
+
+    vi.spyOn(prisma.deliveryMethod, 'findFirst').mockResolvedValueOnce({
+      id: 'del-express',
+      name: 'Livraison Express',
+      price: 5.0,
+      active: true,
+    } as any);
+
+    let createdOrderData: any = null;
+    (vi.spyOn(prisma.order, 'create') as any).mockImplementationOnce(async (args: any) => {
+      createdOrderData = args.data;
+      return {
+        id: 'ord-del-1',
+        ...args.data,
+        items: [],
+      } as any;
+    });
+
+    const payload = {
+      customerName: 'Karim Bouzid',
+      customerPhone: '+213555333444',
+      shippingAddress: '15 Rue Didouche, Alger',
+      deliveryMethod: 'Livraison Express',
+      items: [{ productId: 'prod-cookie-1', quantity: 2 }], // 2 * $10 = $20
+    };
+
+    const req = new NextRequest('http://localhost/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const res = await createOrder(req);
+    expect(res.status).toBe(201);
+    const body = await res.json();
+
+    // 2 * $10 + $5 delivery fee = $25.00
+    expect(body.totalAmount).toBe(25.0);
+    expect(body.totalPrice).toBe('$25.00');
+    expect(createdOrderData.totalAmount).toBe(25.0);
+    expect(createdOrderData.totalPrice).toBe('$25.00');
+    expect(createdOrderData.deliveryMethod).toBe('Livraison Express');
+  });
+
+  it('rejects unapproved or random delivery method with 400', async () => {
+    const { POST: createOrder } = await import('@/app/api/orders/route');
+    const { NextRequest } = await import('next/server');
+    const { prisma } = await import('@/lib/prisma');
+
+    vi.spyOn(prisma.product, 'findMany').mockResolvedValueOnce([
+      {
+        id: 'prod-cookie-1',
+        title: 'Choco Cookie',
+        price: '$10.00',
+        state: 'exist',
+      } as any,
+    ]);
+
+    // Database returns null because the delivery method is not approved or inactive
+    vi.spyOn(prisma.deliveryMethod, 'findFirst').mockResolvedValueOnce(null);
+
+    const payload = {
+      customerName: 'Karim Bouzid',
+      customerPhone: '+213555333444',
+      shippingAddress: '15 Rue Didouche, Alger',
+      deliveryMethod: 'FakeUnapprovedCourier999',
+      items: [{ productId: 'prod-cookie-1', quantity: 1 }],
+    };
+
+    const req = new NextRequest('http://localhost/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const res = await createOrder(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain('Méthode de livraison non valide ou inactive');
+  });
+});
+
+describe('Daily Sequence Counter Reset (Issue #113)', () => {
+  it('resets daily counter to ORD-YYYYMMDD-001 with the start of each new calendar day', async () => {
+    const { generateAtomicOrderReference, resetDailyOrderSequence } = await import('@/lib/order-sequence');
+
+    if (resetDailyOrderSequence) {
+      resetDailyOrderSequence();
+    }
+
+    const day1 = new Date('2026-10-15T08:00:00Z');
+    const day1Later = new Date('2026-10-15T15:30:00Z');
+    const day2 = new Date('2026-10-16T09:00:00Z');
+
+    // Day 1 first order -> 001
+    const refDay1_1 = await generateAtomicOrderReference(undefined, day1);
+    expect(refDay1_1).toBe('ORD-20261015-001');
+
+    // Day 1 second order -> 002
+    const refDay1_2 = await generateAtomicOrderReference(undefined, day1Later);
+    expect(refDay1_2).toBe('ORD-20261015-002');
+
+    // Day 2 first order -> must RESET to 001 for the new day
+    const refDay2_1 = await generateAtomicOrderReference(undefined, day2);
+    expect(refDay2_1).toBe('ORD-20261016-001');
+  });
+});
+
