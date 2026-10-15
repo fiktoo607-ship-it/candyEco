@@ -24,6 +24,7 @@ firestore-debug.log*
 ui-debug.log*
 *.log
 *.dump
+*open_issues.json
 
 # local env files
 .env

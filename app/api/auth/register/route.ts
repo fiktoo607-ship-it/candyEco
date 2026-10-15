@@ -65,25 +65,15 @@ export async function POST(request: NextRequest) {
         throw new Error('PhoneAlreadyUsed');
       }
 
-      // Determine role safely (Issue #5)
-      const userCount = await tx.user.count();
-      const adminEmailsEnv = process.env.ADMIN_EMAILS || "";
-      const adminEmails = adminEmailsEnv
-        .split(",")
-        .map((e) => e.trim().toLowerCase())
-        .filter(Boolean);
-
-      const isDevOrTest = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
-      const isEmailAdmin = (body as any)?.email && adminEmails.includes(String((body as any).email).trim().toLowerCase());
-      const role = (isEmailAdmin || (isDevOrTest && userCount === 0)) ? 'admin' : 'user';
-
-      // Create the user (phone-only registration without email: emailVerified is null)
+      // Public registration strictly creates standard user role (Issues #5, #116).
+      // Privileged roles cannot be self-assigned via client-supplied request data
+      // and cannot race on empty databases. Admin bootstrap is strictly out-of-band via seed / ADMIN_INIT_PASSWORD or verified Google OAuth.
       const createdUser = await tx.user.create({
         data: {
           name: name.trim(),
           phone: phoneNormalized,
           password: hashedPassword,
-          role,
+          role: 'user',
           emailVerified: null,
         },
       });

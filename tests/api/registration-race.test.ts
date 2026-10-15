@@ -31,7 +31,7 @@ describe('Registration & First-User Bootstrap Security (Issue #42)', () => {
     resetRateLimiter();
   });
 
-  it('uses interactive transaction and assigns admin role only to the first user', async () => {
+  it('uses interactive transaction and assigns regular user role to the first user', async () => {
     const txMock = {
       user: {
         findFirst: vi.fn().mockResolvedValue(null),
@@ -51,7 +51,7 @@ describe('Registration & First-User Bootstrap Security (Issue #42)', () => {
     const req = {
       headers: { get: () => '127.0.0.1' },
       json: vi.fn().mockResolvedValue({
-        name: 'First Admin',
+        name: 'First Registrant',
         phone: '+213555000001',
         password: 'ValidPassword123!',
       }),
@@ -67,7 +67,7 @@ describe('Registration & First-User Bootstrap Security (Issue #42)', () => {
     expect(txMock.user.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          role: 'admin',
+          role: 'user',
         }),
       })
     );
@@ -184,7 +184,7 @@ describe('Registration & First-User Bootstrap Security (Issue #42)', () => {
     }
   });
 
-  it('grants admin role in production when user email matches ADMIN_EMAILS', async () => {
+  it('does not grant admin role even when user email matches ADMIN_EMAILS in registration body', async () => {
     const originalEnv = process.env.NODE_ENV;
     const originalAdminEmails = process.env.ADMIN_EMAILS;
     (process.env as any).NODE_ENV = 'production';
@@ -195,7 +195,7 @@ describe('Registration & First-User Bootstrap Security (Issue #42)', () => {
           findFirst: vi.fn().mockResolvedValue(null),
           count: vi.fn().mockResolvedValue(5),
           create: vi.fn().mockImplementation(async ({ data }) => ({
-            id: 'u-prod-admin',
+            id: 'u-prod-user',
             ...data,
           })),
         },
@@ -209,7 +209,7 @@ describe('Registration & First-User Bootstrap Security (Issue #42)', () => {
       const req = {
         headers: { get: () => '127.0.0.1' },
         json: vi.fn().mockResolvedValue({
-          name: 'Designated Admin',
+          name: 'Designated User',
           phone: '+213555000088',
           email: 'admin@candyele.com',
           password: 'ValidPassword123!',
@@ -221,7 +221,7 @@ describe('Registration & First-User Bootstrap Security (Issue #42)', () => {
       expect(txMock.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            role: 'admin',
+            role: 'user',
           }),
         })
       );

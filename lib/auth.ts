@@ -207,7 +207,9 @@ export const authOptions: NextAuthOptions = {
       });
 
       if (account?.provider === "credentials") {
-        if (!dbUser?.emailVerified) {
+        // Phone-authenticated accounts do not require email verification (Issue #117)
+        const isPhoneUser = Boolean(user.phone || dbUser?.phone);
+        if (!isPhoneUser && !dbUser?.emailVerified) {
           throw new Error("EmailNotVerified");
         }
       }

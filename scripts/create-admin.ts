@@ -3,8 +3,8 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma';
 
 async function main() {
-  const phone = '0454545454';
-  const rawPassword = 'pass012';
+  const phone = process.env.ADMIN_INIT_PHONE || '0454545454';
+  const rawPassword = process.env.ADMIN_INIT_PASSWORD || 'pass012';
 
   const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
