@@ -42,12 +42,19 @@ describe('Config API', () => {
       expect(getAllSiteConfigs).toHaveBeenCalled();
     });
 
-    it('should reject unauthenticated or non-admin callers on GET with 401', async () => {
+    it('should allow unauthenticated callers on GET to receive public configurations and restrict admin keys (Issue #61)', async () => {
       vi.mocked(getServerSession).mockResolvedValueOnce(null);
+      vi.mocked(getAllSiteConfigs).mockResolvedValueOnce({
+        store_enabled: true,
+        carousel_max_slides: 5,
+        admin_internal_token: 'secret',
+      });
       const res = await getConfig();
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(200);
       const data = await res.json();
-      expect(data.error).toBe('Unauthorized');
+      expect(data.store_enabled).toBe(true);
+      expect(data.carousel_max_slides).toBe(5);
+      expect(data.admin_internal_token).toBeUndefined();
     });
 
     it('should strip sensitive secret keys from GET response (Issue #40)', async () => {

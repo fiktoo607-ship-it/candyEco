@@ -28,19 +28,6 @@ export async function GET() {
     const session = await getServerSession(authOptions);
     const isAdmin = session?.user?.role === 'admin';
 
-    try {
-      await prisma.deliveryMethod.updateMany({
-        where: {
-          name: { contains: 'yalidin', mode: 'insensitive' },
-        },
-        data: {
-          name: 'Yalidine Express',
-        },
-      });
-    } catch {
-      // Ignore if DB operation fails or table not yet migrated
-    }
-
     const methods = await prisma.deliveryMethod.findMany({
       where: isAdmin ? {} : { active: true },
       orderBy: { name: 'asc' },
