@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { uploadImage } from '@/lib/cloudinary';
+import { uploadImage, deleteImage } from '@/lib/cloudinary';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
@@ -109,3 +109,43 @@ export async function POST(request: NextRequest) {
     return handleServerError(error, '[Upload API] Error uploading file:', 'Failed to upload file');
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized: Admin privileges required' }, { status: 401 });
+    }
+
+    const clientIp = getClientIp(request);
+    const identifier = session.user.id ? `user:${session.user.id}` : `ip:${clientIp}`;
+    const rateLimitResult = await checkRateLimit(identifier, {
+      keyPrefix: 'upload-delete',
+      limit: 30,
+      windowSeconds: 60,
+    });
+
+    if (!rateLimitResult.success) {
+      return createRateLimitResponse(
+        rateLimitResult,
+        'Trop de requêtes de suppression. Veuillez patienter avant de réessayer.'
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const publicId = body.publicId || body.imageUrl || body.url;
+
+    if (!publicId || typeof publicId !== 'string' || !publicId.trim()) {
+      return NextResponse.json(
+        { error: 'Paramètre publicId ou URL manquant ou invalide' },
+        { status: 400 }
+      );
+    }
+
+    const result = await deleteImage(publicId.trim());
+    return NextResponse.json({ success: true, result });
+  } catch (error) {
+    return handleServerError(error, '[Upload API DELETE] Error deleting image:', 'Failed to delete image');
+  }
+}
+

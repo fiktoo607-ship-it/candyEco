@@ -55,9 +55,15 @@ export function resetRateLimiter(): void {
 export function getClientIp(request: Request | NextRequest): string {
   if (!request) return '127.0.0.1';
 
-  // 1. Prefer direct request.ip from Next.js runtime when present
+  // 1. Prefer direct connection IP (request.ip, socket.remoteAddress, connection.remoteAddress)
   if (typeof (request as any).ip === 'string' && (request as any).ip.trim()) {
     return (request as any).ip.trim();
+  }
+  if (typeof (request as any).socket?.remoteAddress === 'string' && (request as any).socket.remoteAddress.trim()) {
+    return (request as any).socket.remoteAddress.trim();
+  }
+  if (typeof (request as any).connection?.remoteAddress === 'string' && (request as any).connection.remoteAddress.trim()) {
+    return (request as any).connection.remoteAddress.trim();
   }
 
   if (!request.headers) return '127.0.0.1';

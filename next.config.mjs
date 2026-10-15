@@ -9,10 +9,12 @@ const cspHeader = `
   form-action 'self';
   base-uri 'self';
   object-src 'none';
+  upgrade-insecure-requests;
 `.replace(/\s{2,}/g, ' ').trim();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  poweredByHeader: false,
   output: 'standalone',
   images: {
     remotePatterns: [
@@ -64,10 +66,6 @@ const nextConfig = {
           {
             key: "X-Frame-Options",
             value: "SAMEORIGIN",
-          },
-          {
-            key: "X-XSS-Protection",
-            value: "1; mode=block",
           },
           {
             key: "Referrer-Policy",

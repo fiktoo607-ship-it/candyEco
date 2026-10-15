@@ -42,9 +42,9 @@ describe('Security & Validation Enhancements Test Suite', () => {
         expect(globalHeader).toBeDefined();
 
         const headerKeys = globalHeader.headers.map((h: any) => h.key);
+        expect(headerKeys).toContain('Content-Security-Policy');
         expect(headerKeys).toContain('X-Content-Type-Options');
         expect(headerKeys).toContain('X-Frame-Options');
-        expect(headerKeys).toContain('X-XSS-Protection');
         expect(headerKeys).toContain('Referrer-Policy');
         expect(headerKeys).toContain('Permissions-Policy');
         expect(headerKeys).toContain('Strict-Transport-Security');

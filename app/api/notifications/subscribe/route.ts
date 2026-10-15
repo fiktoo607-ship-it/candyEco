@@ -5,6 +5,53 @@ import { authOptions } from '@/lib/auth';
 import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
 import { handleServerError } from '@/lib/api-error-handler';
 
+export function isValidPushEndpoint(endpoint: unknown): boolean {
+  if (typeof endpoint !== 'string' || !endpoint.trim()) {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(endpoint.trim());
+    if (parsed.protocol !== 'https:') {
+      return false;
+    }
+
+    const hostname = parsed.hostname.toLowerCase();
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1' ||
+      hostname === '0.0.0.0'
+    ) {
+      return false;
+    }
+
+    if (hostname.startsWith('169.254.')) {
+      return false;
+    }
+
+    if (
+      hostname.startsWith('10.') ||
+      hostname.startsWith('192.168.') ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
+    ) {
+      return false;
+    }
+
+    if (
+      hostname.endsWith('.internal') ||
+      hostname.endsWith('.local') ||
+      hostname.endsWith('.localhost')
+    ) {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const clientIp = getClientIp(request);
@@ -24,9 +71,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { subscription, deviceToken } = body;
 
-    if (!subscription || !subscription.endpoint || !subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
+    if (
+      !subscription ||
+      !subscription.endpoint ||
+      !subscription.keys ||
+      typeof subscription.keys.p256dh !== 'string' ||
+      !subscription.keys.p256dh.trim() ||
+      typeof subscription.keys.auth !== 'string' ||
+      !subscription.keys.auth.trim()
+    ) {
       return NextResponse.json(
         { error: 'Missing required subscription fields' },
+        { status: 400 }
+      );
+    }
+
+    if (!isValidPushEndpoint(subscription.endpoint)) {
+      return NextResponse.json(
+        { error: 'Invalid push subscription endpoint URL' },
         { status: 400 }
       );
     }
@@ -94,6 +156,13 @@ export async function DELETE(request: NextRequest) {
     if (!endpoint) {
       return NextResponse.json(
         { error: 'Missing endpoint field' },
+        { status: 400 }
+      );
+    }
+
+    if (!isValidPushEndpoint(endpoint)) {
+      return NextResponse.json(
+        { error: 'Invalid endpoint format' },
         { status: 400 }
       );
     }
