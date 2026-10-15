@@ -203,67 +203,24 @@ describe('Prompt 9: Accessible Modals, Controllable Carousels, and Live Regions 
       },
     ];
 
-    it('HeroCarousel provides a visible Pause/Play toggle button with accessible aria-label and aria-pressed', () => {
+    it('HeroCarousel does not render pause/play button and keeps clean indicator dots', () => {
       const { container, unmount } = renderComponent(<HeroCarousel slides={mockSlides} />);
 
-      const pauseButton = container.querySelector('button[aria-label="Pause carousel"]') as HTMLButtonElement;
-      expect(pauseButton).not.toBeNull();
-      expect(pauseButton.getAttribute('aria-pressed')).toBe('false');
+      const pauseButton = container.querySelector('button[aria-label="Pause carousel"]');
+      const playButton = container.querySelector('button[aria-label="Play carousel"]');
+      expect(pauseButton).toBeNull();
+      expect(playButton).toBeNull();
 
-      // Click button to pause
-      act(() => {
-        pauseButton.click();
-      });
-
-      const playButton = container.querySelector('button[aria-label="Play carousel"]') as HTMLButtonElement;
-      expect(playButton).not.toBeNull();
-      expect(playButton.getAttribute('aria-pressed')).toBe('true');
+      const dots = container.querySelectorAll('button[aria-label^="Go to slide"]');
+      expect(dots.length).toBe(mockSlides.length);
 
       unmount();
     });
 
-    it('HeroCarousel disables automatic sliding when prefers-reduced-motion is active', () => {
-      // Mock matchMedia to report prefers-reduced-motion: reduce
-      const matchMediaMock = vi.fn().mockImplementation((query: string) => ({
-        matches: query.includes('prefers-reduced-motion: reduce'),
-        media: query,
-        onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      }));
-      window.matchMedia = matchMediaMock;
-
-      const { container, unmount } = renderComponent(<HeroCarousel slides={mockSlides} />);
-
-      // When reduced motion is preferred, carousel must not be auto-playing initially
-      const toggleBtn = container.querySelector('button[aria-label="Play carousel"]');
-      expect(toggleBtn).not.toBeNull();
-      expect(toggleBtn?.getAttribute('aria-pressed')).toBe('true');
-
-      unmount();
-    });
-
-    it('HeroCarousel auto-advances when normal motion is allowed', () => {
+    it('HeroCarousel auto-advances slides by default', () => {
       vi.useFakeTimers();
 
-      window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-        matches: false,
-        media: query,
-        onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      }));
-
       const { container, unmount } = renderComponent(<HeroCarousel slides={mockSlides} />);
-
-      const pauseBtn = container.querySelector('button[aria-label="Pause carousel"]');
-      expect(pauseBtn).not.toBeNull();
 
       // Fast-forward 6 seconds
       act(() => {
