@@ -136,6 +136,63 @@ describe('Product Lifecycle & Catalog Integrity (Issues #10, #22, #25)', () => {
       expect(body.error).toBeDefined();
       expect(body.error.toLowerCase()).toMatch(/coming soon|bient[oô]t|ne peut pas/i);
     });
+
+    it('rejects order creation with 400 when product is unpublished (isPublished = false)', async () => {
+      vi.spyOn(prisma.product, 'findMany').mockResolvedValueOnce([
+        {
+          id: 'prod-unpub-1',
+          title: 'Unpublished Mystery Cake',
+          price: '15.00',
+          state: 'exist',
+          isPublished: false,
+        } as any,
+      ]);
+
+      const payload = {
+        customerName: 'Samir Benali',
+        customerPhone: '+213555112233',
+        shippingAddress: '10 Rue Didouche, Alger',
+        items: [{ productId: 'prod-unpub-1', quantity: 1 }],
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const res = await createOrder(req);
+      expect(res.status).toBe(400);
+
+      const body = await res.json();
+      expect(body.error).toBeDefined();
+      expect(body.error.toLowerCase()).toMatch(/not available|non disponible|publi/i);
+    });
+
+    it('rejects order creation with 400 when product was deleted and does not exist in DB', async () => {
+      // Database returns empty array because product was deleted
+      vi.spyOn(prisma.product, 'findMany').mockResolvedValueOnce([]);
+
+      const payload = {
+        customerName: 'Samir Benali',
+        customerPhone: '+213555112233',
+        shippingAddress: '10 Rue Didouche, Alger',
+        items: [{ productId: 'prod-deleted-999', quantity: 1 }],
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const res = await createOrder(req);
+      expect(res.status).toBe(400);
+
+      const body = await res.json();
+      expect(body.error).toBeDefined();
+      expect(body.error.toLowerCase()).toMatch(/not.*found|introuvable/i);
+    });
   });
 
   describe('Issue #25: Retain Historical OrderItems on Product Deletion', () => {
