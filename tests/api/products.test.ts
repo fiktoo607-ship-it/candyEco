@@ -86,6 +86,7 @@ describe('Products API', () => {
     limitBay: 5,
     state: 'exist',
     visibility: 2,
+    isPublished: true,
     rating: 4.5,
     ratingCount: 2,
     tags: [] as string[],

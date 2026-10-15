@@ -68,6 +68,7 @@ export async function GET(request?: NextRequest) {
       if (searchParams.get('catalog') === 'true' || searchParams.get('public') === 'true') {
         hasWhere = true;
         where.state = 'exist';
+        where.isPublished = true;
       }
 
       if (hasWhere) {
@@ -128,8 +129,9 @@ export async function GET(request?: NextRequest) {
       : mappedProducts.filter((p: any) => {
           const hasValidVisibility = p.visibility !== undefined && p.visibility !== null ? p.visibility > 0 : true;
           const isNotDraft = p.state !== 'draft';
+          const isPublishedFlag = p.isPublished !== false;
           const isPublished = !p.publishedAt || new Date(p.publishedAt) <= new Date();
-          return hasValidVisibility && isNotDraft && isPublished;
+          return hasValidVisibility && isNotDraft && isPublishedFlag && isPublished;
         });
 
     let hasNextPage = false;

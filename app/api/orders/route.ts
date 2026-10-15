@@ -156,8 +156,13 @@ export async function POST(request: NextRequest) {
                 throw new OrderValidationError(`Product "${dbProduct.title}" is out of stock`);
               }
 
-              if (dbProduct.state === 'commingSoun' || dbProduct.state === 'comingSoon') {
+              const productState = String(dbProduct.state || '').toLowerCase();
+              if (productState === 'commingsoun' || productState === 'comingsoon' || productState === 'bientot') {
                 throw new OrderValidationError(`Product "${dbProduct.title}" is coming soon and cannot be ordered`);
+              }
+
+              if ((dbProduct as any).isPublished === false) {
+                throw new OrderValidationError(`Product "${dbProduct.title}" is not available for purchase`);
               }
 
               // Guard inventory and atomically deduct stock inside transaction (Issue #60)
