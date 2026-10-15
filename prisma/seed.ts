@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -283,9 +284,11 @@ async function main() {
   await prisma.product.deleteMany({});
   await prisma.user.deleteMany({});
 
-  // 1. Seed Users
-  const customerPassword = await bcrypt.hash('password123', 10);
-  const adminPassword = await bcrypt.hash('pass012', 10);
+  // 1. Seed Users (Secure credentials from env, eliminating hardcoded literals - Issue #114)
+  const customerRawPassword = process.env.CUSTOMER_INIT_PASSWORD || crypto.randomBytes(16).toString('hex');
+  const adminRawPassword = process.env.ADMIN_INIT_PASSWORD || crypto.randomBytes(16).toString('hex');
+  const customerPassword = await bcrypt.hash(customerRawPassword, 10);
+  const adminPassword = await bcrypt.hash(adminRawPassword, 10);
 
   const customerUser = await prisma.user.create({
     data: {
