@@ -123,81 +123,52 @@ describe('Accessibility Enhancements (Issues #24, #27, #33)', () => {
     });
   });
 
-  describe('Issue #27: Carousels Pause/Play Button & Reduced Motion', () => {
-    it('FeaturedProducts renders Pause/Play button and toggles state correctly', () => {
-      const { container, unmount } = renderComponent(<FeaturedProducts products={sampleProducts} />);
+  describe('Carousels Responsive Layout & Auto Swapping by Default', () => {
+    it('FeaturedProducts, NewProductsSection and PopularProductsSection do not render pause/play button', () => {
+      const { container: c1, unmount: u1 } = renderComponent(<FeaturedProducts products={sampleProducts} />);
+      expect(c1.querySelector('button[aria-label="Mettre en pause le carrousel"]')).toBeNull();
+      expect(c1.querySelector('button[aria-label="Lancer le carrousel"]')).toBeNull();
+      u1();
 
-      const pausePlayBtn = container.querySelector('button[aria-label="Mettre en pause le carrousel"]') as HTMLButtonElement;
-      expect(pausePlayBtn).not.toBeNull();
-      expect(pausePlayBtn.getAttribute('aria-pressed')).toBe('false');
+      const { container: c2, unmount: u2 } = renderComponent(<NewProductsSection products={sampleProducts} />);
+      expect(c2.querySelector('button[aria-label="Mettre en pause le carrousel"]')).toBeNull();
+      expect(c2.querySelector('button[aria-label="Lancer le carrousel"]')).toBeNull();
+      u2();
 
-      // Click to pause
-      act(() => {
-        pausePlayBtn.click();
-      });
-
-      expect(pausePlayBtn.getAttribute('aria-label')).toBe('Lancer le carrousel');
-      expect(pausePlayBtn.getAttribute('aria-pressed')).toBe('true');
-
-      unmount();
+      const { container: c3, unmount: u3 } = renderComponent(<PopularProductsSection products={sampleProducts} />);
+      expect(c3.querySelector('button[aria-label="Mettre en pause le carrousel"]')).toBeNull();
+      expect(c3.querySelector('button[aria-label="Lancer le carrousel"]')).toBeNull();
+      u3();
     });
 
-    it('NewProductsSection renders Pause/Play button and toggles state correctly', () => {
-      const { container, unmount } = renderComponent(<NewProductsSection products={sampleProducts} />);
-
-      const pausePlayBtn = container.querySelector('button[aria-label="Mettre en pause le carrousel"]') as HTMLButtonElement;
-      expect(pausePlayBtn).not.toBeNull();
-      expect(pausePlayBtn.getAttribute('aria-pressed')).toBe('false');
-
-      // Click to pause
-      act(() => {
-        pausePlayBtn.click();
-      });
-
-      expect(pausePlayBtn.getAttribute('aria-label')).toBe('Lancer le carrousel');
-      expect(pausePlayBtn.getAttribute('aria-pressed')).toBe('true');
-
-      unmount();
-    });
-
-    it('PopularProductsSection renders Pause/Play button and toggles state correctly', () => {
+    it('renders indicator dots for slides and navigates properly', () => {
       const { container, unmount } = renderComponent(<PopularProductsSection products={sampleProducts} />);
-
-      const pausePlayBtn = container.querySelector('button[aria-label="Mettre en pause le carrousel"]') as HTMLButtonElement;
-      expect(pausePlayBtn).not.toBeNull();
-      expect(pausePlayBtn.getAttribute('aria-pressed')).toBe('false');
-
-      // Click to pause
-      act(() => {
-        pausePlayBtn.click();
-      });
-
-      expect(pausePlayBtn.getAttribute('aria-label')).toBe('Lancer le carrousel');
-      expect(pausePlayBtn.getAttribute('aria-pressed')).toBe('true');
-
+      const indicatorBtns = container.querySelectorAll('button[aria-label^="Go to slide"]');
+      expect(indicatorBtns.length).toBe(sampleProducts.length);
       unmount();
     });
 
-    it('respects prefers-reduced-motion media query by defaulting to paused', () => {
-      const originalMatchMedia = window.matchMedia;
-      window.matchMedia = vi.fn().mockImplementation((query) => ({
-        matches: query === '(prefers-reduced-motion: reduce)',
-        media: query,
-        onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      }));
+    it('adapts items per view responsively based on window width', () => {
+      // Simulate phone screen (< 640px)
+      window.innerWidth = 375;
+      const { container: phoneContainer, unmount: phoneUnmount } = renderComponent(<PopularProductsSection products={sampleProducts} />);
+      const phoneSlideCard = phoneContainer.querySelector('.flex-shrink-0') as HTMLElement;
+      expect(phoneSlideCard?.style.width).toBe('100%');
+      phoneUnmount();
 
-      const { container, unmount } = renderComponent(<FeaturedProducts products={sampleProducts} />);
-      const btn = container.querySelector('button[aria-label="Lancer le carrousel"]');
-      expect(btn).not.toBeNull();
-      expect(btn?.getAttribute('aria-pressed')).toBe('true');
+      // Simulate tablet screen (640px - 1023px)
+      window.innerWidth = 768;
+      const { container: tabletContainer, unmount: tabletUnmount } = renderComponent(<PopularProductsSection products={sampleProducts} />);
+      const tabletSlideCard = tabletContainer.querySelector('.flex-shrink-0') as HTMLElement;
+      expect(tabletSlideCard?.style.width).toBe('50%');
+      tabletUnmount();
 
-      unmount();
-      window.matchMedia = originalMatchMedia;
+      // Simulate large screen (>= 1024px)
+      window.innerWidth = 1200;
+      const { container: desktopContainer, unmount: desktopUnmount } = renderComponent(<PopularProductsSection products={sampleProducts} />);
+      const desktopSlideCard = desktopContainer.querySelector('.flex-shrink-0') as HTMLElement;
+      expect(desktopSlideCard?.style.width).toBe(`${100 / 3}%`);
+      desktopUnmount();
     });
   });
 
