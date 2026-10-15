@@ -72,6 +72,37 @@ describe('Issues #54, #55, and #123: Contact Form & Delivery Labels', () => {
       expect(data.error).toBeDefined();
       expect(data.success).toBeUndefined();
     });
+
+    it('should reject invalid input payload with 400 when name, email or message is missing or invalid', async () => {
+      // 1. Missing name
+      const reqNoName = new NextRequest('http://localhost/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'valid@example.com', message: 'Hello' }),
+      });
+      const resNoName = await submitContact(reqNoName);
+      expect(resNoName.status).toBe(400);
+
+      // 2. Invalid email format
+      const reqBadEmail = new NextRequest('http://localhost/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Samir', email: 'not-an-email', message: 'Hello' }),
+      });
+      const resBadEmail = await submitContact(reqBadEmail);
+      expect(resBadEmail.status).toBe(400);
+
+      // 3. Missing message
+      const reqNoMsg = new NextRequest('http://localhost/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Samir', email: 'samir@example.com', message: '' }),
+      });
+      const resNoMsg = await submitContact(reqNoMsg);
+      expect(resNoMsg.status).toBe(400);
+
+      expect(mockSendMail).not.toHaveBeenCalled();
+    });
   });
 
   describe('Issue #123: Delivery option labels clean of "test test test"', () => {
