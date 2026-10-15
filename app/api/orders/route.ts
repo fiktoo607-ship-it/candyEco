@@ -13,6 +13,7 @@ export { generateAtomicOrderReference };
 
 import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
 import { withIdempotency } from '@/lib/idempotency';
+import { parsePrice } from '@/lib/utils';
 
 export class OrderValidationError extends Error {
   statusCode: number;
@@ -184,7 +185,7 @@ export async function POST(request: NextRequest) {
                 }
               }
 
-              const numericPrice = parseFloat(dbProduct.price.replace(/[^0-9.]/g, ''));
+              const numericPrice = parsePrice(dbProduct.price);
               if (isNaN(numericPrice) || numericPrice < 0) {
                 throw new Error('Prix de produit invalide dans la base de données');
               }
