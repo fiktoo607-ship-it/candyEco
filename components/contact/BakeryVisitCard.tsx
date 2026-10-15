@@ -20,7 +20,7 @@ export default async function BakeryVisitCard() {
   const hoursParts = hours.split(' | ');
 
   return (
-    <div className="space-y-lg lg:col-span-5">
+    <div className="space-y-lg">
       <div className="rounded-2xl border border-surface-container bg-surface-container-lowest p-6 md:p-lg shadow-soft">
         <h2 className="font-display text-3xl font-bold text-on-surface">
           {visit.title || "Notre Boutique"}
