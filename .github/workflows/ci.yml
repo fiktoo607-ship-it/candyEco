@@ -10,6 +10,21 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: candy_eco
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,6 +41,11 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
+      - name: Deploy Prisma database migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: "postgresql://postgres:postgrespassword@localhost:5432/candy_eco?schema=public"
+
       - name: Lint check
         run: npm run lint
 
@@ -39,6 +59,6 @@ jobs:
         run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: 1
-          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          DATABASE_URL: "postgresql://postgres:postgrespassword@localhost:5432/candy_eco?schema=public"
           NEXTAUTH_SECRET: "dummy_secret_for_ci_build_minimum_32_characters"
           NEXTAUTH_URL: "http://localhost:3000"
