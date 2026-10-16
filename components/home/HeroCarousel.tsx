@@ -70,11 +70,30 @@ interface HeroCarouselProps {
 
 export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (mediaQuery.matches) {
+        setIsPlaying(false);
+      }
+      const handleMotionChange = (e: MediaQueryListEvent) => {
+        if (e.matches) {
+          setIsPlaying(false);
+        }
+      };
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', handleMotionChange);
+        return () => mediaQuery.removeEventListener('change', handleMotionChange);
+      } else if (mediaQuery.addListener) {
+        mediaQuery.addListener(handleMotionChange);
+        return () => mediaQuery.removeListener(handleMotionChange);
+      }
+    }
   }, []);
 
   // Touch Swipe gesture states
@@ -92,13 +111,13 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
         ? (safeUrl
             ? {
                 href: safeUrl,
-                label: "Savoir plus",
+                label: "En savoir plus",
                 isComingSoon: false,
               }
             : undefined)
         : {
             href: safeUrl || "#",
-            label: safeUrl ? "Savoir plus" : "Coming Soon",
+            label: safeUrl ? "En savoir plus" : "Bientôt disponible",
             isComingSoon: !safeUrl,
           },
     };
@@ -106,7 +125,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
 
   const startTimer = () => {
     stopTimer();
-    if (displaySlides.length <= 1) return;
+    if (displaySlides.length <= 1 || !isPlaying) return;
     timerRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
     }, 6000); // cycles slides every 6 seconds
@@ -120,28 +139,36 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
   };
 
   useEffect(() => {
-    startTimer();
+    if (isPlaying) {
+      startTimer();
+    } else {
+      stopTimer();
+    }
     return () => stopTimer();
-  }, [displaySlides.length]);
+  }, [isPlaying, displaySlides.length]);
+
+  const togglePlayPause = () => {
+    setIsPlaying((prev) => !prev);
+  };
 
   const handleNext = () => {
     if (displaySlides.length === 0) return;
     stopTimer();
     setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
-    startTimer();
+    if (isPlaying) startTimer();
   };
 
   const handlePrev = () => {
     if (displaySlides.length === 0) return;
     stopTimer();
     setCurrentSlide((prev) => (prev - 1 + displaySlides.length) % displaySlides.length);
-    startTimer();
+    if (isPlaying) startTimer();
   };
 
   const handleDotClick = (index: number) => {
     stopTimer();
     setCurrentSlide(index);
-    startTimer();
+    if (isPlaying) startTimer();
   };
 
   // Touch handlers for swiping
@@ -186,7 +213,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
               key={index}
               aria-hidden={!isActive ? true : undefined}
               inert={!isActive ? true : undefined}
-              className={`absolute inset-0 h-full w-full transition-all duration-1000 ease-in-out ${
+              className={`absolute inset-0 h-full w-full transition-all duration-1000 ease-in-out motion-reduce:transition-none motion-reduce:transform-none ${
                 isActive
                   ? "opacity-100 scale-100 z-10"
                   : "opacity-0 scale-105 z-0 pointer-events-none"
@@ -196,7 +223,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
               <img
                 src={slide.imageUrl}
                 alt={slide.title}
-                className={`absolute inset-0 h-full w-full object-cover object-center transition-transform duration-[6000ms] ease-out ${
+                className={`absolute inset-0 h-full w-full object-cover object-center transition-transform duration-[6000ms] ease-out motion-reduce:transition-none motion-reduce:transform-none ${
                   isActive ? "scale-100" : "scale-110"
                 }`}
               />
@@ -265,8 +292,8 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
       {displaySlides.length > 1 && (
         <button
           onClick={handlePrev}
-          className="absolute left-6 top-1/2 -translate-y-1/2 z-30 hidden md:flex h-12 w-12 items-center justify-center text-white opacity-60 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          aria-label="Previous Slide"
+          className="absolute left-6 top-1/2 -translate-y-1/2 z-30 hidden md:flex h-12 w-12 items-center justify-center text-white opacity-60 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none"
+          aria-label="Diapositive précédente"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -289,8 +316,8 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
       {displaySlides.length > 1 && (
         <button
           onClick={handleNext}
-          className="absolute right-6 top-1/2 -translate-y-1/2 z-30 hidden md:flex h-12 w-12 items-center justify-center text-white opacity-60 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          aria-label="Next Slide"
+          className="absolute right-6 top-1/2 -translate-y-1/2 z-30 hidden md:flex h-12 w-12 items-center justify-center text-white opacity-60 hover:opacity-100 hover:scale-110 active:scale-95 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none"
+          aria-label="Diapositive suivante"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -309,21 +336,43 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
         </button>
       )}
 
-      {/* Slide Indicator Dots centered at the bottom */}
+      {/* Slide Controls & Indicator Dots centered at the bottom */}
       {displaySlides.length > 1 && (
         <div suppressHydrationWarning className="absolute bottom-md left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 bg-neutral-900/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 shadow-lg">
+          {/* Pause / Play Toggle Button */}
+          <button
+            type="button"
+            onClick={togglePlayPause}
+            className="flex h-6 w-6 items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none"
+            aria-label={
+              isPlaying
+                ? "Mettre en pause le défilement automatique"
+                : "Activer le défilement automatique"
+            }
+          >
+            {isPlaying ? (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+                <path fillRule="evenodd" d="M6.75 5.25a.75.75 0 0 1 .75.75v12a.75.75 0 0 1-1.5 0v-12a.75.75 0 0 1 .75-.75Zm9 0a.75.75 0 0 1 .75.75v12a.75.75 0 0 1-1.5 0v-12a.75.75 0 0 1 .75-.75Z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+                <path fillRule="evenodd" d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clipRule="evenodd" />
+              </svg>
+            )}
+          </button>
+
           {displaySlides.map((_, index) => {
             const isActive = index === currentSlide;
             return (
               <button
                 key={index}
                 onClick={() => handleDotClick(index)}
-                className={`h-3 transition-all duration-300 ease-out rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                className={`h-3 transition-all duration-300 ease-out rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none ${
                   isActive
                     ? "w-12 bg-[#2a1082] shadow-md shadow-[#2a1082]/50"
-                    : "w-3 bg-white/40 hover:bg-white/70 hover:scale-110"
+                    : "w-3 bg-white/40 hover:bg-white/70 hover:scale-110 motion-reduce:hover:scale-100"
                 }`}
-                aria-label={`Go to slide ${index + 1}`}
+                aria-label={`Aller à la diapositive ${index + 1}`}
                 aria-current={isActive ? "true" : undefined}
               />
             );

@@ -211,7 +211,7 @@ describe('Prompt 9: Accessible Modals, Controllable Carousels, and Live Regions 
       expect(pauseButton).toBeNull();
       expect(playButton).toBeNull();
 
-      const dots = container.querySelectorAll('button[aria-label^="Go to slide"]');
+      const dots = container.querySelectorAll('button[aria-label^="Aller à la diapositive"], button[aria-label^="Go to slide"]');
       expect(dots.length).toBe(mockSlides.length);
 
       unmount();
@@ -228,7 +228,7 @@ describe('Prompt 9: Accessible Modals, Controllable Carousels, and Live Regions 
       });
 
       // After 6s, slide 1 should become active
-      const dots = container.querySelectorAll('button[aria-label^="Go to slide"]');
+      const dots = container.querySelectorAll('button[aria-label^="Aller à la diapositive"], button[aria-label^="Go to slide"]');
       expect(dots[1].getAttribute('aria-current')).toBe('true');
 
       unmount();
