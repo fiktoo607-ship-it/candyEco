@@ -194,7 +194,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
           aria-live="assertive"
           className="mb-sm rounded-xl bg-error-container/40 border border-error/20 p-sm text-sm font-medium text-error flex items-start gap-xs animate-fade-in"
         >
-          <span className="material-symbols-outlined text-base select-none shrink-0 mt-[2px]">error</span>
+          <span className="material-symbols-outlined text-base select-none shrink-0 mt-[2px]" aria-hidden="true">error</span>
           <span>{formError}</span>
         </div>
       )}
@@ -350,7 +350,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
 
         {!storeEnabled && (
           <div className="rounded-xl bg-amber-50 border border-amber-200 p-sm text-amber-800 text-sm flex items-start gap-xs mt-md">
-            <span className="material-symbols-outlined text-base flex-shrink-0 mt-[2px] notranslate" translate="no">warning</span>
+            <span className="material-symbols-outlined text-base flex-shrink-0 mt-[2px] notranslate" translate="no" aria-hidden="true">warning</span>
             <div>
               <p className="font-bold">Boutique temporairement fermée</p>
               <p className="text-xs mt-[2px]">{storeMessage}</p>
@@ -360,7 +360,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
 
         {isOffline && (
           <div className="rounded-xl bg-amber-50 border border-amber-200 p-sm text-amber-800 text-sm flex items-start gap-xs mt-md">
-            <span className="material-symbols-outlined text-base flex-shrink-0 mt-[2px] notranslate" translate="no">wifi_off</span>
+            <span className="material-symbols-outlined text-base flex-shrink-0 mt-[2px] notranslate" translate="no" aria-hidden="true">wifi_off</span>
             <div>
               <p className="font-bold">Vous êtes hors ligne</p>
               <p className="text-xs mt-[2px]">La validation de commande est désactivée sans connexion Internet.</p>
@@ -374,7 +374,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
           className="w-full rounded-xl bg-primary py-md mt-md text-base font-bold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-xs"
         >
           {submitOrderMutation.isPending && (
-            <span className="material-symbols-outlined text-base animate-spin">sync</span>
+            <span className="material-symbols-outlined text-base animate-spin" aria-hidden="true">sync</span>
           )}
           {!storeEnabled ? "Commandes désactivées" : isOffline ? "Hors ligne" : dictionary.cart.form.submitButton}
         </button>

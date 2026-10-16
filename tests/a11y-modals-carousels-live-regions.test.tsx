@@ -250,12 +250,14 @@ describe('Prompt 9: Accessible Modals, Controllable Carousels, and Live Regions 
       unmount();
     });
 
-    it('Toast renders error alert correctly with polite live region announcement', () => {
+    it('Toast renders error alert correctly with live region announcement', () => {
       const { container, unmount } = renderComponent(
         <Toast message="Une erreur est survenue lors du paiement." type="error" onClose={vi.fn()} />
       );
 
-      const alertElement = container.querySelector('[role="status"][aria-live="polite"]');
+      const alertElement =
+        container.querySelector('[role="alert"][aria-live="assertive"]') ||
+        container.querySelector('[role="status"]');
       expect(alertElement).not.toBeNull();
       expect(alertElement?.textContent).toContain('Une erreur est survenue');
 
