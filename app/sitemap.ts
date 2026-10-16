@@ -1,14 +1,11 @@
 import type { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma';
+import { getBaseUrl } from '@/lib/site-url';
 
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXTAUTH_URL ||
-    'https://candyeco-production.up.railway.app'
-  ).replace(/\/$/, '');
+  const baseUrl = getBaseUrl();
 
   // Stable baseline date for core content pages instead of volatile current moment
   const staticLastModified = new Date('2026-03-01T00:00:00.000Z');

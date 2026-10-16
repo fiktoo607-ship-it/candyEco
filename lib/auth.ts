@@ -5,7 +5,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { checkRateLimit } from "@/lib/rate-limiter";
-import { logAuthData } from "@/logs/featurs";
+import { logAuthData } from "@/lib/audit-logger";
 import { acquireAdminLock, recordLoginHistory } from "@/lib/admin-session";
 import { MAX_PASSWORD_LENGTH } from "@/lib/validations/auth";
 
