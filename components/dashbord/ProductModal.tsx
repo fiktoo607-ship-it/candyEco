@@ -68,7 +68,7 @@ export default function ProductModal() {
       >
         <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low flex-shrink-0">
           <h2 id="product-modal-title" className="font-display text-xl font-bold text-on-surface flex items-center gap-xs">
-            <span className="material-symbols-outlined text-primary text-xl">
+            <span className="material-symbols-outlined text-primary text-xl" aria-hidden="true">
               {modalMode === "create" ? "add_box" : "edit_square"}
             </span>
             {modalMode === "create" ? "Ajouter un produit" : "Modifier le produit"}
@@ -155,9 +155,9 @@ export default function ProductModal() {
               className="rounded-xl bg-primary px-md py-sm text-sm font-bold text-white hover:bg-surface-tint transition-all disabled:opacity-60 flex items-center gap-xs shadow-soft"
             >
               {(isSubmitting || isUploading) ? (
-                <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+                <span className="material-symbols-outlined text-sm animate-spin" aria-hidden="true">sync</span>
               ) : (
-                <span className="material-symbols-outlined text-sm">save</span>
+                <span className="material-symbols-outlined text-sm" aria-hidden="true">save</span>
               )}
               {modalMode === "create" ? "Créer" : "Enregistrer les modifications"}
             </button>

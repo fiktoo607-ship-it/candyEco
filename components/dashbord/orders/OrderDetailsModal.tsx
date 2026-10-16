@@ -46,7 +46,7 @@ export function OrderDetailsModal({
         <div className="flex items-center justify-between border-b border-outline-variant/30 p-md bg-surface-container-low flex-shrink-0">
           <div>
             <h3 id="order-details-modal-title" className="text-lg font-bold text-on-surface flex items-center gap-xs">
-              <span className="material-symbols-outlined text-primary text-xl">description</span>
+              <span className="material-symbols-outlined text-primary text-xl" aria-hidden="true">description</span>
               Détails de la Commande
             </h3>
             <p className="text-xs font-mono text-on-surface-variant mt-[2px] bg-surface-container-high px-sm py-[2px] rounded-lg inline-block">
@@ -58,7 +58,7 @@ export function OrderDetailsModal({
             className="rounded-full p-xs text-on-surface-variant hover:bg-surface-container-high transition-colors"
             aria-label="Fermer la boîte de dialogue"
           >
-            <span className="material-symbols-outlined">close</span>
+            <span className="material-symbols-outlined" aria-hidden="true">close</span>
           </button>
         </div>
 
@@ -67,33 +67,33 @@ export function OrderDetailsModal({
           {/* Customer Details Section */}
           <div className="space-y-sm">
             <h4 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-xs">
-              <span className="material-symbols-outlined text-base">contact_page</span>
+              <span className="material-symbols-outlined text-base" aria-hidden="true">contact_page</span>
               Informations Client
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-md bg-surface-container-low/40 p-md rounded-2xl border border-outline-variant/20">
               <div className="flex items-start gap-xs">
-                <span className="material-symbols-outlined text-primary text-xl mt-[2px]">person</span>
+                <span className="material-symbols-outlined text-primary text-xl mt-[2px]" aria-hidden="true">person</span>
                 <div>
                   <span className="text-[10px] text-on-surface-variant font-bold block uppercase tracking-wider">Nom</span>
                   <span className="text-sm font-semibold text-on-surface block">{order.customerName}</span>
                 </div>
               </div>
               <div className="flex items-start gap-xs">
-                <span className="material-symbols-outlined text-primary text-xl mt-[2px]">call</span>
+                <span className="material-symbols-outlined text-primary text-xl mt-[2px]" aria-hidden="true">call</span>
                 <div>
                   <span className="text-[10px] text-on-surface-variant font-bold block uppercase tracking-wider">Téléphone</span>
                   <span className="text-sm font-semibold text-on-surface block">{order.customerPhone || '—'}</span>
                 </div>
               </div>
               <div className="flex items-start gap-xs">
-                <span className="material-symbols-outlined text-primary text-xl mt-[2px]">mail</span>
+                <span className="material-symbols-outlined text-primary text-xl mt-[2px]" aria-hidden="true">mail</span>
                 <div>
                   <span className="text-[10px] text-on-surface-variant font-bold block uppercase tracking-wider">Email</span>
                   <span className="text-sm font-semibold text-on-surface block truncate max-w-[220px]">{order.customerEmail || '—'}</span>
                 </div>
               </div>
               <div className="flex items-start gap-xs">
-                <span className="material-symbols-outlined text-primary text-xl mt-[2px]">local_shipping</span>
+                <span className="material-symbols-outlined text-primary text-xl mt-[2px]" aria-hidden="true">local_shipping</span>
                 <div>
                   <span className="text-[10px] text-on-surface-variant font-bold block uppercase tracking-wider">Mode de livraison</span>
                   <span className="text-sm font-semibold text-primary block">{(order as any).deliveryMethod || '—'}</span>
@@ -101,7 +101,7 @@ export function OrderDetailsModal({
               </div>
               {order.shippingAddress && (
                 <div className="flex items-start gap-xs sm:col-span-2 border-t border-outline-variant/10 pt-sm">
-                  <span className="material-symbols-outlined text-primary text-xl mt-[2px]">location_on</span>
+                  <span className="material-symbols-outlined text-primary text-xl mt-[2px]" aria-hidden="true">location_on</span>
                   <div>
                     <span className="text-[10px] text-on-surface-variant font-bold block uppercase tracking-wider">Adresse de livraison</span>
                     <span className="text-sm font-medium text-on-surface block">{order.shippingAddress}</span>
@@ -110,7 +110,7 @@ export function OrderDetailsModal({
               )}
               {(order as any).customerTrustScore !== undefined && (
                 <div className="flex items-start gap-xs border-t border-outline-variant/10 pt-sm sm:col-span-2">
-                  <span className="material-symbols-outlined text-primary text-xl mt-[2px]">verified_user</span>
+                  <span className="material-symbols-outlined text-primary text-xl mt-[2px]" aria-hidden="true">verified_user</span>
                   <div>
                     <span className="text-[10px] text-on-surface-variant font-bold block uppercase tracking-wider">Points de Confiance</span>
                     <span className="inline-flex items-center gap-xs rounded-full bg-emerald-500/10 px-sm py-[2px] text-xs font-bold text-emerald-600 mt-[2px]">
@@ -125,7 +125,7 @@ export function OrderDetailsModal({
           {/* Order Info & Items Section */}
           <div className="space-y-sm">
             <h4 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-xs">
-              <span className="material-symbols-outlined text-base">shopping_basket</span>
+              <span className="material-symbols-outlined text-base" aria-hidden="true">shopping_basket</span>
               Articles Commandés
             </h4>
             <div className="border border-outline-variant/20 rounded-2xl overflow-hidden bg-surface-container-low/20">
@@ -190,7 +190,7 @@ export function OrderDetailsModal({
               disabled={updateStatusMutation.isPending}
               className="rounded-xl bg-emerald-600 px-md py-sm text-sm font-semibold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center gap-xs shadow-soft"
             >
-              <span className="material-symbols-outlined text-sm">thumb_up</span>
+              <span className="material-symbols-outlined text-sm" aria-hidden="true">thumb_up</span>
               Accepter la commande
             </button>
           )}
@@ -207,7 +207,7 @@ export function OrderDetailsModal({
               disabled={updateStatusMutation.isPending}
               className="rounded-xl bg-blue-600 px-md py-sm text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-xs shadow-soft"
             >
-              <span className="material-symbols-outlined text-sm">local_shipping</span>
+              <span className="material-symbols-outlined text-sm" aria-hidden="true">local_shipping</span>
               Marquer comme livrée
             </button>
           )}

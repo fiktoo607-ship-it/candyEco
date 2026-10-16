@@ -40,7 +40,7 @@ export default function Toast({
         className={`flex items-center gap-3 rounded-2xl border px-4 py-3.5 shadow-xl backdrop-blur-md transition-all ${bgStyles}`}
       >
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/20">
-          <span className="material-symbols-outlined text-xl select-none text-white">
+          <span className="material-symbols-outlined text-xl select-none text-white" aria-hidden="true">
             {type === "success" ? "check_circle" : type === "info" ? "info" : "error"}
           </span>
         </div>

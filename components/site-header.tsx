@@ -82,7 +82,7 @@ export default function SiteHeader() {
     <>
       {mounted && !storeEnabled && storeMessage && (
         <div className="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white px-gutter py-2 text-center font-semibold text-sm shadow-md flex items-center justify-center gap-xs relative z-50 animate-fade-in select-none">
-          <span className="material-symbols-outlined text-base animate-pulse">error</span>
+          <span className="material-symbols-outlined text-base animate-pulse" aria-hidden="true">error</span>
           <span>{storeMessage}</span>
         </div>
       )}
@@ -148,7 +148,7 @@ export default function SiteHeader() {
                   href="/orders"
                   className="rounded-full bg-surface-container px-md py-sm text-sm font-semibold text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors ml-sm flex items-center gap-xs"
                 >
-                  <span className="material-symbols-outlined text-base select-none">package_2</span>
+                  <span className="material-symbols-outlined text-base select-none" aria-hidden="true">package_2</span>
                   Mes commandes
                 </Link>
               )}
@@ -162,7 +162,7 @@ export default function SiteHeader() {
                     className="h-8 w-8 rounded-full object-cover border border-outline"
                   />
                 ) : (
-                  <span className="material-symbols-outlined text-2xl text-on-surface-variant select-none">
+                  <span className="material-symbols-outlined text-2xl text-on-surface-variant select-none" aria-hidden="true">
                     account_circle
                   </span>
                 )}
@@ -249,7 +249,7 @@ export default function SiteHeader() {
                     href="/orders"
                     className="rounded-xl px-md py-sm text-base font-semibold text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-colors flex items-center gap-xs"
                   >
-                    <span className="material-symbols-outlined text-base select-none">package_2</span>
+                    <span className="material-symbols-outlined text-base select-none" aria-hidden="true">package_2</span>
                     Mes commandes
                   </Link>
                 )}
@@ -264,7 +264,7 @@ export default function SiteHeader() {
                         className="h-8 w-8 rounded-full object-cover border border-outline"
                       />
                     ) : (
-                      <span className="material-symbols-outlined text-2xl text-on-surface-variant select-none">
+                      <span className="material-symbols-outlined text-2xl text-on-surface-variant select-none" aria-hidden="true">
                         account_circle
                       </span>
                     )}

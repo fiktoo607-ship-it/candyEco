@@ -1,6 +1,7 @@
 import React from 'react';
 import { Faq } from '../hooks/useQnaSection';
 import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
+import { useFocusTrap } from '@/lib/hooks/use-focus-trap';
 
 // ============================================================================
 // 1. QnaFilters
@@ -21,7 +22,7 @@ export function QnaFilters({
     <div className="flex flex-col gap-sm sm:flex-row sm:items-center sm:justify-between bg-surface-container-lowest/50 p-md rounded-2xl border border-outline-variant/10 shadow-soft">
       {/* Search Input */}
       <label className="relative w-full sm:w-80">
-        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
+        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none" aria-hidden="true">
           search
         </span>
         <input
@@ -38,7 +39,7 @@ export function QnaFilters({
         onClick={onOpenCreate}
         className="inline-flex items-center gap-xs rounded-xl bg-primary px-md py-sm text-sm font-semibold text-white shadow-soft transition-transform active:scale-95 hover:bg-surface-tint flex-shrink-0 justify-center h-[46px]"
       >
-        <span className="material-symbols-outlined text-sm">add</span>
+        <span className="material-symbols-outlined text-sm" aria-hidden="true">add</span>
         Ajouter une FAQ
       </button>
     </div>
@@ -76,7 +77,7 @@ export function QnaTable({
   if (filteredFaqs.length === 0) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-sm text-on-surface-variant rounded-2xl bg-surface-container-lowest shadow-soft border border-outline-variant/10">
-        <span className="material-symbols-outlined text-4xl text-on-surface-variant/60 animate-pulse">question_answer</span>
+        <span className="material-symbols-outlined text-4xl text-on-surface-variant/60 animate-pulse" aria-hidden="true">question_answer</span>
         <p className="text-lg font-semibold">Aucune FAQ trouvée</p>
         <p className="text-sm">Ajouter une question fréquente ou modifier les filtres.</p>
       </div>
@@ -92,7 +93,7 @@ export function QnaTable({
             <div className="space-y-sm">
               <div className="flex items-start justify-between gap-sm border-b border-outline-variant/10 pb-sm">
                 <h3 className="font-bold text-on-surface text-base leading-normal flex items-start gap-xs">
-                  <span className="material-symbols-outlined text-primary text-xl mt-[2px] select-none flex-shrink-0">help_outline</span>
+                  <span className="material-symbols-outlined text-primary text-xl mt-[2px] select-none flex-shrink-0" aria-hidden="true">help_outline</span>
                   {faq.question}
                 </h3>
               </div>
@@ -104,7 +105,7 @@ export function QnaTable({
             <div className="space-y-sm pt-sm border-t border-outline-variant/10 mt-auto pl-7">
               <div className="flex justify-between items-center text-xs text-on-surface-variant/80">
                 <span className="flex items-center gap-[2px]">
-                  <span className="material-symbols-outlined text-xs">calendar_today</span>
+                  <span className="material-symbols-outlined text-xs" aria-hidden="true">calendar_today</span>
                   {new Date(faq.createdAt).toLocaleDateString('fr-FR', {
                     day: 'numeric',
                     month: 'short',
@@ -116,16 +117,18 @@ export function QnaTable({
               <div className="flex items-center justify-end gap-xs">
                 <button
                   onClick={() => onOpenEdit(faq)}
+                  aria-label={`Modifier la FAQ: ${faq.question}`}
                   className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-bold text-primary hover:bg-surface-container-high transition-colors flex items-center gap-xs"
                 >
-                  <span className="material-symbols-outlined text-sm">edit</span>
+                  <span className="material-symbols-outlined text-sm" aria-hidden="true">edit</span>
                   Modifier
                 </button>
                 <button
                   onClick={() => onDelete(faq.id)}
+                  aria-label={`Supprimer la FAQ: ${faq.question}`}
                   className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-sm py-xs text-xs font-bold text-error hover:bg-rose-500/10 transition-colors flex items-center gap-xs"
                 >
-                  <span className="material-symbols-outlined text-sm">delete</span>
+                  <span className="material-symbols-outlined text-sm" aria-hidden="true">delete</span>
                   Supprimer
                 </button>
               </div>
@@ -150,7 +153,7 @@ export function QnaTable({
               <tr key={faq.id} className="group transition-colors hover:bg-surface/50">
                 <td className="p-md font-semibold text-base leading-normal">
                   <div className="flex items-start gap-xs">
-                    <span className="material-symbols-outlined text-primary text-xl mt-[2px] select-none flex-shrink-0">help_outline</span>
+                    <span className="material-symbols-outlined text-primary text-xl mt-[2px] select-none flex-shrink-0" aria-hidden="true">help_outline</span>
                     <span>{faq.question}</span>
                   </div>
                 </td>
@@ -168,17 +171,19 @@ export function QnaTable({
                   <div className="flex justify-end gap-xs">
                     <button
                       onClick={() => onOpenEdit(faq)}
+                      aria-label="Modifier la FAQ"
                       className="inline-flex items-center justify-center h-8 w-8 rounded-xl border border-outline-variant/20 text-primary hover:bg-surface-container-low active:scale-95 transition-all"
                       title="Modifier la FAQ"
                     >
-                      <span className="material-symbols-outlined text-lg select-none">edit</span>
+                      <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">edit</span>
                     </button>
                     <button
                       onClick={() => onDelete(faq.id)}
+                      aria-label="Supprimer la FAQ"
                       className="inline-flex items-center justify-center h-8 w-8 rounded-xl border border-rose-500/20 text-error hover:bg-rose-500/5 active:scale-95 transition-all"
                       title="Supprimer la FAQ"
                     >
-                      <span className="material-symbols-outlined text-lg select-none">delete</span>
+                      <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">delete</span>
                     </button>
                   </div>
                 </td>
@@ -217,24 +222,35 @@ export function QnaModal({
   onSave,
 }: QnaModalProps) {
   useLockBodyScroll(isOpen);
+  const modalRef = useFocusTrap<HTMLDivElement>({
+    isOpen,
+    onClose,
+  });
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-sm md:p-md bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl bg-surface-container-lowest flex flex-col max-h-[90vh] overflow-hidden shadow-soft border border-outline-variant/10 animate-in fade-in zoom-in-95 duration-200 text-left">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="qna-modal-title"
+        className="w-full max-w-lg rounded-2xl bg-surface-container-lowest flex flex-col max-h-[90vh] overflow-hidden shadow-soft border border-outline-variant/10 animate-in fade-in zoom-in-95 duration-200 text-left"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-outline-variant/30 p-md bg-surface-container-low flex-shrink-0">
-          <h3 className="text-lg font-bold text-on-surface flex items-center gap-xs">
-            <span className="material-symbols-outlined text-primary text-xl">help_outline</span>
+          <h3 id="qna-modal-title" className="text-lg font-bold text-on-surface flex items-center gap-xs">
+            <span className="material-symbols-outlined text-primary text-xl" aria-hidden="true">help_outline</span>
             {modalMode === 'create' ? 'Ajouter une FAQ' : 'Modifier la FAQ'}
           </h3>
           <button
+            type="button"
             onClick={onClose}
             className="rounded-full p-xs text-on-surface-variant hover:bg-surface-container-high transition-colors"
-            aria-label="Fermer"
+            aria-label="Fermer la boîte de dialogue"
           >
-            <span className="material-symbols-outlined">close</span>
+            <span className="material-symbols-outlined" aria-hidden="true">close</span>
           </button>
         </div>
 
@@ -276,7 +292,7 @@ export function QnaModal({
               type="submit"
               className="rounded-xl bg-primary px-md py-sm text-sm font-bold text-white shadow-soft hover:bg-surface-tint transition-colors flex items-center gap-xs"
             >
-              <span className="material-symbols-outlined text-sm">save</span>
+              <span className="material-symbols-outlined text-sm" aria-hidden="true">save</span>
               Enregistrer
             </button>
           </div>

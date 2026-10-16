@@ -8,6 +8,7 @@ import {
   LieuPriceModal,
 } from './helpers/DeliverySectionHelpers';
 import DashboardDeleteModal from './helpers/DashboardDeleteModal';
+import { useFocusTrap } from '@/lib/hooks/use-focus-trap';
 
 export default function DeliverySection() {
   const {
@@ -51,6 +52,10 @@ export default function DeliverySection() {
   } = useDeliverySection();
 
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const deliveryModalRef = useFocusTrap<HTMLDivElement>({
+    isOpen: isModalOpen,
+    onClose: resetForm,
+  });
 
   if (loading) {
     return (
@@ -66,7 +71,7 @@ export default function DeliverySection() {
   if (error) {
     return (
       <div className="rounded-xl bg-error-container/20 border border-error/20 p-md text-center text-error">
-        <span className="material-symbols-outlined text-3xl mb-xs block select-none">warning</span>
+        <span className="material-symbols-outlined text-3xl mb-xs block select-none" aria-hidden="true">warning</span>
         <p className="font-semibold">{error}</p>
       </div>
     );
@@ -105,10 +110,16 @@ export default function DeliverySection() {
       {/* Create/Update Popup Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-sm md:p-md bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up flex flex-col max-h-[90vh]">
+          <div
+            ref={deliveryModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delivery-modal-title"
+            className="w-full max-w-lg overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up flex flex-col max-h-[90vh]"
+          >
             <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low flex-shrink-0">
-              <h2 className="font-display text-xl font-bold text-on-surface flex items-center gap-xs">
-                <span className="material-symbols-outlined text-primary text-xl">
+              <h2 id="delivery-modal-title" className="font-display text-xl font-bold text-on-surface flex items-center gap-xs">
+                <span className="material-symbols-outlined text-primary text-xl" aria-hidden="true">
                   {isEditing ? 'edit_note' : 'add_circle'}
                 </span>
                 {isEditing ? 'Modifier la méthode' : 'Créer une méthode de livraison'}
@@ -116,9 +127,10 @@ export default function DeliverySection() {
               <button
                 type="button"
                 onClick={resetForm}
+                aria-label="Fermer la boîte de dialogue"
                 className="rounded-full p-xs text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
               >
-                <span className="material-symbols-outlined">close</span>
+                <span className="material-symbols-outlined" aria-hidden="true">close</span>
               </button>
             </header>
 

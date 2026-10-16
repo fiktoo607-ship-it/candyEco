@@ -134,7 +134,7 @@ export function FidelityConfigModal({
         {/* Header */}
         <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low flex-shrink-0">
           <div className="flex items-center gap-xs">
-            <span className="material-symbols-outlined text-amber-500 text-xl select-none">stars</span>
+            <span className="material-symbols-outlined text-amber-500 text-xl select-none" aria-hidden="true">stars</span>
             <h2 id="fidelity-modal-title" className="font-display text-lg font-bold text-on-surface">Mise à jour de la fidélité</h2>
           </div>
           <button
@@ -143,7 +143,7 @@ export function FidelityConfigModal({
             aria-label="Fermer la boîte de dialogue"
             className="rounded-full p-xs text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
           >
-            <span className="material-symbols-outlined">close</span>
+            <span className="material-symbols-outlined" aria-hidden="true">close</span>
           </button>
         </header>
 
@@ -153,7 +153,7 @@ export function FidelityConfigModal({
           <form onSubmit={handleSaveThresholds} className="space-y-sm bg-surface-container-low/40 p-md rounded-2xl border border-outline-variant/10">
             <div className="flex items-center justify-between border-b border-outline-variant/10 pb-xs">
               <h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-xs">
-                <span className="material-symbols-outlined text-base">tune</span>
+                <span className="material-symbols-outlined text-base" aria-hidden="true">tune</span>
                 Seuils Globaux des Statuts (Points p)
               </h3>
             </div>
@@ -202,7 +202,7 @@ export function FidelityConfigModal({
                 disabled={savingConfig || loadingConfig}
                 className="rounded-xl bg-primary px-md py-xs text-xs font-bold text-white hover:bg-surface-tint transition-all disabled:opacity-50 flex items-center gap-xs shadow-soft"
               >
-                {savingConfig && <span className="material-symbols-outlined text-xs animate-spin">sync</span>}
+                {savingConfig && <span className="material-symbols-outlined text-xs animate-spin" aria-hidden="true">sync</span>}
                 Enregistrer les seuils
               </button>
             </div>
@@ -212,7 +212,7 @@ export function FidelityConfigModal({
           <form onSubmit={handleApplyUserStatus} className="space-y-sm bg-surface-container-low/40 p-md rounded-2xl border border-outline-variant/10">
             <div className="flex items-center justify-between border-b border-outline-variant/10 pb-xs">
               <h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-xs">
-                <span className="material-symbols-outlined text-base">person_edit</span>
+                <span className="material-symbols-outlined text-base" aria-hidden="true">person_edit</span>
                 Modifier un Client Particulier
               </h3>
             </div>
@@ -278,7 +278,7 @@ export function FidelityConfigModal({
                   disabled={savingUser}
                   className="rounded-xl bg-emerald-600 px-md py-xs text-xs font-bold text-white hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center gap-xs shadow-soft"
                 >
-                  {savingUser && <span className="material-symbols-outlined text-xs animate-spin">sync</span>}
+                  {savingUser && <span className="material-symbols-outlined text-xs animate-spin" aria-hidden="true">sync</span>}
                   Mettre à jour le client
                 </button>
               </div>

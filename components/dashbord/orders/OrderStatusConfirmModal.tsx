@@ -43,7 +43,7 @@ export function OrderStatusConfirmModal({
       >
         <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low">
           <h2 id="status-modal-title" className="font-display text-base font-bold text-primary flex items-center gap-xs">
-            <span className="material-symbols-outlined text-primary text-xl">published_with_changes</span>
+            <span className="material-symbols-outlined text-primary text-xl" aria-hidden="true">published_with_changes</span>
             Confirmer le changement
           </h2>
           <button
@@ -52,7 +52,7 @@ export function OrderStatusConfirmModal({
             aria-label="Fermer la boîte de dialogue"
             className="rounded-full p-xs text-on-surface-variant transition-colors hover:bg-surface-container-high"
           >
-            <span className="material-symbols-outlined text-xl">close</span>
+            <span className="material-symbols-outlined text-xl" aria-hidden="true">close</span>
           </button>
         </header>
 
