@@ -105,7 +105,8 @@ describe('A11y Fixes Verification (Issues #56, #57)', () => {
     it('transfers active state, inert, and aria-hidden when clicking next or indicator dots', () => {
       const { container, unmount } = renderComponent(<HeroCarousel slides={mockSlides} />);
 
-      const nextButton = container.querySelector('button[aria-label="Next Slide"]') as HTMLButtonElement;
+      const nextButton = (container.querySelector('button[aria-label="Diapositive suivante"]') ||
+        container.querySelector('button[aria-label="Next Slide"]')) as HTMLButtonElement;
       expect(nextButton).not.toBeNull();
 
       act(() => {
@@ -136,9 +137,13 @@ describe('A11y Fixes Verification (Issues #56, #57)', () => {
     it('includes accessible focus-visible classes on carousel navigation controls', () => {
       const { container, unmount } = renderComponent(<HeroCarousel slides={mockSlides} />);
 
-      const prevButton = container.querySelector('button[aria-label="Previous Slide"]') as HTMLButtonElement;
-      const nextButton = container.querySelector('button[aria-label="Next Slide"]') as HTMLButtonElement;
-      const dotButtons = container.querySelectorAll('button[aria-label^="Go to slide"]');
+      const prevButton = (container.querySelector('button[aria-label="Diapositive précédente"]') ||
+        container.querySelector('button[aria-label="Previous Slide"]')) as HTMLButtonElement;
+      const nextButton = (container.querySelector('button[aria-label="Diapositive suivante"]') ||
+        container.querySelector('button[aria-label="Next Slide"]')) as HTMLButtonElement;
+      const dotButtons = container.querySelectorAll(
+        'button[aria-label^="Aller à la diapositive"], button[aria-label^="Afficher la diapositive"], button[aria-label^="Go to slide"]'
+      );
 
       expect(prevButton.className).toContain('focus-visible:ring-2');
       expect(nextButton.className).toContain('focus-visible:ring-2');
