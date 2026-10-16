@@ -274,6 +274,59 @@ describe('NextAuth Callbacks & Security Hardening', () => {
       expect(result).toBeDefined();
       expect(result.id).toBe('admin-force-test');
     });
+
+    it('blocks admin login when the same account is already logged in on a different device (SameAccountAnotherDevice)', async () => {
+      const credentialsProvider = authOptions.providers.find(
+        (p: any) => p.id === 'credentials' || p.name === 'Credentials'
+      ) as any;
+      const authorizeFn = credentialsProvider.options?.authorize || credentialsProvider.authorize;
+
+      vi.mocked(prisma.user.findFirst).mockResolvedValue({
+        id: 'admin-multidevice-test',
+        name: 'Admin MultiDevice',
+        phone: '+213555777666',
+        password: '$2a$10$hashedpassword',
+        role: 'admin',
+      } as any);
+
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+
+      // 1. First login from Device 1 (e.g. PC / Laptop)
+      const firstLogin = await authorizeFn(
+        {
+          phone: '+213555777666',
+          password: 'validpassword',
+          deviceId: 'dev_laptop_office',
+        },
+        {} as any
+      );
+      expect(firstLogin).toBeDefined();
+      expect(firstLogin.id).toBe('admin-multidevice-test');
+
+      // 2. Second login attempt from Device 2 (e.g. Mobile phone) with same credentials
+      await expect(
+        authorizeFn(
+          {
+            phone: '+213555777666',
+            password: 'validpassword',
+            deviceId: 'dev_mobile_phone',
+          },
+          {} as any
+        )
+      ).rejects.toThrow('SameAccountAnotherDevice');
+
+      // 3. Re-login from the SAME Device 1 (e.g. refreshed session) succeeds without error
+      const sameDeviceLogin = await authorizeFn(
+        {
+          phone: '+213555777666',
+          password: 'validpassword',
+          deviceId: 'dev_laptop_office',
+        },
+        {} as any
+      );
+      expect(sameDeviceLogin).toBeDefined();
+      expect(sameDeviceLogin.id).toBe('admin-multidevice-test');
+    });
   });
 
   describe('GoogleProvider Hardening (Issues #46, #41, #17, #3)', () => {
