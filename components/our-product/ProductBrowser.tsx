@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Product, useInfiniteProducts } from '@/lib/hooks/use-products';
 import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
+import { useFocusTrap } from '@/lib/hooks/use-focus-trap';
 import ProductCard from '@/components/ProductCard';
 import SearchBar from '@/components/SearchBar';
 import { useBakeryStore } from '@/lib/store';
@@ -60,6 +61,10 @@ export default function ProductBrowser() {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   useLockBodyScroll(isFilterModalOpen);
+  const filterModalRef = useFocusTrap<HTMLDivElement>({
+    isOpen: isFilterModalOpen,
+    onClose: () => setIsFilterModalOpen(false),
+  });
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -183,7 +188,7 @@ export default function ProductBrowser() {
                 Filtrer par tags
               </label>
               <div className="relative">
-                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-xl pointer-events-none select-none">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-xl pointer-events-none select-none" aria-hidden="true">
                   sell
                 </span>
                 <input
@@ -313,7 +318,7 @@ export default function ProductBrowser() {
           ) : products.length === 0 ? (
             /* Empty State */
             <div className="flex flex-col items-center justify-center py-xl text-center">
-              <span className="material-symbols-outlined text-5xl text-outline mb-sm">search_off</span>
+              <span className="material-symbols-outlined text-5xl text-outline mb-sm" aria-hidden="true">search_off</span>
               <p className="text-lg font-semibold text-on-surface">Aucun produit trouvé</p>
               <p className="text-sm text-on-surface-variant mt-xs">Essayez d&apos;ajuster votre recherche ou vos filtres.</p>
             </div>
@@ -334,7 +339,7 @@ export default function ProductBrowser() {
               {/* Observer Target */}
               {hasNextPage && (
                 <div ref={loadMoreRef} className="flex justify-center py-md">
-                  <span className="material-symbols-outlined text-3xl text-primary animate-spin">sync</span>
+                  <span className="material-symbols-outlined text-3xl text-primary animate-spin" aria-hidden="true">sync</span>
                 </div>
               )}
             </div>
@@ -345,9 +350,15 @@ export default function ProductBrowser() {
       {/* Mobile Category Filter Modal */}
       {isFilterModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-md bg-black/40 backdrop-blur-sm animate-fade-in lg:hidden">
-          <div className="w-full max-w-sm rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-lg space-y-md animate-scale-up">
+          <div
+            ref={filterModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mobile-category-filter-title"
+            className="w-full max-w-sm rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-lg space-y-md animate-scale-up"
+          >
             <header className="flex items-center justify-between border-b border-outline-variant/20 pb-xs">
-              <h3 className="font-display text-lg font-bold text-on-surface flex items-center gap-xs">
+              <h3 id="mobile-category-filter-title" className="font-display text-lg font-bold text-on-surface flex items-center gap-xs">
                 <span className="material-symbols-outlined text-primary" aria-hidden="true">filter_alt</span>
                 Filtrer par catégorie
               </h3>

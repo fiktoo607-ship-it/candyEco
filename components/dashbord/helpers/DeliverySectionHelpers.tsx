@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PriceDisplay from '@/components/PriceDisplay';
 import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
+import { useFocusTrap } from '@/lib/hooks/use-focus-trap';
 
 export interface DeliveryMethod {
   id: string;
@@ -136,7 +137,7 @@ export function DeliveryForm({
     <form onSubmit={onSubmit} className="p-md flex flex-col gap-sm overflow-y-auto flex-grow">
       {submitError && (
         <div className="rounded-xl bg-error-container/40 border border-error/20 p-sm text-center text-xs font-medium text-error mb-sm flex items-start gap-xs">
-          <span className="material-symbols-outlined text-base select-none shrink-0 mt-[2px]">error</span>
+          <span className="material-symbols-outlined text-base select-none shrink-0 mt-[2px]" aria-hidden="true">error</span>
           <span>{submitError}</span>
         </div>
       )}
@@ -241,9 +242,9 @@ export function DeliveryForm({
           className="rounded-xl bg-primary px-md py-sm text-sm font-bold text-white hover:bg-surface-tint transition-all disabled:opacity-60 flex items-center justify-center gap-xs shadow-soft"
         >
           {submitLoading ? (
-            <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+            <span className="material-symbols-outlined text-sm animate-spin" aria-hidden="true">sync</span>
           ) : (
-            <span className="material-symbols-outlined text-sm">save</span>
+            <span className="material-symbols-outlined text-sm" aria-hidden="true">save</span>
           )}
           {isEditing ? 'Sauvegarder' : 'Créer'}
         </button>
@@ -329,8 +330,9 @@ export function DeliveryTable({
                           onClick={() => onEditLieuPrice(method)}
                           className="inline-flex items-center justify-center h-6 w-6 rounded text-on-surface-variant hover:text-primary transition-colors"
                           title="Modifier les prix par lieu"
+                          aria-label={`Modifier les prix par lieu pour ${method.name}`}
                         >
-                          <span className="material-symbols-outlined text-sm">edit</span>
+                          <span className="material-symbols-outlined text-sm" aria-hidden="true">edit</span>
                         </button>
                       )}
                     </div>
@@ -339,16 +341,18 @@ export function DeliveryTable({
                   <div className="flex items-center justify-end gap-xs">
                     <button
                       onClick={() => onEdit(method)}
+                      aria-label={`Modifier la méthode de livraison: ${method.name}`}
                       className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-bold text-primary hover:bg-surface-container-high transition-colors flex items-center gap-xs"
                     >
-                      <span className="material-symbols-outlined text-sm">edit</span>
+                      <span className="material-symbols-outlined text-sm" aria-hidden="true">edit</span>
                       Modifier
                     </button>
                     <button
                       onClick={() => onDelete(method.id)}
+                      aria-label={`Supprimer la méthode de livraison: ${method.name}`}
                       className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-sm py-xs text-xs font-bold text-error hover:bg-rose-500/10 transition-colors flex items-center gap-xs"
                     >
-                      <span className="material-symbols-outlined text-sm">delete</span>
+                      <span className="material-symbols-outlined text-sm" aria-hidden="true">delete</span>
                       Supprimer
                     </button>
                   </div>
@@ -412,8 +416,9 @@ export function DeliveryTable({
                             onClick={() => onEditLieuPrice(method)}
                             className="inline-flex items-center justify-center h-6 w-6 rounded text-on-surface-variant hover:text-primary transition-colors opacity-70 hover:opacity-100"
                             title="Modifier les prix par lieu"
+                            aria-label={`Modifier les prix par lieu pour ${method.name}`}
                           >
-                            <span className="material-symbols-outlined text-sm">edit</span>
+                            <span className="material-symbols-outlined text-sm" aria-hidden="true">edit</span>
                           </button>
                         )}
                       </div>
@@ -429,15 +434,17 @@ export function DeliveryTable({
                         onClick={() => onEdit(method)}
                         className="inline-flex items-center justify-center h-8 w-8 rounded-xl border border-outline-variant/20 text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-colors mr-xs"
                         title="Modifier"
+                        aria-label={`Modifier ${method.name}`}
                       >
-                        <span className="material-symbols-outlined text-lg select-none">edit</span>
+                        <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">edit</span>
                       </button>
                       <button
                         onClick={() => onDelete(method.id)}
                         className="inline-flex items-center justify-center h-8 w-8 rounded-xl border border-rose-500/20 text-on-surface-variant hover:text-error hover:bg-rose-500/5 transition-colors"
                         title="Supprimer"
+                        aria-label={`Supprimer ${method.name}`}
                       >
-                        <span className="material-symbols-outlined text-lg select-none">delete</span>
+                        <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">delete</span>
                       </button>
                     </td>
                   </tr>
@@ -481,17 +488,27 @@ export function LieuPriceModal({
   onClose,
 }: LieuPriceModalProps) {
   useLockBodyScroll(isOpen);
+  const modalRef = useFocusTrap<HTMLDivElement>({
+    isOpen: isOpen && !!method,
+    onClose,
+  });
 
   if (!isOpen || !method) return null;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-sm md:p-md bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up flex flex-col">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="lieu-price-modal-title"
+        className="w-full max-w-md overflow-hidden rounded-2xl bg-surface-container-lowest shadow-lg border border-outline-variant/30 animate-scale-up flex flex-col"
+      >
         <header className="flex items-center justify-between border-b border-outline-variant/20 px-md py-sm bg-surface-container-low">
           <div className="flex items-center gap-xs">
-            <span className="material-symbols-outlined text-primary text-xl">payments</span>
+            <span className="material-symbols-outlined text-primary text-xl" aria-hidden="true">payments</span>
             <div>
-              <h2 className="font-display text-lg font-bold text-on-surface leading-snug">
+              <h2 id="lieu-price-modal-title" className="font-display text-lg font-bold text-on-surface leading-snug">
                 Modifier les prix par Lieu
               </h2>
               <p className="text-xs text-on-surface-variant font-medium">
@@ -502,16 +519,17 @@ export function LieuPriceModal({
           <button
             type="button"
             onClick={onClose}
+            aria-label="Fermer la boîte de dialogue"
             className="rounded-full p-xs text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
           >
-            <span className="material-symbols-outlined text-xl">close</span>
+            <span className="material-symbols-outlined text-xl" aria-hidden="true">close</span>
           </button>
         </header>
 
         <form onSubmit={onSubmit} className="p-md space-y-md">
           {submitError && (
             <div className="rounded-xl bg-error-container/40 border border-error/20 p-sm text-center text-xs font-medium text-error flex items-start gap-xs">
-              <span className="material-symbols-outlined text-base select-none shrink-0 mt-[2px]">error</span>
+              <span className="material-symbols-outlined text-base select-none shrink-0 mt-[2px]" aria-hidden="true">error</span>
               <span>{submitError}</span>
             </div>
           )}
@@ -568,9 +586,9 @@ export function LieuPriceModal({
               className="rounded-xl bg-primary px-md py-sm text-xs font-bold text-white hover:bg-surface-tint transition-all disabled:opacity-60 flex items-center justify-center gap-xs shadow-soft"
             >
               {submitLoading ? (
-                <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+                <span className="material-symbols-outlined text-sm animate-spin" aria-hidden="true">sync</span>
               ) : (
-                <span className="material-symbols-outlined text-sm">save</span>
+                <span className="material-symbols-outlined text-sm" aria-hidden="true">save</span>
               )}
               Enregistrer
             </button>

@@ -56,6 +56,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         if (icon.getAttribute('translate') !== 'no') {
           icon.setAttribute('translate', 'no');
         }
+        if (!icon.hasAttribute('aria-hidden')) {
+          icon.setAttribute('aria-hidden', 'true');
+        }
       });
     };
 
@@ -72,6 +75,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
                 }
                 if (node.getAttribute('translate') !== 'no') {
                   node.setAttribute('translate', 'no');
+                }
+                if (!node.hasAttribute('aria-hidden')) {
+                  node.setAttribute('aria-hidden', 'true');
                 }
               }
               preventIconTranslation(node);

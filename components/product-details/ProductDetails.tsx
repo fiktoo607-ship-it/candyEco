@@ -9,6 +9,7 @@ import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
 import PriceDisplay from '@/components/PriceDisplay';
 import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
+import { useFocusTrap } from '@/lib/hooks/use-focus-trap';
 import { containsArabic } from '@/lib/a11y';
 
 interface ProductData {
@@ -38,6 +39,13 @@ export default function ProductDetails({ product }: { product: ProductData }) {
   const [pendingRating, setPendingRating] = useState(0);
 
   useLockBodyScroll(showRatingModal);
+  const ratingModalRef = useFocusTrap<HTMLDivElement>({
+    isOpen: showRatingModal,
+    onClose: () => {
+      setPendingRating(0);
+      setShowRatingModal(false);
+    },
+  });
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -202,7 +210,7 @@ export default function ProductDetails({ product }: { product: ProductData }) {
             </p>
           ) : hasRated ? (
             <p className="mt-xs text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-xs">
-              <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400">check_circle</span>
+              <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400" aria-hidden="true">check_circle</span>
               Merci pour votre évaluation !
             </p>
           ) : (
@@ -288,10 +296,16 @@ export default function ProductDetails({ product }: { product: ProductData }) {
       {/* Rating Confirmation Modal */}
       {showRatingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-sm scale-95 transform rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft transition-all duration-200">
+          <div
+            ref={ratingModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="rating-modal-title"
+            className="relative w-full max-w-sm scale-95 transform rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft transition-all duration-200"
+          >
             <div className="flex flex-col items-center text-center">
-              <span className="material-symbols-outlined text-4xl text-primary mb-sm">rate_review</span>
-              <h3 className="font-display text-xl font-bold text-on-surface">Confirmer l'évaluation</h3>
+              <span className="material-symbols-outlined text-4xl text-primary mb-sm" aria-hidden="true">rate_review</span>
+              <h3 id="rating-modal-title" className="font-display text-xl font-bold text-on-surface">Confirmer l'évaluation</h3>
               <p className="mt-xs text-xs text-on-surface-variant max-w-xs">
                 Souhaitez-vous attribuer une note de {pendingRating} étoile{pendingRating > 1 ? 's' : ''} à ce produit ?
               </p>
@@ -301,6 +315,7 @@ export default function ProductDetails({ product }: { product: ProductData }) {
                   <span key={star} className="text-amber-500 select-none">
                     <span
                       className="material-symbols-outlined text-2xl"
+                      aria-hidden="true"
                       style={star <= pendingRating ? { fontVariationSettings: "'FILL' 1" } : undefined}
                     >
                       star

@@ -1,6 +1,7 @@
 import React from 'react';
 import { CarouselSlide } from '@/lib/hooks/use-carousel';
 import { useFocusTrap } from '@/lib/hooks/use-focus-trap';
+import { useLockBodyScroll } from '@/lib/hooks/use-lock-body-scroll';
 
 interface SlideModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export function SlideModal({
   handleSlideImageUpload,
   handleSlideSubmit,
 }: SlideModalProps) {
+  useLockBodyScroll(isOpen);
   const modalRef = useFocusTrap<HTMLDivElement>({
     isOpen,
     onClose,
@@ -58,7 +60,7 @@ export function SlideModal({
         {/* Fixed Header */}
         <div className="flex items-center justify-between border-b border-outline-variant/30 p-md flex-shrink-0">
           <h3 id="slide-modal-title" className="font-display text-lg md:text-xl font-bold text-on-surface flex items-center gap-xs">
-            <span className="material-symbols-outlined text-primary text-xl">add_photo_alternate</span>
+            <span className="material-symbols-outlined text-primary text-xl" aria-hidden="true">add_photo_alternate</span>
             {editingSlide ? "Modifier la diapositive" : "Ajouter une diapositive"}
           </h3>
           <button
@@ -67,7 +69,7 @@ export function SlideModal({
             aria-label="Fermer la boîte de dialogue"
             className="rounded-full p-1 text-on-surface-variant hover:bg-surface-variant transition-colors"
           >
-            <span className="material-symbols-outlined">close</span>
+            <span className="material-symbols-outlined" aria-hidden="true">close</span>
           </button>
         </div>
 
@@ -119,15 +121,16 @@ export function SlideModal({
                       onClick={() => setSlideImageUrl("")}
                       className="absolute top-2 right-2 bg-black/60 hover:bg-black/85 text-white rounded-full p-1.5 transition-colors shadow-md flex items-center justify-center"
                       title="Supprimer l'image"
+                      aria-label="Supprimer l'image de la diapositive"
                     >
-                      <span className="material-symbols-outlined text-sm font-bold">delete</span>
+                      <span className="material-symbols-outlined text-sm font-bold" aria-hidden="true">delete</span>
                     </button>
                   </div>
                 )}
                 
                 {!slideImageUrl && (
                   <label className={`flex flex-col items-center justify-center border-2 border-dashed border-outline-variant/60 hover:border-primary/60 bg-surface-container-low hover:bg-primary/5 rounded-2xl p-md text-center cursor-pointer transition-all ${isSlideUploading ? 'pointer-events-none opacity-50' : ''}`}>
-                    <span className="material-symbols-outlined text-4xl text-outline mb-xs animate-pulse">cloud_upload</span>
+                    <span className="material-symbols-outlined text-4xl text-outline mb-xs animate-pulse" aria-hidden="true">cloud_upload</span>
                     <span className="text-sm font-semibold text-on-surface">Cliquez pour téléverser une image</span>
                     <span className="text-xs text-on-surface-variant mt-[2px]">Format WebP, PNG, JPG (Max 10Mo)</span>
                     <input
@@ -143,7 +146,7 @@ export function SlideModal({
                 {isSlideUploading && (
                   <div className="flex items-center gap-sm bg-primary/5 border border-primary/20 p-sm rounded-xl animate-pulse">
                     <div className="w-5 h-5 text-primary animate-spin flex items-center justify-center">
-                      <span className="material-symbols-outlined text-lg">sync</span>
+                      <span className="material-symbols-outlined text-lg" aria-hidden="true">sync</span>
                     </div>
                     <p className="text-xs text-primary font-semibold">Téléchargement de l'image en cours...</p>
                   </div>
@@ -151,7 +154,7 @@ export function SlideModal({
 
                 {slideUploadError && (
                   <div className="flex items-center gap-xs text-error text-xs font-semibold bg-error-container/10 border border-error/20 p-sm rounded-xl">
-                    <span className="material-symbols-outlined text-base">error</span>
+                    <span className="material-symbols-outlined text-base" aria-hidden="true">error</span>
                     <span>{slideUploadError}</span>
                   </div>
                 )}
