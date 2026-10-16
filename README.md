@@ -77,7 +77,7 @@ The project is engineered with a strict focus on:
 ## 🏗️ Project Structure
 
 ```text
-candy_client/
+candy_eco/
 ├── app/                              # Next.js App Router (Pages & Endpoints)
 │   ├── (storefront)/                 # Public customer-facing routes
 │   │   ├── home/                     # Dynamic homepage (Hero, New, Popular, FAQs)
@@ -199,7 +199,7 @@ git clone https://github.com/charif1206/candy_eco.git
 
 ### 2. Navigate to the Project Directory
 ```bash
-cd candy_eco/candy_client
+cd candy_eco
 ```
 
 ### 3. Install Dependencies
@@ -255,11 +255,14 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## ⚙️ Environment Variables Configuration
 
-Create a `.env` file in the root of `candy_client/` and supply the required keys:
+Create a `.env` file in the root of the project and supply the required keys:
 
 ```env
+# Canonical Site URL (Used for sitemaps, robots.txt, canonical metadata)
+NEXT_PUBLIC_SITE_URL="https://candy-eco.vercel.app"
+
 # Database connection string (PostgreSQL)
-DATABASE_URL="postgresql://username:password@localhost:5432/candy_client?schema=public"
+DATABASE_URL="postgresql://username:password@localhost:5432/candy_eco?schema=public"
 
 # NextAuth Configuration
 NEXTAUTH_URL="http://localhost:3000"
@@ -283,6 +286,12 @@ SMTP_PORT=465
 SMTP_USER="verification@example.com"
 SMTP_PASSWORD="your_smtp_password"
 EMAIL_FROM='"Délices d'\''Eva" <verification@example.com>'
+
+# Web Push VAPID Configurations
+# Generate a new keypair via: npx web-push generate-vapid-keys
+NEXT_PUBLIC_VAPID_PUBLIC_KEY="your_vapid_public_key"
+VAPID_PRIVATE_KEY="your_vapid_private_key"
+VAPID_SUBJECT="mailto:contact@example.com"
 
 # Optional: Distributed Redis Pub/Sub & Presence
 REDIS_URL="redis://localhost:6379"
@@ -456,12 +465,12 @@ searchBakeryCatalog();
 - **Frontend & Fullstack Framework:** Next.js 16 (App Router), React 19, TypeScript
 - **State Management & Caching:** TanStack React Query v5, Zustand v5
 - **Styling & UI Architecture:** Tailwind CSS 3.4 (60-30-10 color hierarchy)
-- **Database & Persistence:** PostgreSQL 15+, Prisma ORM 7.8
+- **Database & Persistence:** PostgreSQL 15+, Prisma ORM 7.10
 - **Distributed Messaging & Real-time:** Redis (`ioredis`), Server-Sent Events (SSE), Node.js `EventEmitter`
 - **Authentication & Security:** NextAuth.js (Google OAuth & Credentials with `bcryptjs`)
 - **Email & Communications:** Nodemailer (SMTP verification)
 - **Asset Storage & CDN:** Cloudinary REST API
-- **Testing & Quality Assurance:** Vitest 4, JSDOM, TypeScript strict typechecking
+- **Testing & Quality Assurance:** Vitest 5, JSDOM, TypeScript strict typechecking
 
 ---
 

@@ -67,8 +67,11 @@ Thumbs.db
 
 
 /prompts/*
-/logs/*
-!/logs/featurs/
+/logs/
+/scratch/
+.firebaserc
+rollback.sql
+test-api.ts
 
 /plan.md
 /screens/
