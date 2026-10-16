@@ -54,6 +54,12 @@ function installLockfileShim() {
 
 installLockfileShim();
 
+if (process.argv.includes('lint')) {
+  require('./lint.cjs');
+  return;
+}
+
 const nextBin = path.join(require.resolve('next/package.json'), '..', 'dist', 'bin', 'next');
 require(nextBin);
+
 
