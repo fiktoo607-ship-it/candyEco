@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { getActiveAdminSessions, MAX_CONCURRENT_ADMINS } from '@/lib/admin-session';
+import { getActiveAdminSessions, releaseAdminLock, MAX_CONCURRENT_ADMINS } from '@/lib/admin-session';
 import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
 
 export const dynamic = 'force-dynamic';
@@ -127,3 +127,55 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'InternalServerError' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const clientIp = getClientIp(req);
+    const rateLimitResult = await checkRateLimit(clientIp, {
+      keyPrefix: 'admin_active_session_delete',
+      limit: 5,
+      windowSeconds: 900,
+    });
+
+    if (!rateLimitResult.success) {
+      return createRateLimitResponse(
+        rateLimitResult,
+        'Trop de tentatives. Veuillez réessayer plus tard.'
+      );
+    }
+
+    const body = await req.json();
+    const { phone, password } = body || {};
+
+    if (!phone || !password) {
+      return NextResponse.json({ error: 'MissingCredentials' }, { status: 400 });
+    }
+
+    if (typeof password !== 'string' || password.length > 128) {
+      return NextResponse.json({ error: 'InvalidCredentials' }, { status: 400 });
+    }
+
+    const phoneNormalized = String(phone).trim();
+
+    const user = await prisma.user.findFirst({
+      where: { phone: phoneNormalized },
+    });
+
+    if (!user || user.role !== 'admin' || !user.password) {
+      return NextResponse.json({ error: 'InvalidCredentials' }, { status: 401 });
+    }
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return NextResponse.json({ error: 'InvalidCredentials' }, { status: 401 });
+    }
+
+    await releaseAdminLock(user.id);
+
+    return NextResponse.json({ success: true, message: 'Sessions libérées avec succès' });
+  } catch (error) {
+    console.error('[ActiveAdminSessions DELETE API] Error:', error);
+    return NextResponse.json({ error: 'InternalServerError' }, { status: 500 });
+  }
+}
+

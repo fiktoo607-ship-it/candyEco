@@ -2,6 +2,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { authOptions, getGoogleProvider } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { _resetInMemoryAdminSession } from '@/lib/admin-session';
 
 // Mock Prisma client
 vi.mock('@/lib/prisma', () => {
@@ -30,6 +31,7 @@ vi.mock('bcryptjs', () => {
 describe('NextAuth Callbacks & Security Hardening', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    _resetInMemoryAdminSession();
     process.env.ADMIN_EMAILS = 'admin@example.com,super@example.com';
   });
 
@@ -181,6 +183,96 @@ describe('NextAuth Callbacks & Security Hardening', () => {
 
       // bcrypt.compare must NOT have been called
       expect(bcrypt.compare).not.toHaveBeenCalled();
+    });
+
+    it('should successfully allow admin login via authorize and signIn callback without SameAccountAnotherDevice false-positive', async () => {
+      const credentialsProvider = authOptions.providers.find(
+        (p: any) => p.id === 'credentials' || p.name === 'Credentials'
+      ) as any;
+      const authorizeFn = credentialsProvider.options?.authorize || credentialsProvider.authorize;
+
+      vi.mocked(prisma.user.findFirst).mockResolvedValue({
+        id: 'admin-123',
+        name: 'Admin Test',
+        phone: '+213555123456',
+        password: '$2a$10$hashedpassword',
+        role: 'admin',
+      } as any);
+
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+
+      // Step 1: authorize is invoked
+      const authUser = await authorizeFn(
+        {
+          phone: '+213555123456',
+          password: 'validpassword',
+          deviceId: 'dev_test_unique_1',
+        },
+        {
+          headers: {
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+          },
+        } as any
+      );
+
+      expect(authUser).toBeDefined();
+      expect(authUser.id).toBe('admin-123');
+
+      // Step 2: signIn callback is invoked for credentials provider
+      const signInCallback = authOptions.callbacks?.signIn;
+      expect(signInCallback).toBeDefined();
+
+      if (signInCallback) {
+        // Must NOT throw SameAccountAnotherDevice
+        await expect(
+          signInCallback({
+            user: authUser as any,
+            account: { provider: 'credentials' } as any,
+            profile: {} as any,
+          })
+        ).resolves.toBe(true);
+      }
+    });
+
+    it('supports forceDisconnect to release previous sessions and sign in', async () => {
+      const credentialsProvider = authOptions.providers.find(
+        (p: any) => p.id === 'credentials' || p.name === 'Credentials'
+      ) as any;
+      const authorizeFn = credentialsProvider.options?.authorize || credentialsProvider.authorize;
+
+      vi.mocked(prisma.user.findFirst).mockResolvedValue({
+        id: 'admin-force-test',
+        name: 'Admin Force',
+        phone: '+213555999888',
+        password: '$2a$10$hashedpassword',
+        role: 'admin',
+      } as any);
+
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+
+      // Sign in with device 1
+      await authorizeFn(
+        {
+          phone: '+213555999888',
+          password: 'validpassword',
+          deviceId: 'dev_old_1',
+        },
+        {} as any
+      );
+
+      // Attempt login on device 2 with forceDisconnect = "true"
+      const result = await authorizeFn(
+        {
+          phone: '+213555999888',
+          password: 'validpassword',
+          deviceId: 'dev_new_2',
+          forceDisconnect: 'true',
+        },
+        {} as any
+      );
+
+      expect(result).toBeDefined();
+      expect(result.id).toBe('admin-force-test');
     });
   });
 

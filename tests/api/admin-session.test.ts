@@ -17,6 +17,7 @@ import {
 import {
   GET as getActiveSessionsRoute,
   POST as postActiveSessionsRoute,
+  DELETE as deleteActiveSessionsRoute,
 } from '@/app/api/admin/session/active/route';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
@@ -324,6 +325,47 @@ describe('Admin Multi-Device & 2-Admin Concurrency Management', () => {
       // Maximum 5 allowed per 15 minutes; remainder must be blocked with 429
       expect(passed.length).toBeLessThanOrEqual(5);
       expect(rateLimited.length).toBeGreaterThanOrEqual(10);
+    });
+
+    it('releases admin sessions via DELETE /api/admin/session/active with valid credentials', async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue({
+        id: 'admin-delete-test',
+        phone: '0555112233',
+        password: 'hashed-password',
+        role: 'admin',
+      } as any);
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as any);
+
+      await acquireAdminLock('admin-delete-test', {
+        deviceId: 'dev-old',
+        userName: 'Admin To Delete',
+      });
+
+      let sessions = await getActiveAdminSessions();
+      expect(sessions.some((s) => s.userId === 'admin-delete-test')).toBe(true);
+
+      const req = {
+        headers: { get: () => '127.0.0.1' },
+        json: vi.fn().mockResolvedValue({ phone: '0555112233', password: 'correct-password' }),
+      } as any;
+
+      const res = await deleteActiveSessionsRoute(req);
+      expect(res.status).toBe(200);
+
+      sessions = await getActiveAdminSessions();
+      expect(sessions.some((s) => s.userId === 'admin-delete-test')).toBe(false);
+    });
+
+    it('rejects DELETE /api/admin/session/active with invalid credentials', async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+
+      const req = {
+        headers: { get: () => '127.0.0.1' },
+        json: vi.fn().mockResolvedValue({ phone: '0555000000', password: 'wrong' }),
+      } as any;
+
+      const res = await deleteActiveSessionsRoute(req);
+      expect(res.status).toBe(401);
     });
   });
 

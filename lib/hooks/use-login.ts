@@ -140,8 +140,10 @@ export function useLogin() {
     }
   };
 
-  const handleCredentialsLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCredentialsLogin = async (e?: React.FormEvent, forceDisconnect = false) => {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+    }
     setErrorMessage("");
     setShowAdminsDetails(false);
     setCanViewDetails(false);
@@ -164,6 +166,7 @@ export function useLogin() {
         password: currentPassword,
         deviceId,
         deviceName: deviceModel || clientDevice?.label || undefined,
+        forceDisconnect: forceDisconnect ? "true" : "false",
         redirect: false,
       });
 
@@ -201,6 +204,10 @@ export function useLogin() {
     }
   };
 
+  const handleForceLogin = async () => {
+    await handleCredentialsLogin(undefined, true);
+  };
+
   const handleGoogleLogin = async () => {
     try {
       setGoogleLoading(true);
@@ -231,6 +238,7 @@ export function useLogin() {
     toggleShowAdminsDetails,
     activeSessions,
     handleCredentialsLogin,
+    handleForceLogin,
     handleGoogleLogin,
   };
 }

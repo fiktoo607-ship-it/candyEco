@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { checkRateLimit } from "@/lib/rate-limiter";
 import { logAuthData } from "@/lib/audit-logger";
-import { acquireAdminLock, recordLoginHistory } from "@/lib/admin-session";
+import { acquireAdminLock, releaseAdminLock, recordLoginHistory } from "@/lib/admin-session";
 import { MAX_PASSWORD_LENGTH } from "@/lib/validations/auth";
 
 export function getGoogleProvider(
@@ -59,6 +59,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
         deviceId: { label: "Device ID", type: "text" },
         deviceName: { label: "Device Name", type: "text" },
+        forceDisconnect: { label: "Force Disconnect", type: "text" },
       },
       async authorize(credentials, req) {
         if (!credentials?.phone || !credentials?.password) {
@@ -114,6 +115,11 @@ export const authOptions: NextAuthOptions = {
         if (user.role === "admin") {
           const deviceId = (credentials as any)?.deviceId || (req?.headers as any)?.['x-device-id'] || 'default_device';
           const userAgent = (req?.headers as any)?.['user-agent'] || null;
+          const forceDisconnect = (credentials as any)?.forceDisconnect === "true" || (credentials as any)?.forceDisconnect === true;
+
+          if (forceDisconnect) {
+            await releaseAdminLock(user.id);
+          }
 
           const lockResult = await acquireAdminLock(user.id, {
             deviceId,
@@ -253,9 +259,10 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // Verify active session lock for any admin login
+        // Verify active session lock for non-credentials admin logins (e.g. OAuth)
+        // For credentials provider, acquireAdminLock is already executed during authorize() with client deviceId.
         const isUserAdmin = (user as any).role === "admin";
-        if (isUserAdmin) {
+        if (isUserAdmin && account?.provider !== "credentials") {
           const lockResult = await acquireAdminLock(user.id, {
             userName: user.name,
             userEmail: email,

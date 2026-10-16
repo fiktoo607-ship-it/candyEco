@@ -26,6 +26,7 @@ function LoginContent() {
     toggleShowAdminsDetails,
     activeSessions,
     handleCredentialsLogin,
+    handleForceLogin,
     handleGoogleLogin,
   } = useLogin();
 
@@ -70,13 +71,28 @@ function LoginContent() {
 
           {/* Active Admin Indicator & Transparency Widget - Only visible when admin credentials in DB are verified */}
           {canViewDetails && (
-            <ActiveAdminsWidget
-              slotsOccupied={slotsOccupied}
-              canViewDetails={canViewDetails}
-              showAdminsDetails={showAdminsDetails}
-              activeSessions={activeSessions}
-              onToggleDetails={toggleShowAdminsDetails}
-            />
+            <div className="flex flex-col gap-xs">
+              <ActiveAdminsWidget
+                slotsOccupied={slotsOccupied}
+                canViewDetails={canViewDetails}
+                showAdminsDetails={showAdminsDetails}
+                activeSessions={activeSessions}
+                onToggleDetails={toggleShowAdminsDetails}
+              />
+              <button
+                type="button"
+                onClick={handleForceLogin}
+                disabled={loading}
+                className="mt-xs inline-flex w-full items-center justify-center gap-xs rounded-xl border border-rose-300/80 bg-rose-50/90 px-md py-2 text-xs font-semibold text-rose-800 hover:bg-rose-100 hover:border-rose-400 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 cursor-pointer shadow-xs active:scale-[0.99] disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-base text-rose-600 select-none" aria-hidden="true">
+                  phonelink_erase
+                </span>
+                <span>
+                  {loading ? "Déconnexion et connexion..." : "Déconnecter les autres sessions et me connecter ici"}
+                </span>
+              </button>
+            </div>
           )}
 
           {/* Error Toast Notification */}
