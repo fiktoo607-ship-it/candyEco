@@ -73,6 +73,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     <article className="overflow-hidden rounded-2xl border border-surface-variant bg-surface-container-lowest shadow-soft transition-transform duration-300 hover:-translate-y-1 flex flex-col h-full group">
       <Link
         href={`/our-product/${product.slug}`}
+        aria-label={`Voir ${product.title}`}
         className="relative aspect-[4/3] overflow-hidden bg-surface-variant cursor-pointer block"
       >
         <Image
@@ -148,9 +149,10 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
             <Link
               href={`/our-product/${product.slug}`}
+              aria-label={`En savoir plus sur ${product.title}`}
               className="group inline-flex items-center text-xs sm:text-sm font-bold text-primary hover:text-surface-tint hover:underline transition-all"
             >
-              {dictionary.productCard.readMore || "Read More"}
+              {dictionary.productCard.readMore || "En savoir plus"}
               <svg
                 className="w-3 h-3 sm:w-4 sm:h-4 ml-1 select-none transition-transform group-hover:translate-x-1"
                 fill="none"

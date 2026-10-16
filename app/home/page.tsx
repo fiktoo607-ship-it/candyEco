@@ -25,6 +25,7 @@ export default async function HomePage() {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <main id="main-content" className="flex-1">
+        <h1 className="sr-only">Candy Eco - Pâtisseries Artisanales et Gourmandises Écoresponsables</h1>
         <HomeProductSection
           initialFeaturedProducts={featuredProducts}
           initialNewProducts={newProducts}
