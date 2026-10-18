@@ -15,6 +15,7 @@ WORKDIR /app
 # Copy package management files and prisma schema for pre-install & code generation
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
+COPY prisma.config.ts ./
 
 # Install dependencies cleanly including devDependencies needed for build
 RUN npm ci
@@ -63,6 +64,16 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+
+# Copy Prisma CLI and configuration dependencies from deps to enable migrations at runtime
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/dotenv ./node_modules/dotenv
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/.bin ./node_modules/.bin
+
+# Symlink prisma executable to PATH
+RUN ln -sf /app/node_modules/prisma/build/index.js /usr/local/bin/prisma
 
 # Switch to the non-root user
 USER nextjs
