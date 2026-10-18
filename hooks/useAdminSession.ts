@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { DeviceInfo, parseDeviceInfo, formatDeviceModel } from '@/lib/admin-session/device-geo';
 
 const DEVICE_ID_KEY = 'admin_device_id';
@@ -94,7 +94,7 @@ export function useAdminSession() {
         ? forcedVisibility
         : typeof document !== 'undefined' ? !document.hidden : true;
 
-      await fetch('/api/admin/session/heartbeat', {
+      const res = await fetch('/api/admin/session/heartbeat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,6 +107,12 @@ export function useAdminSession() {
           isVisible,
         }),
       });
+
+      if (res.status === 409) {
+        const body = await res.json().catch(() => ({}));
+        const errType = body?.error === 'MaxAdminsReached' ? 'MaxAdminsReached' : 'SameAccountAnotherDevice';
+        signOut({ callbackUrl: `/login?error=${encodeURIComponent(errType)}` });
+      }
     } catch (err: any) {
       // Gracefully handle aborted requests, offline state, or transient server restarts
       if (err?.name === 'AbortError') return;

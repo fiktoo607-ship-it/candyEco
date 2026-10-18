@@ -70,31 +70,7 @@ interface HeroCarouselProps {
 
 export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [isMounted, setIsMounted] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    setIsMounted(true);
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-      if (mediaQuery.matches) {
-        setIsPlaying(false);
-      }
-      const handleMotionChange = (e: MediaQueryListEvent) => {
-        if (e.matches) {
-          setIsPlaying(false);
-        }
-      };
-      if (mediaQuery.addEventListener) {
-        mediaQuery.addEventListener('change', handleMotionChange);
-        return () => mediaQuery.removeEventListener('change', handleMotionChange);
-      } else if (mediaQuery.addListener) {
-        mediaQuery.addListener(handleMotionChange);
-        return () => mediaQuery.removeListener(handleMotionChange);
-      }
-    }
-  }, []);
 
   // Touch Swipe gesture states
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -125,10 +101,10 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
 
   const startTimer = () => {
     stopTimer();
-    if (displaySlides.length <= 1 || !isPlaying) return;
+    if (displaySlides.length <= 1) return;
     timerRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
-    }, 6000); // cycles slides every 6 seconds
+    }, 5000); // cycles slides every 5 seconds
   };
 
   const stopTimer = () => {
@@ -139,36 +115,28 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
   };
 
   useEffect(() => {
-    if (isPlaying) {
-      startTimer();
-    } else {
-      stopTimer();
-    }
+    startTimer();
     return () => stopTimer();
-  }, [isPlaying, displaySlides.length]);
-
-  const togglePlayPause = () => {
-    setIsPlaying((prev) => !prev);
-  };
+  }, [displaySlides.length]);
 
   const handleNext = () => {
     if (displaySlides.length === 0) return;
     stopTimer();
     setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
-    if (isPlaying) startTimer();
+    startTimer();
   };
 
   const handlePrev = () => {
     if (displaySlides.length === 0) return;
     stopTimer();
     setCurrentSlide((prev) => (prev - 1 + displaySlides.length) % displaySlides.length);
-    if (isPlaying) startTimer();
+    startTimer();
   };
 
   const handleDotClick = (index: number) => {
     stopTimer();
     setCurrentSlide(index);
-    if (isPlaying) startTimer();
+    startTimer();
   };
 
   // Touch handlers for swiping
@@ -223,7 +191,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
               <img
                 src={slide.imageUrl}
                 alt={slide.title}
-                className={`absolute inset-0 h-full w-full object-cover object-center transition-transform duration-[6000ms] ease-out motion-reduce:transition-none motion-reduce:transform-none ${
+                className={`absolute inset-0 h-full w-full object-cover object-center transition-transform duration-[5000ms] ease-out motion-reduce:transition-none motion-reduce:transform-none ${
                   isActive ? "scale-100" : "scale-110"
                 }`}
               />
@@ -336,31 +304,9 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
         </button>
       )}
 
-      {/* Slide Controls & Indicator Dots centered at the bottom */}
+      {/* Slide Indicator Dots centered at the bottom */}
       {displaySlides.length > 1 && (
         <div suppressHydrationWarning className="absolute bottom-md left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 bg-neutral-900/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 shadow-lg">
-          {/* Pause / Play Toggle Button */}
-          <button
-            type="button"
-            onClick={togglePlayPause}
-            className="flex h-6 w-6 items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none"
-            aria-label={
-              isPlaying
-                ? "Mettre en pause le défilement automatique"
-                : "Activer le défilement automatique"
-            }
-          >
-            {isPlaying ? (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">
-                <path fillRule="evenodd" d="M6.75 5.25a.75.75 0 0 1 .75.75v12a.75.75 0 0 1-1.5 0v-12a.75.75 0 0 1 .75-.75Zm9 0a.75.75 0 0 1 .75.75v12a.75.75 0 0 1-1.5 0v-12a.75.75 0 0 1 .75-.75Z" clipRule="evenodd" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">
-                <path fillRule="evenodd" d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clipRule="evenodd" />
-              </svg>
-            )}
-          </button>
-
           {displaySlides.map((_, index) => {
             const isActive = index === currentSlide;
             return (

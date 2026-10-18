@@ -121,46 +121,29 @@ describe('Issues #27, #44, and #126: Carousel Accessibility, Security & Motion C
     });
   });
 
-  describe('Issue #126: Auto-Advancing Motion Controls & prefers-reduced-motion Support', () => {
-    it('provides an accessible pause/play button to stop and resume auto-advancing slides', () => {
+  describe('Continuous Auto-Advancing Smooth Transitions & Clean Controls', () => {
+    it('does not render pause/play button and auto-advances slides every 5 seconds', () => {
       vi.useFakeTimers();
 
       const { container, unmount } = renderComponent(<HeroCarousel slides={mockSlides} />);
 
-      // Locate pause/play toggle button with French aria-label
+      // Ensure no pause/play buttons exist in the controls
       const pauseBtn = container.querySelector(
-        'button[aria-label="Mettre en pause le défilement automatique"], button[aria-label="Arrêter le défilement automatique"]'
-      ) as HTMLButtonElement;
-      expect(pauseBtn).not.toBeNull();
+        'button[aria-label="Mettre en pause le défilement automatique"], button[aria-label="Pause carousel"]'
+      );
+      const playBtn = container.querySelector(
+        'button[aria-label="Activer le défilement automatique"], button[aria-label="Play carousel"]'
+      );
+      expect(pauseBtn).toBeNull();
+      expect(playBtn).toBeNull();
 
-      // Click pause button
-      act(() => {
-        pauseBtn.click();
-      });
-
-      // Advance timers by 6 seconds
-      act(() => {
-        vi.advanceTimersByTime(6000);
-      });
-
-      // Slide should NOT have changed because it was paused
       const dots = container.querySelectorAll('button[aria-label*="diapositive"]');
       expect(dots[0].getAttribute('aria-current')).toBe('true');
       expect(dots[1].getAttribute('aria-current')).toBeNull();
 
-      // Now resume playback
-      const playBtn = container.querySelector(
-        'button[aria-label="Activer le défilement automatique"], button[aria-label="Reprendre le défilement automatique"]'
-      ) as HTMLButtonElement;
-      expect(playBtn).not.toBeNull();
-
+      // Advance timers by 5 seconds
       act(() => {
-        playBtn.click();
-      });
-
-      // Advance timers by 6 seconds
-      act(() => {
-        vi.advanceTimersByTime(6000);
+        vi.advanceTimersByTime(5000);
       });
 
       // Slide should now have advanced to slide 2
@@ -170,41 +153,16 @@ describe('Issues #27, #44, and #126: Carousel Accessibility, Security & Motion C
       vi.useRealTimers();
     });
 
-    it('respects prefers-reduced-motion media query by disabling auto-advance by default and applying reduced motion styles', () => {
-      // Mock window.matchMedia for prefers-reduced-motion: reduce
-      const matchMediaMock = vi.fn().mockImplementation((query: string) => ({
-        matches: query.includes('prefers-reduced-motion: reduce'),
-        media: query,
-        onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      }));
-      window.matchMedia = matchMediaMock;
-
-      vi.useFakeTimers();
-
+    it('applies accessible transition and reduced-motion styling classes to slides', () => {
       const { container, unmount } = renderComponent(<HeroCarousel slides={mockSlides} />);
 
-      // Verify that reduced motion styles/classes are applied or active
+      // Verify that motion styling classes are applied to the slides
       const section = container.querySelector('section');
       expect(section).not.toBeNull();
       const slides = section?.querySelectorAll('.transition-all, .transition-transform, [class*="motion-reduce"]');
       expect(slides && slides.length > 0).toBe(true);
 
-      // Verify auto-advance does not trigger when prefers-reduced-motion is true
-      act(() => {
-        vi.advanceTimersByTime(12000);
-      });
-
-      const dots = container.querySelectorAll('button[aria-label*="diapositive"]');
-      expect(dots[0].getAttribute('aria-current')).toBe('true');
-      expect(dots[1].getAttribute('aria-current')).toBeNull();
-
       unmount();
-      vi.useRealTimers();
     });
   });
 });
