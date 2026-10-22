@@ -8,8 +8,11 @@ import QnaSection from "@/components/dashbord/QnaSection";
 import UsersSection from "@/components/dashbord/UsersSection";
 import DeliverySection from "@/components/dashbord/DeliverySection";
 import ProfileSection from "@/components/dashbord/ProfileSection";
+import BlogSection from "@/components/dashbord/BlogSection";
 import ProductModal from "@/components/dashbord/ProductModal";
 import DeleteModal from "@/components/dashbord/DeleteModal";
+import BlogModal from "@/components/dashbord/BlogModal";
+import BlogDeleteModal from "@/components/dashbord/BlogDeleteModal";
 import NotificationBell from "@/components/dashbord/NotificationBell";
 import AdminProfileMenu from "@/components/dashbord/AdminProfileMenu";
 import { useDashboardStore } from "@/lib/dashboard-store";
@@ -52,13 +55,15 @@ export default function DashboardPage() {
                 ? "Gestion des commandes"
                 : activeTab === "cms"
                   ? "Configuration du site (CMS)"
-                  : activeTab === "qna"
-                    ? "Questions & Réponses"
-                    : activeTab === "users"
-                      ? "Gestion des clients"
-                      : activeTab === "profile"
-                        ? "Profil Administrateur & Historique"
-                        : "Méthodes de livraison"}
+                  : activeTab === "blog"
+                    ? "Gestion du Blog"
+                    : activeTab === "qna"
+                      ? "Questions & Réponses"
+                      : activeTab === "users"
+                        ? "Gestion des clients"
+                        : activeTab === "profile"
+                          ? "Profil Administrateur & Historique"
+                          : "Méthodes de livraison"}
           </h1>
           {/* flex-shrink-0 ensures the action buttons area is never compressed */}
           <div className="flex items-center gap-sm flex-shrink-0">
@@ -76,6 +81,8 @@ export default function DashboardPage() {
             <OrdersSection />
           ) : activeTab === "cms" ? (
             <CmsSection />
+          ) : activeTab === "blog" ? (
+            <BlogSection />
           ) : activeTab === "qna" ? (
             <QnaSection />
           ) : activeTab === "users" ? (
@@ -102,6 +109,10 @@ export default function DashboardPage() {
 
       {/* Delete Confirmation Modal */}
       <DeleteModal />
+
+      {/* Blog Management Modals */}
+      <BlogModal />
+      <BlogDeleteModal />
 
       {/* Global Toast Notification */}
       {toast && (

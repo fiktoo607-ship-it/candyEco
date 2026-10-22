@@ -1,9 +1,12 @@
 import { create } from 'zustand';
 import { Product } from './hooks/use-products';
+import { BlogPostItem } from '@/components/blog/types';
+
+export type DashboardTab = 'products' | 'orders' | 'cms' | 'qna' | 'users' | 'delivery-methods' | 'profile' | 'blog';
 
 interface DashboardState {
-  activeTab: 'products' | 'orders' | 'cms' | 'qna' | 'users' | 'delivery-methods' | 'profile';
-  setActiveTab: (tab: 'products' | 'orders' | 'cms' | 'qna' | 'users' | 'delivery-methods' | 'profile') => void;
+  activeTab: DashboardTab;
+  setActiveTab: (tab: DashboardTab) => void;
 
   // Orders Search & Pagination
   orderSearchQuery: string;
@@ -19,7 +22,7 @@ interface DashboardState {
   currentPage: number;
   setCurrentPage: (page: number) => void;
 
-  // Modals & Controls
+  // Products Modals & Controls
   isModalOpen: boolean;
   setIsModalOpen: (open: boolean) => void;
   modalMode: 'create' | 'edit';
@@ -34,10 +37,28 @@ interface DashboardState {
 
   defaultCategory: string;
 
-  // Helpers to open/close modal and delete
+  // Helpers to open/close product modal and delete
   openCreate: (defaultCategory: string) => void;
   openEdit: (product: Product) => void;
   openDelete: (product: Product) => void;
+
+  // Blog Modals & Controls
+  isBlogModalOpen: boolean;
+  setIsBlogModalOpen: (open: boolean) => void;
+  blogModalMode: 'create' | 'edit';
+  setBlogModalMode: (mode: 'create' | 'edit') => void;
+  editingBlogPost: BlogPostItem | null;
+  setEditingBlogPost: (post: BlogPostItem | null) => void;
+
+  isBlogDeleteOpen: boolean;
+  setIsBlogDeleteOpen: (open: boolean) => void;
+  blogToDelete: BlogPostItem | null;
+  setBlogToDelete: (post: BlogPostItem | null) => void;
+
+  // Blog helpers
+  openCreateBlog: () => void;
+  openEditBlog: (post: BlogPostItem) => void;
+  openDeleteBlog: (post: BlogPostItem) => void;
 
   // Toast notifications
   toast: { message: string; type: 'success' | 'error' } | null;
@@ -91,6 +112,36 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   openDelete: (p) => set({
     productToDelete: p,
     isDeleteOpen: true,
+  }),
+
+  // Blog state
+  isBlogModalOpen: false,
+  setIsBlogModalOpen: (isBlogModalOpen) => set({ isBlogModalOpen }),
+  blogModalMode: 'create',
+  setBlogModalMode: (blogModalMode) => set({ blogModalMode }),
+  editingBlogPost: null,
+  setEditingBlogPost: (editingBlogPost) => set({ editingBlogPost }),
+
+  isBlogDeleteOpen: false,
+  setIsBlogDeleteOpen: (isBlogDeleteOpen) => set({ isBlogDeleteOpen }),
+  blogToDelete: null,
+  setBlogToDelete: (blogToDelete) => set({ blogToDelete }),
+
+  openCreateBlog: () => set({
+    blogModalMode: 'create',
+    editingBlogPost: null,
+    isBlogModalOpen: true,
+  }),
+
+  openEditBlog: (post) => set({
+    blogModalMode: 'edit',
+    editingBlogPost: post,
+    isBlogModalOpen: true,
+  }),
+
+  openDeleteBlog: (post) => set({
+    blogToDelete: post,
+    isBlogDeleteOpen: true,
   }),
 
   toast: null,

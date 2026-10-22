@@ -41,6 +41,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.7,
     },
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: staticLastModified,
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
   ];
 
   try {
@@ -61,9 +67,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
-    return [...staticRoutes, ...productRoutes];
+    const blogPosts = prisma.blogPost?.findMany
+      ? await prisma.blogPost.findMany({
+          where: {
+            isPublished: true,
+            OR: [
+              { publishedAt: null },
+              { publishedAt: { lte: new Date() } },
+            ],
+          },
+          select: {
+            slug: true,
+            updatedAt: true,
+          },
+        })
+      : [];
+
+    const blogRoutes: MetadataRoute.Sitemap = blogPosts.map((post) => ({
+      url: `${baseUrl}/blog/${post.slug}`,
+      lastModified: post.updatedAt ? new Date(post.updatedAt) : staticLastModified,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    }));
+
+    return [...staticRoutes, ...productRoutes, ...blogRoutes];
   } catch (error) {
-    console.error('Failed to generate product sitemap entries:', error);
+    console.error('Failed to generate dynamic sitemap entries:', error);
     return staticRoutes;
   }
 }

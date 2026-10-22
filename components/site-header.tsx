@@ -16,6 +16,7 @@ import PwaInstallButton from './PwaInstallButton';
 const navigationLinks = [
   { href: '/home', label: dictionary.navigation.home },
   { href: '/our-product', label: dictionary.navigation.products },
+  { href: '/blog', label: 'Blog' },
   { href: '/about', label: dictionary.navigation.about },
   { href: '/contact', label: dictionary.navigation.contact }
 ];

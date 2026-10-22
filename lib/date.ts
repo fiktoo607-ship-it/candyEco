@@ -20,3 +20,16 @@ export function formatFrenchDate(dateInput: Date | string | null | undefined): s
   
   return `${day} ${month} ${year}, ${hours}:${minutes}`;
 }
+
+export function formatBlogDate(dateInput: Date | string | null | undefined): string {
+  if (!dateInput) return '—';
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime()) || date.getTime() === 0) return '—';
+
+  const day = date.getDate();
+  const months = [
+    'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+    'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+  ];
+  return `${day} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}

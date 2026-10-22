@@ -16,7 +16,7 @@ export default function Sidebar() {
   const [isMounted, setIsMounted] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
 
-  const navigateToTab = (tab: 'products' | 'orders' | 'cms' | 'qna' | 'users' | 'delivery-methods' | 'profile') => {
+  const navigateToTab = (tab: 'products' | 'orders' | 'cms' | 'qna' | 'users' | 'delivery-methods' | 'profile' | 'blog') => {
     setActiveTab(tab);
     if (pathname !== '/dashboard') {
       router.push('/dashboard');
@@ -162,6 +162,21 @@ export default function Sidebar() {
                 </button>
 
                 <button
+                  onClick={() => setActiveTab("blog")}
+                  className={`group flex items-center gap-0 hover:gap-xs px-2 py-2 rounded-xl text-left transition-all duration-300 font-semibold overflow-hidden max-w-[40px] hover:max-w-[200px] h-[40px] ${
+                    activeTab === "blog"
+                      ? "bg-primary-container/10 text-primary"
+                      : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+                  }`}
+                  title="Articles Blog"
+                >
+                  <span className="material-symbols-outlined text-xl select-none flex-shrink-0 w-[24px] h-[24px] flex items-center justify-center">article</span>
+                  <span suppressHydrationWarning className="whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 max-w-0 group-hover:max-w-[150px] overflow-hidden text-xs">
+                    Articles Blog
+                  </span>
+                </button>
+
+                <button
                   onClick={() => setActiveTab("qna")}
                   className={`group flex items-center gap-0 hover:gap-xs px-2 py-2 rounded-xl text-left transition-all duration-300 font-semibold overflow-hidden max-w-[40px] hover:max-w-[200px] h-[40px] ${
                     activeTab === "qna"
@@ -289,6 +304,19 @@ export default function Sidebar() {
               >
                 <span className="material-symbols-outlined text-xl select-none">auto_stories</span>
                 {!activeCollapsed && <span suppressHydrationWarning className="whitespace-nowrap">Gestion contenu</span>}
+              </button>
+
+              <button
+                onClick={() => { setActiveTab("blog"); setIsOpen(false); }}
+                className={`flex items-center ${activeCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'} rounded-xl text-left transition-all duration-200 font-semibold w-full ${
+                  activeTab === "blog"
+                    ? "bg-primary-container/10 text-primary"
+                    : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"
+                }`}
+                title={activeCollapsed ? "Articles Blog" : undefined}
+              >
+                <span className="material-symbols-outlined text-xl select-none">article</span>
+                {!activeCollapsed && <span suppressHydrationWarning className="whitespace-nowrap">Articles Blog</span>}
               </button>
 
               <button

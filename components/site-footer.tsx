@@ -34,6 +34,27 @@ export default function SiteFooter({
         </div>
 
         <div className="flex flex-col gap-sm">
+          <span className="text-sm font-semibold uppercase tracking-[0.2em] text-on-surface-variant">Navigation</span>
+          <div className="flex flex-col gap-xs">
+            <Link href="/home" className="text-base text-on-surface-variant transition-colors hover:text-primary">
+              {dictionary.navigation.home}
+            </Link>
+            <Link href="/our-product" className="text-base text-on-surface-variant transition-colors hover:text-primary">
+              {dictionary.navigation.products}
+            </Link>
+            <Link href="/blog" className="text-base text-on-surface-variant transition-colors hover:text-primary">
+              Blog
+            </Link>
+            <Link href="/about" className="text-base text-on-surface-variant transition-colors hover:text-primary">
+              {dictionary.navigation.about}
+            </Link>
+            <Link href="/contact" className="text-base text-on-surface-variant transition-colors hover:text-primary">
+              {dictionary.navigation.contact}
+            </Link>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-sm">
           <span className="text-sm font-semibold uppercase tracking-[0.2em] text-on-surface-variant">{dictionary.footer.followUs}</span>
           <div className="flex flex-col gap-xs">
             {socialLinks.map((link) => (
