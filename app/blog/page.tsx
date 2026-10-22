@@ -91,9 +91,6 @@ export default async function BlogPage() {
 
         {/* Page Header */}
         <header className="mb-6 md:mb-10 text-center max-w-3xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
-            <span>✨ Journal Artisanal</span>
-          </div>
           <h1 className="text-3xl md:text-5xl font-display font-bold text-on-surface tracking-tight">
             Le Blog Gourmand & Artisanal
           </h1>

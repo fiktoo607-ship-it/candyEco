@@ -77,12 +77,6 @@ export default function BlogHero({ post }: BlogHeroProps) {
             </div>
           )}
 
-          {/* Featured pill badge */}
-          <div className="absolute top-4 left-4 flex items-center gap-2">
-            <span className="bg-secondary-fixed text-on-secondary-fixed font-bold text-xs uppercase px-3 py-1 rounded-full shadow-md tracking-wider">
-              ⭐ À la une
-            </span>
-          </div>
         </Link>
 
         {/* Content Column */}
