@@ -7,6 +7,7 @@ import { useDashboardStore } from '@/lib/dashboard-store';
 import { useBlogPosts, useUpdateBlogPost } from '@/lib/hooks/use-blog';
 import { BlogPostItem, BLOG_CATEGORIES } from '@/components/blog/types';
 import { formatFrenchDate } from '@/lib/date';
+import { containsArabic } from '@/lib/a11y';
 
 export default function BlogSection() {
   const { openCreateBlog, openEditBlog, openDeleteBlog, showToast } = useDashboardStore();
@@ -201,83 +202,25 @@ export default function BlogSection() {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-on-surface border-collapse">
-              <thead>
-                <tr className="border-b border-outline-variant/20 bg-surface-container-low text-xs font-bold uppercase tracking-wider text-outline">
-                  <th scope="col" className="px-4 py-3.5">
-                    Article
-                  </th>
-                  <th scope="col" className="px-4 py-3.5">
-                    Catégorie
-                  </th>
-                  <th scope="col" className="px-4 py-3.5">
-                    Lecture
-                  </th>
-                  <th scope="col" className="px-4 py-3.5">
-                    Statut
-                  </th>
-                  <th scope="col" className="px-4 py-3.5">
-                    Date
-                  </th>
-                  <th scope="col" className="px-4 py-3.5 text-right">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant/15">
-                {posts.map((post) => (
-                  <tr
-                    key={post.id}
-                    className="hover:bg-surface-container-low/40 transition-colors group"
-                  >
-                    {/* Article Thumbnail + Title & Slug */}
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="relative h-12 w-16 rounded-lg overflow-hidden bg-surface-container-high flex-shrink-0 border border-outline-variant/30">
-                          {post.coverImage ? (
-                            <Image
-                              src={post.coverImage}
-                              alt={post.title}
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-outline">
-                              <span className="material-symbols-outlined text-base">image</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0 max-w-xs md:max-w-sm">
-                          <p className="font-bold text-on-surface truncate group-hover:text-primary transition-colors">
-                            {post.title}
-                          </p>
-                          <p className="text-xs text-outline font-mono truncate">
-                            /blog/{post.slug}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Category Tag */}
-                    <td className="px-4 py-3.5">
+          <>
+            {/* Mobile/Tablet Card Grid Layout (< 1024px) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-md p-md lg:hidden bg-surface/20">
+              {posts.map((post) => (
+                <div
+                  key={post.id}
+                  className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-soft space-y-md hover:border-primary/20 transition-all flex flex-col justify-between"
+                >
+                  <div className="space-y-sm">
+                    {/* Header: Category & Status */}
+                    <div className="flex items-center justify-between gap-sm border-b border-outline-variant/10 pb-sm">
                       <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-container-high text-primary whitespace-nowrap">
                         {post.category}
                       </span>
-                    </td>
-
-                    {/* Reading Time */}
-                    <td className="px-4 py-3.5 whitespace-nowrap text-xs text-on-surface-variant font-medium">
-                      {post.readingTime || 3} min
-                    </td>
-
-                    {/* Status Badge (Publié / Brouillon) */}
-                    <td className="px-4 py-3.5">
                       <button
                         type="button"
                         onClick={() => handleTogglePublished(post)}
                         title="Cliquer pour basculer le statut"
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
                           post.isPublished
                             ? 'bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20'
                             : 'bg-amber-500/10 text-amber-800 hover:bg-amber-500/20'
@@ -290,59 +233,253 @@ export default function BlogSection() {
                         />
                         <span>{post.isPublished ? 'Publié' : 'Brouillon'}</span>
                       </button>
-                    </td>
+                    </div>
 
-                    {/* Date */}
-                    <td className="px-4 py-3.5 text-xs text-outline whitespace-nowrap">
-                      {formatFrenchDate(post.publishedAt || post.createdAt)}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1 justify-end">
-                        {/* Public Link */}
-                        <Link
-                          href={`/blog/${post.slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg text-outline hover:text-primary hover:bg-surface-variant transition-colors"
-                          title="Voir l'article en ligne"
-                        >
-                          <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
-                            visibility
-                          </span>
-                        </Link>
-
-                        {/* Edit Button */}
-                        <button
-                          type="button"
-                          onClick={() => openEditBlog(post)}
-                          className="p-1.5 rounded-lg text-outline hover:text-primary hover:bg-surface-variant transition-colors"
-                          title="Modifier l'article"
-                        >
-                          <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
-                            edit
-                          </span>
-                        </button>
-
-                        {/* Delete Button */}
-                        <button
-                          type="button"
-                          onClick={() => openDeleteBlog(post)}
-                          className="p-1.5 rounded-lg text-outline hover:text-error hover:bg-error/10 transition-colors"
-                          title="Supprimer l'article"
-                        >
-                          <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
-                            delete
-                          </span>
-                        </button>
+                    {/* Article Media & Information */}
+                    <div className="flex items-start gap-3">
+                      <div className="relative h-16 w-20 rounded-xl overflow-hidden bg-surface-container-high flex-shrink-0 border border-outline-variant/30 shadow-xs">
+                        {post.coverImage ? (
+                          <Image
+                            src={post.coverImage}
+                            alt={post.title}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-outline">
+                            <span className="material-symbols-outlined text-xl">image</span>
+                          </div>
+                        )}
                       </div>
-                    </td>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-on-surface text-sm line-clamp-2 leading-snug">
+                          {containsArabic(post.title) ? (
+                            <span lang="ar" dir="rtl">{post.title}</span>
+                          ) : (
+                            post.title
+                          )}
+                        </h4>
+                        <p className="text-xs text-outline font-mono truncate mt-0.5">
+                          /blog/{post.slug}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Summary excerpt if present */}
+                    {post.summary && (
+                      <p className="text-xs text-on-surface-variant line-clamp-2 bg-surface-container-low/40 p-2 rounded-lg border border-outline-variant/10">
+                        {containsArabic(post.summary) ? (
+                          <span lang="ar" dir="rtl">{post.summary}</span>
+                        ) : (
+                          post.summary
+                        )}
+                      </p>
+                    )}
+
+                    {/* Metadata: Reading time & Date */}
+                    <div className="flex items-center justify-between text-xs text-on-surface-variant bg-surface-container-low/60 rounded-xl px-3 py-2 border border-outline-variant/10">
+                      <span className="flex items-center gap-1 font-medium">
+                        <span className="material-symbols-outlined text-sm text-outline select-none">schedule</span>
+                        <span>{post.readingTime || 3} min</span>
+                      </span>
+                      <span className="flex items-center gap-1 text-outline">
+                        <span className="material-symbols-outlined text-sm select-none">calendar_today</span>
+                        <span>{formatFrenchDate(post.publishedAt || post.createdAt)}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions Footer */}
+                  <div className="flex items-center justify-between pt-sm border-t border-outline-variant/10 mt-auto">
+                    <Link
+                      href={`/blog/${post.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-xl border border-outline-variant bg-surface-container-low px-3 py-1.5 text-xs font-semibold text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors flex items-center gap-1"
+                      title="Voir l'article en ligne"
+                    >
+                      <span className="material-symbols-outlined text-sm select-none" aria-hidden="true">
+                        visibility
+                      </span>
+                      <span>Voir</span>
+                    </Link>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => openEditBlog(post)}
+                        className="rounded-xl border border-outline-variant bg-surface-container-low px-3 py-1.5 text-xs font-bold text-primary hover:bg-surface-container-high transition-colors flex items-center gap-1"
+                        title="Modifier l'article"
+                      >
+                        <span className="material-symbols-outlined text-sm select-none" aria-hidden="true">
+                          edit
+                        </span>
+                        <span>Modifier</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openDeleteBlog(post)}
+                        className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-3 py-1.5 text-xs font-bold text-error hover:bg-rose-500/10 transition-colors flex items-center gap-1"
+                        title="Supprimer l'article"
+                      >
+                        <span className="material-symbols-outlined text-sm select-none" aria-hidden="true">
+                          delete
+                        </span>
+                        <span>Supprimer</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Tabular Grid Layout (>= 1024px) */}
+            <div className="overflow-x-auto lg:block hidden">
+              <table className="min-w-[800px] w-full text-left text-sm text-on-surface border-collapse">
+                <thead>
+                  <tr className="border-b border-outline-variant/20 bg-surface-container-low text-xs font-bold uppercase tracking-wider text-outline">
+                    <th scope="col" className="px-4 py-3.5">
+                      Article
+                    </th>
+                    <th scope="col" className="px-4 py-3.5">
+                      Catégorie
+                    </th>
+                    <th scope="col" className="px-4 py-3.5">
+                      Lecture
+                    </th>
+                    <th scope="col" className="px-4 py-3.5">
+                      Statut
+                    </th>
+                    <th scope="col" className="px-4 py-3.5">
+                      Date
+                    </th>
+                    <th scope="col" className="px-4 py-3.5 text-right">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/15">
+                  {posts.map((post) => (
+                    <tr
+                      key={post.id}
+                      className="hover:bg-surface-container-low/40 transition-colors group"
+                    >
+                      {/* Article Thumbnail + Title & Slug */}
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="relative h-12 w-16 rounded-lg overflow-hidden bg-surface-container-high flex-shrink-0 border border-outline-variant/30">
+                            {post.coverImage ? (
+                              <Image
+                                src={post.coverImage}
+                                alt={post.title}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-outline">
+                                <span className="material-symbols-outlined text-base">image</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 max-w-xs md:max-w-sm">
+                            <p className="font-bold text-on-surface truncate group-hover:text-primary transition-colors">
+                              {containsArabic(post.title) ? (
+                                <span lang="ar" dir="rtl">{post.title}</span>
+                              ) : (
+                                post.title
+                              )}
+                            </p>
+                            <p className="text-xs text-outline font-mono truncate">
+                              /blog/{post.slug}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Category Tag */}
+                      <td className="px-4 py-3.5">
+                        <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-container-high text-primary whitespace-nowrap">
+                          {post.category}
+                        </span>
+                      </td>
+
+                      {/* Reading Time */}
+                      <td className="px-4 py-3.5 whitespace-nowrap text-xs text-on-surface-variant font-medium">
+                        {post.readingTime || 3} min
+                      </td>
+
+                      {/* Status Badge (Publié / Brouillon) */}
+                      <td className="px-4 py-3.5">
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePublished(post)}
+                          title="Cliquer pour basculer le statut"
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                            post.isPublished
+                              ? 'bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20'
+                              : 'bg-amber-500/10 text-amber-800 hover:bg-amber-500/20'
+                          }`}
+                        >
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              post.isPublished ? 'bg-emerald-500' : 'bg-amber-500'
+                            }`}
+                          />
+                          <span>{post.isPublished ? 'Publié' : 'Brouillon'}</span>
+                        </button>
+                      </td>
+
+                      {/* Date */}
+                      <td className="px-4 py-3.5 text-xs text-outline whitespace-nowrap">
+                        {formatFrenchDate(post.publishedAt || post.createdAt)}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center gap-1 justify-end">
+                          {/* Public Link */}
+                          <Link
+                            href={`/blog/${post.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg text-outline hover:text-primary hover:bg-surface-variant transition-colors"
+                            title="Voir l'article en ligne"
+                          >
+                            <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
+                              visibility
+                            </span>
+                          </Link>
+
+                          {/* Edit Button */}
+                          <button
+                            type="button"
+                            onClick={() => openEditBlog(post)}
+                            className="p-1.5 rounded-lg text-outline hover:text-primary hover:bg-surface-variant transition-colors"
+                            title="Modifier l'article"
+                          >
+                            <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
+                              edit
+                            </span>
+                          </button>
+
+                          {/* Delete Button */}
+                          <button
+                            type="button"
+                            onClick={() => openDeleteBlog(post)}
+                            className="p-1.5 rounded-lg text-outline hover:text-error hover:bg-error/10 transition-colors"
+                            title="Supprimer l'article"
+                          >
+                            <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
+                              delete
+                            </span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {/* Pagination Bar */}

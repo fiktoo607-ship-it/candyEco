@@ -199,6 +199,12 @@ describe('Admin Dashboard Blog Integration', () => {
 
     expect(useDashboardStore.getState().isBlogModalOpen).toBe(true);
     expect(useDashboardStore.getState().blogModalMode).toBe('create');
+
+    // Verify responsive cards and desktop table presence
+    const mobileCardsGrid = container!.querySelector('.grid.lg\\:hidden');
+    expect(mobileCardsGrid).not.toBeNull();
+    const desktopTable = container!.querySelector('.lg\\:block.hidden table');
+    expect(desktopTable).not.toBeNull();
   });
 
   it('3. BlogModal should allow creating a new post with slug generator and publish toggle', async () => {
