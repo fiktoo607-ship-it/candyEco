@@ -6,7 +6,7 @@ import TabVisibilityNotifier from '@/components/TabVisibilityNotifier';
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
-describe('Tab Visibility Notification System (Client Component)', () => {
+describe('Tab Visibility Notification System (Client Component - Issue #141 Fix)', () => {
   let mockNotificationConstructor: any;
   let mockAudioPlay: any;
   let mockRequestPermission: any;
@@ -90,143 +90,41 @@ describe('Tab Visibility Notification System (Client Component)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('should request permission and force-unregister service workers on mount', async () => {
+  it('unregisters legacy service workers on mount without requesting notification permissions (Issue #141)', async () => {
     await act(async () => {
       root!.render(<TabVisibilityNotifier />);
     });
 
     // Check SW unregistration called
     expect(mockGetRegistrations).toHaveBeenCalled();
-    // Wait for the registrations promise microtask to run
     await new Promise(resolve => setTimeout(resolve, 0));
     expect(mockUnregister).toHaveBeenCalled();
 
-    // Check Notification permission requested
-    expect(mockRequestPermission).toHaveBeenCalled();
+    // Check Notification permission was NOT requested on mount
+    expect(mockRequestPermission).not.toHaveBeenCalled();
   });
 
-  it('should play sound and show desktop notification when tab switches to hidden and permission is granted', async () => {
-    (global.Notification as any).permission = 'granted';
-    
+  it('does not request permission or attach intrusive click/keydown listeners on first touch', async () => {
     await act(async () => {
       root!.render(<TabVisibilityNotifier />);
     });
 
-    // Mock document.visibilityState
-    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
-
-    // Trigger visibilitychange event
-    const handlers = eventListeners['visibilitychange'] || [];
-    expect(handlers.length).toBe(1);
-    
-    const handler = handlers[0];
-    if (typeof handler === 'function') {
-      await act(async () => {
-        handler(new Event('visibilitychange'));
-      });
-    }
-
-    // Verify Audio play called
-    expect(audioInstances.length).toBe(1);
-    expect(audioInstances[0].src).toBe('/notification.mp3');
-    expect(mockAudioPlay).toHaveBeenCalled();
-
-    // Verify Desktop Notification triggered via standard constructor
-    expect(mockNotificationConstructor).toHaveBeenCalledWith('Revenez vite ! 🍰', expect.objectContaining({
-      body: 'Ne manquez pas vos gourmandises préférées sur Délices d\'Eva !',
-      icon: '/logo.jpeg',
-      tag: 'tab-away'
-    }));
+    // Ensure no click or keydown listeners were registered to request permission
+    expect(eventListeners['click']?.length || 0).toBe(0);
+    expect(eventListeners['keydown']?.length || 0).toBe(0);
+    expect(mockRequestPermission).not.toHaveBeenCalled();
   });
 
-  it('should not show notification if tab switches to hidden but permission is denied', async () => {
-    (global.Notification as any).permission = 'denied';
-    
+  it('does not register visibilitychange listener to play sound or show notification on tab switch', async () => {
     await act(async () => {
       root!.render(<TabVisibilityNotifier />);
     });
 
-    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    // Verify visibilitychange listener was NOT registered
+    expect(eventListeners['visibilitychange']?.length || 0).toBe(0);
 
-    const handlers = eventListeners['visibilitychange'] || [];
-    const handler = handlers[0];
-    if (typeof handler === 'function') {
-      await act(async () => {
-        handler(new Event('visibilitychange'));
-      });
-    }
-
-    // Sound should still play
-    expect(mockAudioPlay).toHaveBeenCalled();
-
-    // Notification should NOT trigger
-    expect(mockNotificationConstructor).not.toHaveBeenCalled();
-  });
-
-  it('should not trigger sound or notification when tab switches to visible', async () => {
-    (global.Notification as any).permission = 'granted';
-    
-    await act(async () => {
-      root!.render(<TabVisibilityNotifier />);
-    });
-
-    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
-
-    const handlers = eventListeners['visibilitychange'] || [];
-    const handler = handlers[0];
-    if (typeof handler === 'function') {
-      await act(async () => {
-        handler(new Event('visibilitychange'));
-      });
-    }
-
+    // Audio and desktop notification should never be called
     expect(mockAudioPlay).not.toHaveBeenCalled();
     expect(mockNotificationConstructor).not.toHaveBeenCalled();
-  });
-
-  it('should handle audio playback rejection gracefully (autoplay policy restriction)', async () => {
-    (global.Notification as any).permission = 'granted';
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-    // Force play to reject with NotAllowedError
-    mockAudioPlay.mockRejectedValue(new DOMException('NotAllowedError', 'NotAllowedError'));
-
-    await act(async () => {
-      root!.render(<TabVisibilityNotifier />);
-    });
-
-    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
-
-    const handlers = eventListeners['visibilitychange'] || [];
-    const handler = handlers[0];
-    if (typeof handler === 'function') {
-      await act(async () => {
-        handler(new Event('visibilitychange'));
-      });
-    }
-
-    // Check play was called
-    expect(mockAudioPlay).toHaveBeenCalled();
-    // Wait for the rejection promise to resolve
-    await new Promise(resolve => setTimeout(resolve, 0));
-    
-    // Check that the error was caught and logged
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('autoplay policy'));
-    consoleSpy.mockRestore();
-  });
-
-  it('should clean up the event listener on unmount', async () => {
-    await act(async () => {
-      root!.render(<TabVisibilityNotifier />);
-    });
-
-    expect(eventListeners['visibilitychange']?.length).toBe(1);
-
-    await act(async () => {
-      root!.unmount();
-      root = null;
-    });
-
-    expect(eventListeners['visibilitychange']?.length).toBe(0);
   });
 });

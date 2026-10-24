@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNotifications, useMarkNotifications, useClearNotifications, OrderNotification } from '@/lib/hooks/use-notifications';
 import { useDashboardStore } from '@/lib/dashboard-store';
+import { formatCurrency } from '@/lib/price';
 
 export function useNotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
@@ -67,9 +68,8 @@ export function useNotificationBell() {
 
           const clientName = newNotif.order?.customerName || 'Nouveau Client';
           const rawPrice = newNotif.order?.totalPrice;
-          const amount = typeof rawPrice === 'string'
-            ? rawPrice.includes('€') ? rawPrice : `${rawPrice} €`
-            : '0.00 €';
+          const formatted = formatCurrency(rawPrice);
+          const amount = formatted !== '—' ? formatted : '0.00 €';
 
           // Trigger native browser notification if permission is granted
           if ('Notification' in window && Notification.permission === 'granted') {

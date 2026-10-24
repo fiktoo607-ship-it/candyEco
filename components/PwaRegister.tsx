@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 
 export default function PwaRegister() {
   const pathname = usePathname();
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const userAcceptedUpdateRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -29,6 +30,7 @@ export default function PwaRegister() {
             if (newWorker) {
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed') {
+                  // Only prompt for update if an active controller already exists (never prompt/reload on first install)
                   if (navigator.serviceWorker.controller) {
                     setUpdateAvailable(true);
                   }
@@ -38,7 +40,7 @@ export default function PwaRegister() {
           });
 
           // Check if there is already a waiting worker on page load
-          if (reg.waiting) {
+          if (reg.waiting && navigator.serviceWorker.controller) {
             setUpdateAvailable(true);
           }
         })
@@ -46,19 +48,27 @@ export default function PwaRegister() {
           console.error('Service worker registration failed:', err);
         });
 
-      // Reload page when the new active service worker takes control
+      // Never reload aggressively on controllerchange (e.g. first visit, background installs, mid-checkout)
+      // Only reload if the user explicitly clicked "Mettre à jour"
       let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
+      const handleControllerChange = () => {
+        if (userAcceptedUpdateRef.current && !refreshing) {
           refreshing = true;
           window.location.reload();
         }
-      });
+      };
+
+      navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+
+      return () => {
+        navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      };
     }
   }, []);
 
   const handleUpdate = () => {
     if (registration && registration.waiting) {
+      userAcceptedUpdateRef.current = true;
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
     }
   };

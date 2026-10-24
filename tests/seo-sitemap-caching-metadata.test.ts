@@ -74,10 +74,15 @@ describe('SEO, Sitemap, Caching & Metadata Implementation', () => {
       expect(urls.some((u) => u.endsWith('/our-product/croissant-bio'))).toBe(true);
       expect(urls.some((u) => u.endsWith('/our-product/pain-chocolat'))).toBe(true);
 
-      expect(prisma.product.findMany).toHaveBeenCalledWith({
-        where: { state: 'exist' },
-        select: { slug: true, updatedAt: true },
-      });
+      expect(prisma.product.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            state: 'exist',
+            isPublished: true,
+          }),
+          select: { slug: true, updatedAt: true },
+        })
+      );
     });
   });
 

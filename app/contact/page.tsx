@@ -6,6 +6,8 @@ import ContactLinksCard from '@/components/contact/ContactLinksCard';
 import BakeryVisitCard from '@/components/contact/BakeryVisitCard';
 import ContactForm from '@/components/contact/ContactForm';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Contact',
   description: 'Contactez Candy Eco ou visitez notre boutique artisanale.',

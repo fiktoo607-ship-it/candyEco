@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import SiteHeader from '@/components/site-header';
@@ -39,10 +39,24 @@ function OrderTrackingContent() {
     return '';
   };
 
+  const hasOrderRef = useRef(false);
+
   useEffect(() => {
     if (!id) return;
 
+    let intervalId: NodeJS.Timeout | null = null;
+    let stopped = false;
+
+    const stopPolling = () => {
+      stopped = true;
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+
     const fetchOrder = async () => {
+      if (stopped) return;
       try {
         const token = getGuestToken();
         const url = token ? `/api/orders/${id}?token=${encodeURIComponent(token)}` : `/api/orders/${id}`;
@@ -51,27 +65,40 @@ function OrderTrackingContent() {
         const res = await fetch(url, { headers });
         if (!res.ok) {
           if (res.status === 404) {
-            throw new Error('Commande introuvable');
+            stopPolling();
+            setError('Commande introuvable');
+            return;
           }
           if (res.status === 401 || res.status === 403) {
-            throw new Error('Accès refusé. Vous devez être connecté ou disposer d\'un lien de suivi valide pour consulter cette commande.');
+            stopPolling();
+            setError('Accès refusé. Vous devez être connecté ou disposer d\'un lien de suivi valide pour consulter cette commande.');
+            return;
           }
           throw new Error('Impossible de charger les détails de la commande');
         }
         const data = await res.json();
         setOrder(data);
+        hasOrderRef.current = true;
+        setError('');
+        if (data.status === 'DELIVERED' || data.status === 'CANCELLED') {
+          stopPolling();
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+        // Keep last known good data on transient network error; only set error if we don't have order data yet
+        if (!hasOrderRef.current) {
+          setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    const interval = setInterval(fetchOrder, 15000); // Poll status periodically
-
     fetchOrder();
+    intervalId = setInterval(fetchOrder, 15000);
 
-    return () => clearInterval(interval);
+    return () => {
+      stopPolling();
+    };
   }, [id, searchParams]);
 
   const handleCancelOrder = async () => {

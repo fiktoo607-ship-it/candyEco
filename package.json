@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "scripts": {
     "dev": "node ./scripts/next-with-swc-lockfile-shim.cjs dev",
-    "build": "node ./scripts/next-with-swc-lockfile-shim.cjs build",
+    "build": "prisma generate && prisma migrate deploy && node ./scripts/next-with-swc-lockfile-shim.cjs build",
+    "vercel-build": "prisma generate && prisma migrate deploy && node ./scripts/next-with-swc-lockfile-shim.cjs build",
     "start": "node ./scripts/next-with-swc-lockfile-shim.cjs start",
     "lint": "node ./scripts/next-with-swc-lockfile-shim.cjs lint",
     "test": "vitest run",

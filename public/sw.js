@@ -11,8 +11,6 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS);
-    }).then(() => {
-      return self.skipWaiting();
     })
   );
 });
@@ -100,29 +98,52 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 4. Static / Immutable Assets -> Cache-First
+  // 4. Static / Immutable Assets -> Cache-First for /_next/static/, Stale-While-Revalidate for non-hashed assets
+  const isNextStatic = url.pathname.startsWith('/_next/static/');
   const isStatic =
-    url.pathname.startsWith('/_next/static/') ||
+    isNextStatic ||
     url.pathname.match(/\.(png|jpg|jpeg|gif|webp|svg|ico|woff2?|css|js)$/) ||
     STATIC_ASSETS.includes(url.pathname);
 
   if (isStatic) {
-    event.respondWith(
-      caches.match(request).then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        return fetch(request).then((response) => {
-          if (response && response.status === 200 && response.type === 'basic') {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            });
+    if (isNextStatic) {
+      // Immutable hashed Next.js assets: Cache-First with network fallback
+      event.respondWith(
+        caches.match(request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
           }
-          return response;
-        });
-      })
-    );
+          return fetch(request).then((response) => {
+            if (response && response.status === 200 && response.type === 'basic') {
+              const responseClone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(request, responseClone);
+              });
+            }
+            return response;
+          });
+        })
+      );
+    } else {
+      // Non-hashed assets: Stale-While-Revalidate to guarantee fresh assets across redeploys
+      event.respondWith(
+        caches.match(request).then((cachedResponse) => {
+          const fetchPromise = fetch(request)
+            .then((networkResponse) => {
+              if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                const responseClone = networkResponse.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                  cache.put(request, responseClone);
+                });
+              }
+              return networkResponse;
+            })
+            .catch(() => cachedResponse);
+
+          return cachedResponse || fetchPromise;
+        })
+      );
+    }
     return;
   }
 
