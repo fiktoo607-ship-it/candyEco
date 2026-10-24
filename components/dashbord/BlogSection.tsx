@@ -295,36 +295,36 @@ export default function BlogSection() {
                       href={`/blog/${post.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="rounded-xl border border-outline-variant bg-surface-container-low px-3 py-1.5 text-xs font-semibold text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors flex items-center gap-1"
+                      className="h-9 w-9 flex items-center justify-center rounded-xl border border-outline-variant bg-surface-container-low text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors"
                       title="Voir l'article en ligne"
+                      aria-label="Voir l'article en ligne"
                     >
-                      <span className="material-symbols-outlined text-sm select-none" aria-hidden="true">
+                      <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
                         visibility
                       </span>
-                      <span>Voir</span>
                     </Link>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => openEditBlog(post)}
-                        className="rounded-xl border border-outline-variant bg-surface-container-low px-3 py-1.5 text-xs font-bold text-primary hover:bg-surface-container-high transition-colors flex items-center gap-1"
+                        className="h-9 w-9 flex items-center justify-center rounded-xl border border-outline-variant bg-surface-container-low text-primary hover:bg-surface-container-high transition-colors"
                         title="Modifier l'article"
+                        aria-label="Modifier l'article"
                       >
-                        <span className="material-symbols-outlined text-sm select-none" aria-hidden="true">
+                        <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
                           edit
                         </span>
-                        <span>Modifier</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => openDeleteBlog(post)}
-                        className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-3 py-1.5 text-xs font-bold text-error hover:bg-rose-500/10 transition-colors flex items-center gap-1"
+                        className="h-9 w-9 flex items-center justify-center rounded-xl border border-rose-500/20 bg-rose-500/5 text-error hover:bg-rose-500/10 transition-colors"
                         title="Supprimer l'article"
+                        aria-label="Supprimer l'article"
                       >
-                        <span className="material-symbols-outlined text-sm select-none" aria-hidden="true">
+                        <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
                           delete
                         </span>
-                        <span>Supprimer</span>
                       </button>
                     </div>
                   </div>
@@ -443,6 +443,7 @@ export default function BlogSection() {
                             rel="noopener noreferrer"
                             className="p-1.5 rounded-lg text-outline hover:text-primary hover:bg-surface-variant transition-colors"
                             title="Voir l'article en ligne"
+                            aria-label="Voir l'article en ligne"
                           >
                             <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
                               visibility
@@ -455,6 +456,7 @@ export default function BlogSection() {
                             onClick={() => openEditBlog(post)}
                             className="p-1.5 rounded-lg text-outline hover:text-primary hover:bg-surface-variant transition-colors"
                             title="Modifier l'article"
+                            aria-label="Modifier l'article"
                           >
                             <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
                               edit
@@ -467,6 +469,7 @@ export default function BlogSection() {
                             onClick={() => openDeleteBlog(post)}
                             className="p-1.5 rounded-lg text-outline hover:text-error hover:bg-error/10 transition-colors"
                             title="Supprimer l'article"
+                            aria-label="Supprimer l'article"
                           >
                             <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
                               delete
