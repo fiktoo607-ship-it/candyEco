@@ -205,7 +205,7 @@ export function OrdersTable({
                           <option value="CANCELLED">Annulée</option>
                         )}
                       </select>
-                      <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none select-none text-base">
+                      <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none select-none text-base" aria-hidden="true">
                         arrow_drop_down
                       </span>
                     </div>
@@ -213,11 +213,11 @@ export function OrdersTable({
                     {order.status === 'ACCEPTED' && (
                       <button
                         onClick={() => onPrintOrder(order)}
-                        className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-[8px] text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors flex items-center justify-center gap-xs h-[34px]"
+                        className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-[8px] text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors flex items-center justify-center gap-xs h-[34px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         title="Imprimer la commande"
                         aria-label="Imprimer la commande"
                       >
-                        <svg className="w-4 h-4 text-on-surface" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-on-surface" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.821V21h10.56v-7.179m-10.56 0h10.56m-10.56 0V11.25M17.28 13.821V11.25M17.28 11.25a2.25 2.25 0 00-2.25-2.25h-6.06a2.25 2.25 0 00-2.25 2.25m10.56 0V6a2.25 2.25 0 00-2.25-2.25H8.25A2.25 2.25 0 006 6v5.25m11.25 0h.008v.008h-.008V11.25zm-12 0h.008v.008H5.25V11.25z" />
                         </svg>
                       </button>
@@ -225,9 +225,10 @@ export function OrdersTable({
 
                     <button
                       onClick={() => onViewDetails(order)}
-                      className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-[8px] text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors flex items-center justify-center gap-xs h-[34px]"
+                      className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-[8px] text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors flex items-center justify-center gap-xs h-[34px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                      aria-label={`Voir les détails de la commande ${order.reference || order.id}`}
                     >
-                      <span className="material-symbols-outlined text-sm">visibility</span>
+                      <span className="material-symbols-outlined text-sm" aria-hidden="true">visibility</span>
                       Détails
                     </button>
                   </div>
@@ -320,27 +321,28 @@ export function OrdersTable({
                           <option value="CANCELLED">Annulée</option>
                         )}
                       </select>
-                      <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none select-none text-base">
+                      <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none select-none text-base" aria-hidden="true">
                         arrow_drop_down
                       </span>
                     </div>
                     {order.status === 'ACCEPTED' && (
                       <button
                         onClick={() => onPrintOrder(order)}
-                        className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors h-[34px] flex items-center justify-center gap-xs"
+                        className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors h-[34px] flex items-center justify-center gap-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         title="Imprimer la commande"
                         aria-label="Imprimer la commande"
                       >
-                        <svg className="w-4 h-4 text-on-surface" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-on-surface" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.821V21h10.56v-7.179m-10.56 0h10.56m-10.56 0V11.25M17.28 13.821V11.25M17.28 11.25a2.25 2.25 0 00-2.25-2.25h-6.06a2.25 2.25 0 00-2.25 2.25m10.56 0V6a2.25 2.25 0 00-2.25-2.25H8.25A2.25 2.25 0 006 6v5.25m11.25 0h.008v.008h-.008V11.25zm-12 0h.008v.008H5.25V11.25z" />
                         </svg>
                       </button>
                     )}
                     <button
                       onClick={() => onViewDetails(order)}
-                      className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors h-[34px] flex items-center gap-xs"
+                      className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors h-[34px] flex items-center gap-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                      aria-label={`Voir les détails de la commande ${order.reference || order.id}`}
                     >
-                      <span className="material-symbols-outlined text-sm">visibility</span>
+                      <span className="material-symbols-outlined text-sm" aria-hidden="true">visibility</span>
                       Détails
                     </button>
                   </div>
@@ -360,22 +362,23 @@ export function OrdersTable({
               {Math.min(orderCurrentPage * ordersPerPage, totalOrders)} sur {totalOrders} commandes
             </span>
             <div className="flex items-center gap-xs">
-              <span className="text-xs text-on-surface-variant font-medium">Afficher :</span>
+              <label htmlFor="orders-per-page-select" className="text-xs text-on-surface-variant font-medium">Afficher :</label>
               <div className="relative">
                 <select
+                  id="orders-per-page-select"
                   value={ordersPerPage}
                   onChange={(e) => {
                     setOrdersPerPage(Number(e.target.value));
                     setOrderCurrentPage(1);
                   }}
-                  className="rounded-xl border border-outline-variant bg-surface-container-low pl-sm pr-6 py-xs text-xs text-on-surface outline-none focus:border-primary cursor-pointer h-8 appearance-none"
+                  className="rounded-xl border border-outline-variant bg-surface-container-low pl-sm pr-6 py-xs text-xs text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer h-8 appearance-none"
                 >
                   <option value="5">5</option>
                   <option value="10">10</option>
                   <option value="25">25</option>
                   <option value="50">50</option>
                 </select>
-                <span className="material-symbols-outlined absolute right-1 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
+                <span className="material-symbols-outlined absolute right-1 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none" aria-hidden="true">
                   arrow_drop_down
                 </span>
               </div>
@@ -385,7 +388,8 @@ export function OrdersTable({
             <button
               disabled={orderCurrentPage === 1}
               onClick={() => setOrderCurrentPage(Math.max(orderCurrentPage - 1, 1))}
-              className="rounded-xl border border-outline-variant text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 max-sm:h-11 max-sm:w-11 flex items-center justify-center font-bold p-0"
+              aria-label="Page précédente"
+              className="rounded-xl border border-outline-variant text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 max-sm:h-11 max-sm:w-11 flex items-center justify-center font-bold p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               ‹
             </button>
@@ -394,7 +398,9 @@ export function OrdersTable({
                 <button
                   key={page}
                   onClick={() => setOrderCurrentPage(page)}
-                  className={`rounded-xl text-xs md:text-sm max-sm:text-base font-semibold transition-all h-9 w-9 max-sm:h-11 max-sm:w-11 flex items-center justify-center p-0 ${
+                  aria-label={`Page ${page}`}
+                  aria-current={orderCurrentPage === page ? "page" : undefined}
+                  className={`rounded-xl text-xs md:text-sm max-sm:text-base font-semibold transition-all h-9 w-9 max-sm:h-11 max-sm:w-11 flex items-center justify-center p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                     orderCurrentPage === page
                       ? 'bg-primary text-white shadow-soft font-bold'
                       : 'border border-outline-variant text-on-surface hover:bg-surface-container-low'
@@ -407,7 +413,8 @@ export function OrdersTable({
             <button
               disabled={orderCurrentPage === totalPages}
               onClick={() => setOrderCurrentPage(Math.min(orderCurrentPage + 1, totalPages))}
-              className="rounded-xl border border-outline-variant text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 max-sm:h-11 max-sm:w-11 flex items-center justify-center font-bold p-0"
+              aria-label="Page suivante"
+              className="rounded-xl border border-outline-variant text-on-surface transition-all hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed h-9 w-9 max-sm:h-11 max-sm:w-11 flex items-center justify-center font-bold p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               ›
             </button>

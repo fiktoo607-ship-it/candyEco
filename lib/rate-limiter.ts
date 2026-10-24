@@ -48,9 +48,28 @@ export function resetRateLimiter(): void {
 }
 
 /**
+ * Helper to safely extract a header value from Request or NextRequest,
+ * whether headers is a Headers instance or a plain object.
+ */
+function getHeader(request: Request | NextRequest, name: string): string | null {
+  if (!request || !request.headers) return null;
+  if (typeof request.headers.get === 'function') {
+    return request.headers.get(name);
+  }
+  const headers = request.headers as unknown as Record<string, string | string[] | undefined>;
+  const key = Object.keys(headers).find((k) => k.toLowerCase() === name.toLowerCase());
+  if (!key) return null;
+  const val = headers[key];
+  if (Array.isArray(val)) return val.join(', ');
+  if (typeof val === 'string') return val;
+  return null;
+}
+
+/**
  * Extracts a trustworthy client IP address from request.
- * Prioritizes request.ip and parses the rightmost trusted proxy hop from X-Forwarded-For
- * to prevent client header spoofing attacks (Issue #7).
+ * Prioritizes request.ip / socket address and verified platform/proxy headers
+ * (x-vercel-forwarded-for, x-real-ip, cf-connecting-ip) before falling back
+ * to rightmost proxy hop of X-Forwarded-For to prevent client spoofing (Issue #7).
  */
 export function getClientIp(request: Request | NextRequest): string {
   if (!request) return '127.0.0.1';
@@ -68,15 +87,39 @@ export function getClientIp(request: Request | NextRequest): string {
 
   if (!request.headers) return '127.0.0.1';
 
-  // 2. Parse X-Forwarded-For: parse only the rightmost trusted proxy hop
-  // Prevents attackers from spoofing arbitrary IPs at the beginning of the list
-  let forwarded: string | null = null;
-  if (typeof request.headers.get === 'function') {
-    forwarded = request.headers.get('x-forwarded-for');
-  } else if ((request.headers as any)['x-forwarded-for']) {
-    forwarded = String((request.headers as any)['x-forwarded-for']);
+  // 2. Verified platform / reverse proxy headers:
+  // 2a. Vercel edge network (x-vercel-forwarded-for appends verified client IP as rightmost hop)
+  const vercelForwarded = getHeader(request, 'x-vercel-forwarded-for');
+  if (vercelForwarded) {
+    const hops = vercelForwarded.split(',').map((h) => h.trim()).filter(Boolean);
+    if (hops.length > 0) {
+      const rightmost = hops[hops.length - 1];
+      if (rightmost) return rightmost;
+    }
   }
 
+  // 2b. Reverse proxy: x-real-ip (Nginx / Vercel verified client IP)
+  const realIp = getHeader(request, 'x-real-ip');
+  if (realIp && realIp.trim()) {
+    const hops = realIp.split(',').map((h) => h.trim()).filter(Boolean);
+    if (hops.length > 0) {
+      const rightmost = hops[hops.length - 1];
+      if (rightmost) return rightmost;
+    }
+  }
+
+  // 2c. Cloudflare: cf-connecting-ip
+  const cfConnectingIp = getHeader(request, 'cf-connecting-ip');
+  if (cfConnectingIp && cfConnectingIp.trim()) {
+    const hops = cfConnectingIp.split(',').map((h) => h.trim()).filter(Boolean);
+    if (hops.length > 0) {
+      const rightmost = hops[hops.length - 1];
+      if (rightmost) return rightmost;
+    }
+  }
+
+  // 3. Fallback to rightmost proxy hop of X-Forwarded-For
+  const forwarded = getHeader(request, 'x-forwarded-for');
   if (forwarded) {
     const hops = forwarded.split(',').map((h) => h.trim()).filter(Boolean);
     if (hops.length > 0) {
@@ -84,15 +127,6 @@ export function getClientIp(request: Request | NextRequest): string {
       if (rightmost) return rightmost;
     }
   }
-
-  // 3. Fallback to X-Real-IP if provided by reverse proxy
-  let realIp: string | null = null;
-  if (typeof request.headers.get === 'function') {
-    realIp = request.headers.get('x-real-ip');
-  } else if ((request.headers as any)['x-real-ip']) {
-    realIp = String((request.headers as any)['x-real-ip']);
-  }
-  if (realIp && realIp.trim()) return realIp.trim();
 
   return '127.0.0.1';
 }

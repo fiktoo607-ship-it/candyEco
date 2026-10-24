@@ -176,6 +176,16 @@ describe('Admin Multi-Device & 2-Admin Concurrency Management', () => {
       expect(data.error).toBe('Unauthorized');
     });
 
+    it('returns 401 Unauthorized on GET /api/admin/session/active when authenticated as non-admin customer', async () => {
+      vi.mocked(getServerSession).mockResolvedValue({
+        user: { id: 'cust-1', role: 'customer' },
+      } as any);
+      const res = await getActiveSessionsRoute();
+      expect(res.status).toBe(401);
+      const data = await res.json();
+      expect(data.error).toBe('Unauthorized');
+    });
+
     it('returns sanitized active sessions on GET /api/admin/session/active for authenticated admins with deviceId stripped', async () => {
       vi.mocked(getServerSession).mockResolvedValue({
         user: { id: 'admin-1', role: 'admin' },
@@ -327,6 +337,66 @@ describe('Admin Multi-Device & 2-Admin Concurrency Management', () => {
       expect(rateLimited.length).toBeGreaterThanOrEqual(10);
     });
 
+    it('rejects POST /api/admin/session/active with 400 on missing credentials', async () => {
+      const req = {
+        json: vi.fn().mockResolvedValue({}),
+      } as any;
+      const res = await postActiveSessionsRoute(req);
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toBe('MissingCredentials');
+    });
+
+    it('rejects POST /api/admin/session/active with 400 on oversize passwords to prevent bcrypt CPU DoS', async () => {
+      const req = {
+        json: vi.fn().mockResolvedValue({ phone: '0123456789', password: 'A'.repeat(150) }),
+      } as any;
+      const res = await postActiveSessionsRoute(req);
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toBe('InvalidCredentials');
+    });
+
+    it('enforces per-phone rate limiting on POST across different IP addresses to prevent distributed credential stuffing', async () => {
+      resetRateLimiter();
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+
+      const targetPhone = '0777777777';
+
+      // 5 failed attempts from 5 distinct IP addresses
+      for (let i = 1; i <= 5; i++) {
+        const req = {
+          headers: { get: () => `203.0.113.${i}` },
+          json: vi.fn().mockResolvedValue({ phone: targetPhone, password: 'guessed-password' }),
+        } as any;
+        const res = await postActiveSessionsRoute(req);
+        expect(res.status).toBe(401);
+      }
+
+      // 6th attempt from a brand new 6th IP against the same phone must be rate-limited (429)
+      const reqBlocked = {
+        headers: { get: () => '203.0.113.99' },
+        json: vi.fn().mockResolvedValue({ phone: targetPhone, password: 'guessed-password' }),
+      } as any;
+      const resBlocked = await postActiveSessionsRoute(reqBlocked);
+      expect(resBlocked.status).toBe(429);
+      const data = await resBlocked.json();
+      expect(data.error).toContain('Trop de tentatives sur ce compte');
+    });
+
+    it('performs constant-time dummy bcrypt comparison when phone does not belong to an admin to prevent timing oracle', async () => {
+      resetRateLimiter();
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+
+      const req = {
+        headers: { get: () => '192.168.1.50' },
+        json: vi.fn().mockResolvedValue({ phone: '0900000000', password: 'timing-test-password' }),
+      } as any;
+
+      await postActiveSessionsRoute(req);
+      expect(bcrypt.compare).toHaveBeenCalledWith('timing-test-password', expect.stringContaining('$2a$'));
+    });
+
     it('releases admin sessions via DELETE /api/admin/session/active with valid credentials', async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValue({
         id: 'admin-delete-test',
@@ -366,6 +436,32 @@ describe('Admin Multi-Device & 2-Admin Concurrency Management', () => {
 
       const res = await deleteActiveSessionsRoute(req);
       expect(res.status).toBe(401);
+    });
+
+    it('enforces per-phone rate limiting on DELETE across different IP addresses', async () => {
+      resetRateLimiter();
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+
+      const targetPhone = '0555998877';
+
+      for (let i = 1; i <= 5; i++) {
+        const req = {
+          headers: { get: () => `198.51.100.${i}` },
+          json: vi.fn().mockResolvedValue({ phone: targetPhone, password: 'guess' }),
+        } as any;
+        const res = await deleteActiveSessionsRoute(req);
+        expect(res.status).toBe(401);
+      }
+
+      // 6th attempt from a fresh IP
+      const reqBlocked = {
+        headers: { get: () => '198.51.100.200' },
+        json: vi.fn().mockResolvedValue({ phone: targetPhone, password: 'guess' }),
+      } as any;
+      const resBlocked = await deleteActiveSessionsRoute(reqBlocked);
+      expect(resBlocked.status).toBe(429);
+      const data = await resBlocked.json();
+      expect(data.error).toContain('Trop de tentatives sur ce compte');
     });
   });
 

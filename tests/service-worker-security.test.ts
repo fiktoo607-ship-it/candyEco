@@ -50,6 +50,23 @@ describe('Service Worker Notification Click Security & CSPRNG Device ID', () => 
       vm.runInContext(swCode, swContext);
     });
 
+    it('does not call self.skipWaiting() on install event (Issue #142)', async () => {
+      const installHandler = registeredListeners['install'];
+      expect(installHandler).toBeDefined();
+
+      let waitUntilPromise: Promise<any> | null = null;
+      const mockEvent = {
+        waitUntil: (p: Promise<any>) => {
+          waitUntilPromise = p;
+        },
+      };
+
+      installHandler(mockEvent);
+      await waitUntilPromise;
+
+      expect(swContext.self.skipWaiting).not.toHaveBeenCalled();
+    });
+
     it('sanitizes javascript:alert(1) and redirects to safe default "/" on notification click', async () => {
       const notificationClickHandler = registeredListeners['notificationclick'];
       expect(notificationClickHandler).toBeDefined();

@@ -95,8 +95,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid status transition' }, { status: 400 });
     }
 
-    // Optional client expected status check
-    const clientExpectedStatus = body.expectedStatus || body.currentStatus;
+    // Optional client expected / previous status check for optimistic concurrency (Issue #59, #138)
+    const clientExpectedStatus = body.previousStatus || body.expectedStatus || body.currentStatus;
     if (clientExpectedStatus && String(clientExpectedStatus).trim().toUpperCase() !== currentStatus) {
       return NextResponse.json(
         { error: 'Conflit : le statut actuel de la commande ne correspond pas au statut attendu.' },
@@ -104,11 +104,15 @@ export async function PUT(
       );
     }
 
-    // Optimistic locking / conditional status update to solve TOCTOU race conditions (Issue #59)
+    const expectedStatusCondition = clientExpectedStatus
+      ? String(clientExpectedStatus).trim().toUpperCase()
+      : existingOrder.status;
+
+    // Optimistic locking / conditional status update to solve TOCTOU race conditions (Issue #59, #138)
     const updateResult = await prisma.order.updateMany({
       where: {
         id,
-        status: existingOrder.status,
+        status: expectedStatusCondition,
       },
       data: { status: targetStatus },
     });

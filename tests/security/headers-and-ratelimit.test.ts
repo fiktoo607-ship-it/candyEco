@@ -94,6 +94,101 @@ describe('Security: Headers, Rate Limit & Endpoint Authorization (Issues #7, #14
       expect(extractedIp).not.toBe(spoofedClientHop);
       expect(extractedIp).toBe(trustedProxyHop);
     });
+
+    it('should NOT allow bypassing the rate limiter with spoofed X-Forwarded-For when originating from the same Vercel proxy connection (x-vercel-forwarded-for)', async () => {
+      const realPeerIp = '198.51.100.88';
+      const options = { keyPrefix: 'vercel-spoof-test', limit: 2, windowSeconds: 60 };
+
+      // Attacker sends 3 requests from the same Vercel connection, rotating x-forwarded-for headers:
+      const req1 = new NextRequest('http://localhost/api/test', {
+        headers: {
+          'x-forwarded-for': '1.2.3.4',
+          'x-vercel-forwarded-for': realPeerIp,
+        },
+      });
+
+      const req2 = new NextRequest('http://localhost/api/test', {
+        headers: {
+          'x-forwarded-for': '5.6.7.8',
+          'x-vercel-forwarded-for': realPeerIp,
+        },
+      });
+
+      const req3 = new NextRequest('http://localhost/api/test', {
+        headers: {
+          'x-forwarded-for': '9.10.11.12',
+          'x-vercel-forwarded-for': realPeerIp,
+        },
+      });
+
+      // getClientIp must prioritize verified x-vercel-forwarded-for over client-injected x-forwarded-for
+      expect(getClientIp(req1)).toBe(realPeerIp);
+      expect(getClientIp(req2)).toBe(realPeerIp);
+      expect(getClientIp(req3)).toBe(realPeerIp);
+
+      const res1 = await checkRateLimit(getClientIp(req1), options);
+      expect(res1.success).toBe(true);
+      expect(res1.remaining).toBe(1);
+
+      const res2 = await checkRateLimit(getClientIp(req2), options);
+      expect(res2.success).toBe(true);
+      expect(res2.remaining).toBe(0);
+
+      // Third request must be blocked because the originating connection exceeded the limit of 2,
+      // and spoofing x-forwarded-for must not reset the rate limiter counter.
+      const res3 = await checkRateLimit(getClientIp(req3), options);
+      expect(res3.success).toBe(false);
+      expect(res3.remaining).toBe(0);
+      expect(res3.retryAfter).toBeGreaterThan(0);
+    });
+
+    it('should NOT allow bypassing the rate limiter with spoofed X-Forwarded-For when reverse proxy sets x-real-ip', async () => {
+      const proxyPeerIp = '203.0.113.50';
+      const options = { keyPrefix: 'x-real-ip-test', limit: 2, windowSeconds: 60 };
+
+      const req1 = new NextRequest('http://localhost/api/test', {
+        headers: {
+          'x-forwarded-for': '10.0.0.1',
+          'x-real-ip': proxyPeerIp,
+        },
+      });
+
+      const req2 = new NextRequest('http://localhost/api/test', {
+        headers: {
+          'x-forwarded-for': '10.0.0.2',
+          'x-real-ip': proxyPeerIp,
+        },
+      });
+
+      const req3 = new NextRequest('http://localhost/api/test', {
+        headers: {
+          'x-forwarded-for': '10.0.0.3',
+          'x-real-ip': proxyPeerIp,
+        },
+      });
+
+      expect(getClientIp(req1)).toBe(proxyPeerIp);
+      expect(getClientIp(req2)).toBe(proxyPeerIp);
+      expect(getClientIp(req3)).toBe(proxyPeerIp);
+
+      const res1 = await checkRateLimit(getClientIp(req1), options);
+      expect(res1.success).toBe(true);
+
+      const res2 = await checkRateLimit(getClientIp(req2), options);
+      expect(res2.success).toBe(true);
+
+      const res3 = await checkRateLimit(getClientIp(req3), options);
+      expect(res3.success).toBe(false);
+    });
+
+    it('should extract the rightmost hop if x-vercel-forwarded-for contains multiple hops due to upstream proxy chaining', () => {
+      const req = new NextRequest('http://localhost/api/test', {
+        headers: {
+          'x-vercel-forwarded-for': 'client.spoofed.hop, 198.51.100.99',
+        },
+      });
+      expect(getClientIp(req)).toBe('198.51.100.99');
+    });
   });
 
   describe('Issue #14: Security Headers & CSP Configuration', () => {

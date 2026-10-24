@@ -888,6 +888,130 @@ describe('Orders API', () => {
       expect(prisma.order.create).not.toHaveBeenCalled();
     });
 
+    it('should query DB with active: true and support lookup by delivery method ID or name (Issue #8, #28)', async () => {
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
+      vi.mocked(prisma.deliveryMethod.findFirst).mockResolvedValueOnce({
+        id: 'dm-home-uuid',
+        name: 'Standard Home Delivery',
+        price: 4.50,
+        active: true,
+      } as any);
+
+      const payload = {
+        ...validPayload,
+        deliveryMethod: 'dm-home-uuid',
+        items: [
+          { productId: 'prod-1', quantity: 2 }, // $2.50 * 2 = $5.00
+          { productId: 'prod-2', quantity: 1 }, // $15.00 * 1 = $15.00
+        ], // Items total: $20.00 + delivery: $4.50 = $24.50
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(201);
+      expect(prisma.deliveryMethod.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            active: true,
+            OR: [
+              { name: { equals: 'dm-home-uuid', mode: 'insensitive' } },
+              { id: 'dm-home-uuid' },
+            ],
+          }),
+        })
+      );
+      expect(prisma.order.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            totalAmount: 24.50,
+            totalPrice: '$24.50',
+            deliveryMethod: 'Standard Home Delivery',
+          }),
+        })
+      );
+    });
+
+    it('should reject order with 400 when delivery method is an empty string or non-string format', async () => {
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
+
+      const payload = {
+        ...validPayload,
+        deliveryMethod: '   ',
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('Méthode de livraison non valide');
+      expect(prisma.order.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject invalid or expired promo code with 400', async () => {
+      const payload = {
+        ...validPayload,
+        promoCode: 'FAKE_DISCOUNT_99',
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('Code promo invalide');
+      expect(prisma.order.create).not.toHaveBeenCalled();
+    });
+
+    it('should accept valid promo code without error', async () => {
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
+
+      const payload = {
+        ...validPayload,
+        promoCode: 'WELCOME10',
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(201);
+      expect(prisma.order.create).toHaveBeenCalled();
+    });
+
+    it('should reject order with empty cart items array with 400', async () => {
+      const payload = {
+        ...validPayload,
+        items: [],
+      };
+
+      const req = new NextRequest('http://localhost/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const response = await createOrder(req);
+      expect(response.status).toBe(400);
+      expect(prisma.order.create).not.toHaveBeenCalled();
+    });
+
     it('should ignore client-provided manipulated prices and calculate authoritative total from database', async () => {
       vi.mocked(prisma.product.findMany).mockResolvedValueOnce(mockDbProducts as any);
       vi.mocked(prisma.order.findFirst).mockResolvedValueOnce(null);
@@ -1291,6 +1415,46 @@ describe('Orders API', () => {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'ACCEPTED', expectedStatus: 'DELIVERED' }),
+      });
+
+      const response = await updateOrder(req, { params: Promise.resolve({ id: mockOrder.id }) });
+      expect(response.status).toBe(409);
+      const data = await response.json();
+      expect(data.error).toContain('Conflit');
+      expect(prisma.order.update).not.toHaveBeenCalled();
+    });
+
+    it('should update status when previousStatus matches current order status (Issue #138)', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'admin-1', role: 'admin' } } as any);
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockOrder as any);
+      vi.mocked(prisma.order.updateMany).mockResolvedValueOnce({ count: 1 });
+      vi.mocked(prisma.order.update).mockResolvedValueOnce({ ...mockOrder, status: 'ACCEPTED' } as any);
+
+      const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ACCEPTED', previousStatus: 'PENDING' }),
+      });
+
+      const response = await updateOrder(req, { params: Promise.resolve({ id: mockOrder.id }) });
+      expect(response.status).toBe(200);
+      expect(prisma.order.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: mockOrder.id,
+          status: 'PENDING',
+        },
+        data: { status: 'ACCEPTED' },
+      });
+    });
+
+    it('should return 409 Conflict when client previousStatus does not match current order status (Issue #138)', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'admin-1', role: 'admin' } } as any);
+      vi.mocked(prisma.order.findUnique).mockResolvedValueOnce(mockOrder as any); // mockOrder has status 'PENDING'
+
+      const req = new NextRequest(`http://localhost/api/orders/${mockOrder.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ACCEPTED', previousStatus: 'PROCESSING' }),
       });
 
       const response = await updateOrder(req, { params: Promise.resolve({ id: mockOrder.id }) });

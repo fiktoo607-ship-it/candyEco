@@ -105,7 +105,16 @@ describe('Rate Limiter & Abuse Protection (SEC-08)', () => {
     });
     expect(getClientIp(reqWithRealIp)).toBe('198.51.100.42');
 
-    // 4. Default fallback when no headers are provided
+    // 4. Vercel edge x-vercel-forwarded-for priority over spoofed x-forwarded-for
+    const reqVercelWithSpoofedXff = new NextRequest('http://localhost/api/test', {
+      headers: {
+        'x-forwarded-for': '1.2.3.4',
+        'x-vercel-forwarded-for': '198.51.100.77',
+      },
+    });
+    expect(getClientIp(reqVercelWithSpoofedXff)).toBe('198.51.100.77');
+
+    // 5. Default fallback when no headers are provided
     const reqEmpty = new NextRequest('http://localhost/api/test');
     expect(getClientIp(reqEmpty)).toBe('127.0.0.1');
   });

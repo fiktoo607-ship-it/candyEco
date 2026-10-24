@@ -312,4 +312,72 @@ describe('Issues #60, #120, #121: Order Creation Transactions, Stock Concurrency
       expect(createdCount).toBe(2);
     });
   });
+
+  describe('Issue #138: Concurrent Order Status Updates with Optimistic Concurrency', () => {
+    it('should eliminate race condition when concurrent status updates target the same order using previousStatus', async () => {
+      vi.mocked(getServerSession).mockResolvedValue({
+        user: { id: 'admin-1', role: 'admin' },
+      } as any);
+
+      let currentDbStatus = 'PENDING';
+      const mockOrder = {
+        id: 'ord-concurrent-status-1',
+        reference: 'ORD-20261015-101',
+        sessionId: 'token-101',
+        status: 'PENDING',
+        totalPrice: '$20.00',
+        totalAmount: 20.0,
+        customerName: 'Test Customer',
+        customerPhone: '+213555111222',
+        shippingAddress: '123 Street',
+        items: [],
+      };
+
+      (vi.mocked(prisma.order.findUnique) as any).mockImplementation(async () => ({
+        ...mockOrder,
+        status: currentDbStatus,
+      }));
+
+      (vi.mocked(prisma.order.updateMany) as any).mockImplementation(async (args: any) => {
+        // Atomic conditional check in database: WHERE id = :id AND status = expectedStatus
+        if (args.where.status === currentDbStatus) {
+          currentDbStatus = args.data.status;
+          return { count: 1 };
+        }
+        return { count: 0 };
+      });
+
+      (vi.mocked(prisma.order.update) as any).mockImplementation(async (args: any) => ({
+        ...mockOrder,
+        status: args.data.status,
+      }));
+
+      // Concurrent request 1: Update from PENDING to ACCEPTED
+      const req1 = new NextRequest('http://localhost/api/orders/ord-concurrent-status-1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ACCEPTED', previousStatus: 'PENDING' }),
+      });
+
+      // Concurrent request 2: Update from PENDING to CANCELLED
+      const req2 = new NextRequest('http://localhost/api/orders/ord-concurrent-status-1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED', previousStatus: 'PENDING' }),
+      });
+
+      const [res1, res2] = await Promise.all([
+        updateOrder(req1, { params: Promise.resolve({ id: 'ord-concurrent-status-1' }) }),
+        updateOrder(req2, { params: Promise.resolve({ id: 'ord-concurrent-status-1' }) }),
+      ]);
+
+      const statuses = [res1.status, res2.status];
+      // One request must succeed (200), and the losing concurrent request must receive 409 Conflict
+      expect(statuses).toContain(200);
+      expect(statuses).toContain(409);
+
+      // The final status in DB must be the winner's status, not overwritten
+      expect(['ACCEPTED', 'CANCELLED']).toContain(currentDbStatus);
+    });
+  });
 });

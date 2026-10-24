@@ -8,6 +8,8 @@ import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate
 
 export const dynamic = 'force-dynamic';
 
+const DUMMY_HASH = '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+
 function sanitizeSessions(sessions: Awaited<ReturnType<typeof getActiveAdminSessions>>) {
   return sessions.map((s, idx) => ({
     id: `session-${idx + 1}`,
@@ -27,8 +29,24 @@ function sanitizeSessions(sessions: Awaited<ReturnType<typeof getActiveAdminSess
   }));
 }
 
-export async function GET() {
+export async function GET(req?: NextRequest) {
   try {
+    if (req) {
+      const clientIp = getClientIp(req);
+      const rateLimitResult = await checkRateLimit(clientIp, {
+        keyPrefix: 'admin_active_session_get',
+        limit: 30,
+        windowSeconds: 60,
+      });
+
+      if (!rateLimitResult.success) {
+        return createRateLimitResponse(
+          rateLimitResult,
+          'Trop de requêtes. Veuillez patienter.'
+        );
+      }
+    }
+
     const session = await getServerSession(authOptions);
     if (!session || session.user?.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -86,7 +104,7 @@ export async function POST(req: NextRequest) {
 
     const phoneNormalized = String(phone).trim();
 
-    // Additional per-phone rate limiting against brute-force password probing
+    // Additional per-phone rate limiting against brute-force password probing (Issue #39)
     const phoneRateLimitResult = await checkRateLimit(`phone:${phoneNormalized}`, {
       keyPrefix: 'admin_active_session_phone',
       limit: 5,
@@ -104,7 +122,16 @@ export async function POST(req: NextRequest) {
       where: { phone: phoneNormalized },
     });
 
+    // Constant-time compare to mitigate password oracle / user enumeration timing attacks
     if (!user || user.role !== 'admin' || !user.password) {
+      try {
+        const cmp = bcrypt.compare(password, DUMMY_HASH);
+        if (cmp && typeof (cmp as any).then === 'function') {
+          await cmp;
+        }
+      } catch {
+        // Ignore dummy comparison error
+      }
       return NextResponse.json({ error: 'InvalidCredentials' }, { status: 401 });
     }
 
@@ -157,11 +184,34 @@ export async function DELETE(req: NextRequest) {
 
     const phoneNormalized = String(phone).trim();
 
+    // Additional per-phone rate limiting against brute-force password probing on DELETE (Issue #11, Issue #39)
+    const phoneRateLimitResult = await checkRateLimit(`phone_del:${phoneNormalized}`, {
+      keyPrefix: 'admin_active_session_delete_phone',
+      limit: 5,
+      windowSeconds: 900,
+    });
+
+    if (!phoneRateLimitResult.success) {
+      return createRateLimitResponse(
+        phoneRateLimitResult,
+        'Trop de tentatives sur ce compte. Veuillez réessayer plus tard.'
+      );
+    }
+
     const user = await prisma.user.findFirst({
       where: { phone: phoneNormalized },
     });
 
+    // Constant-time compare to mitigate password oracle / user enumeration timing attacks
     if (!user || user.role !== 'admin' || !user.password) {
+      try {
+        const cmp = bcrypt.compare(password, DUMMY_HASH);
+        if (cmp && typeof (cmp as any).then === 'function') {
+          await cmp;
+        }
+      } catch {
+        // Ignore dummy comparison error
+      }
       return NextResponse.json({ error: 'InvalidCredentials' }, { status: 401 });
     }
 
