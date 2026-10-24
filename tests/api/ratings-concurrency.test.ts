@@ -1,6 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { POST as submitRatingViaRatingRoute } from '@/app/api/products/[id]/rating/route';
 import { POST as submitRatingViaProductRoute } from '@/app/api/products/[id]/route';
+import { POST as submitRatingViaReviewsRoute } from '@/app/api/products/[id]/reviews/route';
 import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -11,6 +12,11 @@ vi.mock('@/lib/cloudinary', () => ({
   getPublicIdFromUrl: vi.fn(),
 }));
 
+const { ratingsStore } = vi.hoisted(() => {
+  const store: Array<{ id: string; productId: string; rating: number; userId?: string }> = [];
+  return { ratingsStore: store };
+});
+
 vi.mock('next-auth', () => ({
   getServerSession: vi.fn().mockResolvedValue({
     user: { id: 'user-uuid-1', role: 'user', name: 'User 1' },
@@ -18,7 +24,7 @@ vi.mock('next-auth', () => ({
 }));
 
 vi.mock('@/lib/prisma', () => {
-  const ratingsStore: Array<{ id: string; productId: string; rating: number; userId?: string }> = [];
+  const store = ratingsStore;
 
   const mockPrisma = {
     product: {
@@ -29,13 +35,16 @@ vi.mock('@/lib/prisma', () => {
       findFirst: vi.fn(),
     },
     rating: {
+      findFirst: vi.fn(async ({ where }: any) => {
+        return store.find(r => r.productId === where.productId && r.userId === where.userId) || null;
+      }),
       create: vi.fn(async ({ data }: any) => {
-        const entry = { id: `r-${ratingsStore.length + 1}`, ...data };
-        ratingsStore.push(entry);
+        const entry = { id: `r-${store.length + 1}`, ...data };
+        store.push(entry);
         return entry;
       }),
       aggregate: vi.fn(async ({ where }: any) => {
-        const matches = ratingsStore.filter(r => r.productId === where.productId);
+        const matches = store.filter(r => r.productId === where.productId);
         const count = matches.length;
         const sum = matches.reduce((acc, curr) => acc + curr.rating, 0);
         return {
@@ -54,11 +63,11 @@ vi.mock('@/lib/prisma', () => {
 
   return {
     prisma: mockPrisma,
-    _ratingsStore: ratingsStore,
+    _ratingsStore: store,
   };
 });
 
-describe('Atomic Rating Aggregation and Concurrency', () => {
+describe('Atomic Rating Aggregation and Concurrency (Issue #61, #152)', () => {
   const testProduct = {
     id: 'prod-atomic-1',
     title: 'Atomic Croissant',
@@ -71,6 +80,7 @@ describe('Atomic Rating Aggregation and Concurrency', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    ratingsStore.length = 0;
     vi.mocked(prisma.order.findFirst).mockResolvedValue({ id: 'order-delivered-1' } as any);
     vi.mocked(prisma.product.findUnique).mockResolvedValue(testProduct as any);
     vi.mocked(prisma.product.update).mockImplementation((async ({ data }: any) => ({
@@ -81,11 +91,6 @@ describe('Atomic Rating Aggregation and Concurrency', () => {
   });
 
   it('should route via /api/products/[id]/rating and atomically aggregate', async () => {
-    vi.mocked(prisma.rating.aggregate).mockResolvedValueOnce({
-      _avg: { rating: 5.0 },
-      _count: 1,
-    } as any);
-
     const req = new NextRequest(`http://localhost/api/products/${testProduct.id}/rating`, {
       method: 'POST',
       body: JSON.stringify({ rating: 5 }),
@@ -106,40 +111,83 @@ describe('Atomic Rating Aggregation and Concurrency', () => {
     });
   });
 
-  it('should handle simulated concurrent ratings atomically without lost updates', async () => {
-    let currentAvg = 0;
-    let currentCount = 0;
+  it('should route via /api/products/[id]/reviews and atomically aggregate', async () => {
+    const req = new NextRequest(`http://localhost/api/products/${testProduct.id}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify({ rating: 4 }),
+    });
 
-    // Simulate 3 concurrent submissions: rating 5, rating 4, rating 3
-    const submittedScores = [5, 4, 3];
+    const res = await submitRatingViaReviewsRoute(req, { params: Promise.resolve({ id: testProduct.id }) });
+    expect(res.status).toBe(200);
 
-    for (let i = 0; i < submittedScores.length; i++) {
-      const score = submittedScores[i];
-      const newCount = i + 1;
-      const runningSum = submittedScores.slice(0, newCount).reduce((a, b) => a + b, 0);
-      const runningAvg = parseFloat((runningSum / newCount).toFixed(2));
+    const data = await res.json();
+    expect(data.rating).toBe(4);
+    expect(data.ratingCount).toBe(1);
 
-      vi.mocked(prisma.rating.create).mockResolvedValueOnce({ id: `r-${i + 1}`, rating: score, productId: testProduct.id } as any);
-      vi.mocked(prisma.rating.aggregate).mockResolvedValueOnce({
-        _avg: { rating: runningAvg },
-        _count: newCount,
-      } as any);
+    expect(prisma.rating.create).toHaveBeenCalled();
+    expect(prisma.rating.aggregate).toHaveBeenCalledWith({
+      where: { productId: testProduct.id },
+      _avg: { rating: true },
+      _count: true,
+    });
+  });
 
-      const req = new NextRequest(`http://localhost/api/products/${testProduct.id}`, {
-        method: 'POST',
-        body: JSON.stringify({ rating: score }),
-      });
+  it('should accurately calculate average under concurrent review posts via Promise.all (Issue #61, #152)', async () => {
+    // 4 concurrent reviews from 4 distinct users
+    const submissions = [
+      { userId: 'user-concurrent-1', rating: 5 },
+      { userId: 'user-concurrent-2', rating: 4 },
+      { userId: 'user-concurrent-3', rating: 3 },
+      { userId: 'user-concurrent-4', rating: 4 },
+    ];
 
-      const res = await submitRatingViaProductRoute(req, { params: Promise.resolve({ id: testProduct.id }) });
+    // Simulate concurrent HTTP requests executed in parallel with Promise.all
+    const responses = await Promise.all(
+      submissions.map(async (sub) => {
+        const req = new NextRequest(`http://localhost/api/products/${testProduct.id}/reviews`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-forwarded-for': `192.168.1.${sub.userId.slice(-1)}`,
+          },
+          body: JSON.stringify({ rating: sub.rating }),
+        });
+
+        // Set authenticated user for this concurrent request
+        vi.mocked(getServerSession).mockResolvedValueOnce({
+          user: { id: sub.userId, role: 'user', name: sub.userId },
+        } as any);
+
+        return await submitRatingViaReviewsRoute(req, {
+          params: Promise.resolve({ id: testProduct.id }),
+        });
+      })
+    );
+
+    // Verify all 4 concurrent requests completed successfully (status 200)
+    for (const res of responses) {
       expect(res.status).toBe(200);
-      const resJson = await res.json();
-
-      currentAvg = resJson.rating;
-      currentCount = resJson.ratingCount;
     }
 
-    // Final average of [5, 4, 3] = 12 / 3 = 4.0
-    expect(currentAvg).toBe(4.0);
-    expect(currentCount).toBe(3);
+    // Verify all 4 ratings were atomically persisted in the ratings table
+    expect(ratingsStore).toHaveLength(4);
+
+    // Verify all scores are stored correctly
+    const storedScores = ratingsStore.map((r) => r.rating);
+    expect(storedScores).toEqual([5, 4, 3, 4]);
+
+    // Expected final average: (5 + 4 + 3 + 4) / 4 = 16 / 4 = 4.0
+    const finalExpectedSum = 5 + 4 + 3 + 4;
+    const finalExpectedCount = 4;
+    const finalExpectedAvg = finalExpectedSum / finalExpectedCount;
+
+    // Verify that the final update to the product record matches the true aggregation
+    expect(prisma.product.update).toHaveBeenLastCalledWith({
+      where: { id: testProduct.id },
+      data: {
+        rating: finalExpectedAvg,
+        ratingCount: finalExpectedCount,
+      },
+    });
   });
 });

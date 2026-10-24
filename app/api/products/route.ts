@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { normalizePrice } from "@/lib/utils/currency";
 import { ensureProductTags } from "@/lib/tags";
 import { handleServerError } from "@/lib/api-error-handler";
+import { getPublicProductWhere, isProductPubliclyVisible } from "@/lib/products";
 
 export async function GET(request?: NextRequest) {
   try {
@@ -40,6 +41,12 @@ export async function GET(request?: NextRequest) {
 
       const where: any = {};
       let hasWhere = false;
+
+      // Filter public requests at database level before count & pagination (Issue #144, #10)
+      if (!isDashboard) {
+        Object.assign(where, getPublicProductWhere());
+        hasWhere = true;
+      }
 
       if (category && category !== 'all') {
         hasWhere = true;
@@ -96,6 +103,9 @@ export async function GET(request?: NextRequest) {
         queryOptions.skip = (page - 1) * limit;
         queryOptions.take = limit;
       }
+    } else {
+      // If request is omitted, default to public products where clause
+      queryOptions.where = getPublicProductWhere();
     }
 
     const total = await prisma.product.count({
@@ -123,16 +133,10 @@ export async function GET(request?: NextRequest) {
       return mapped;
     });
 
-    // By default, filter public catalog queries so only published/active products are returned to non-admin visitors (Issue #10)
+    // Guard non-admin responses: ensure default visibility 0 is included (Issue #144, #10)
     const resultProducts = isDashboard
       ? mappedProducts
-      : mappedProducts.filter((p: any) => {
-          const hasValidVisibility = p.visibility !== undefined && p.visibility !== null ? p.visibility > 0 : true;
-          const isNotDraft = p.state !== 'draft';
-          const isPublishedFlag = p.isPublished !== false;
-          const isPublished = !p.publishedAt || new Date(p.publishedAt) <= new Date();
-          return hasValidVisibility && isNotDraft && isPublishedFlag && isPublished;
-        });
+      : mappedProducts.filter((p: any) => isProductPubliclyVisible(p));
 
     let hasNextPage = false;
     if (pageStr || limitStr) {
@@ -143,10 +147,15 @@ export async function GET(request?: NextRequest) {
       hasNextPage = total > page * limit;
     }
 
+    const cacheControl = isDashboard
+      ? 'private, no-cache, no-store, must-revalidate'
+      : 'public, s-maxage=60, stale-while-revalidate=300';
+
     return NextResponse.json(resultProducts, {
       headers: {
         'x-total-count': total.toString(),
-        'x-has-next-page': hasNextPage.toString()
+        'x-has-next-page': hasNextPage.toString(),
+        'Cache-Control': cacheControl,
       }
     });
   } catch (error) {
@@ -204,6 +213,17 @@ export async function POST(request: NextRequest) {
 
     if (!tags || (Array.isArray(tags) && tags.length === 0)) {
       await ensureProductTags(newProduct.id);
+    }
+
+    try {
+      const { revalidatePath } = await import('next/cache');
+      revalidatePath('/our-product');
+      revalidatePath('/products');
+      revalidatePath('/home');
+      revalidatePath('/');
+      revalidatePath('/sitemap.xml');
+    } catch {
+      // Safe fallback if called outside Next.js request context
     }
 
     return NextResponse.json({

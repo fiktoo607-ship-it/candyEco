@@ -6,6 +6,9 @@ import SiteFooter from '@/components/site-footer';
 import ProductDetails from '@/components/product-details/ProductDetails';
 import { THEME_CONFIG } from '@/lib/theme';
 import dictionary from '@/lib/copy-dictionary.json';
+import { isProductPubliclyVisible } from '@/lib/products';
+
+export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -13,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     where: { slug }
   });
 
-  if (!product) {
+  if (!product || !isProductPubliclyVisible(product)) {
     return {
       title: dictionary.productDetails.notFound.title,
       description: dictionary.productDetails.notFound.description,
@@ -33,7 +36,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     include: { tags: true }
   });
 
-  if (!product) {
+  if (!product || !isProductPubliclyVisible(product)) {
     notFound();
   }
 

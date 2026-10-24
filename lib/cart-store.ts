@@ -75,7 +75,7 @@ export const useCartStore = create<CartState>()(
         }, 0);
       },
       getTotalItemsCount: () => {
-        return get().items.length;
+        return get().items.reduce((total, item) => total + (item.quantity || 0), 0);
       },
     }),
     {

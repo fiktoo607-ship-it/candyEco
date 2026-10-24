@@ -83,3 +83,36 @@ export function generateSlug(text: string): string {
     .replace(/[^a-z0-9-ء-ي]/g, '');
 }
 
+/**
+ * Shared Prisma WHERE clause for public products queries (Issue #144, #145, #10).
+ * Ensures only published, active items with valid visibility (>= 0) and non-future publication dates are returned.
+ */
+export function getPublicProductWhere() {
+  return {
+    isPublished: true,
+    visibility: { gte: 0 },
+    state: { not: 'draft' },
+    OR: [
+      { publishedAt: null },
+      { publishedAt: { lte: new Date() } },
+    ],
+  };
+}
+
+/**
+ * Checks whether an in-memory product record satisfies public visibility rules.
+ * Default visibility 0 is treated as active (Issue #144).
+ */
+export function isProductPubliclyVisible(product: {
+  isPublished?: boolean | null;
+  state?: string | null;
+  visibility?: number | null;
+  publishedAt?: Date | string | null;
+}): boolean {
+  if (product.isPublished === false) return false;
+  if (product.state === 'draft') return false;
+  if (product.visibility !== undefined && product.visibility !== null && product.visibility < 0) return false;
+  if (product.publishedAt && new Date(product.publishedAt) > new Date()) return false;
+  return true;
+}
+

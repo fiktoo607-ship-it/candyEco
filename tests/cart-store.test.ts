@@ -58,4 +58,43 @@ describe('Cart Store & limitBay Alignment (Minimum Order Quantity)', () => {
     useCartStore.getState().addItem(limitedProduct, 4); // 4 * 25 = 100
     expect(useCartStore.getState().getTotalPrice()).toBe(100);
   });
+
+  it('calculates total item count based on sum of quantities rather than line count (Issue #155)', () => {
+    expect(useCartStore.getState().getTotalItemsCount()).toBe(0);
+
+    const secondProduct: CartProduct = {
+      id: 'prod-item-2',
+      title: 'Strawberry Macarons',
+      slug: 'strawberry-macarons',
+      price: '$15.00',
+      imageUrl: '/macaron.jpg',
+      category: 'macaron',
+      description: 'Sweet macarons',
+      state: 'exist',
+      limitBay: 1,
+    };
+
+    // Add first item with qty 3 (limitBay is 3)
+    useCartStore.getState().addItem(limitedProduct, 3);
+    expect(useCartStore.getState().getTotalItemsCount()).toBe(3);
+
+    // Add second item with qty 5
+    useCartStore.getState().addItem(secondProduct, 5);
+    // Line count is 2, but total quantity is 3 + 5 = 8
+    expect(useCartStore.getState().items.length).toBe(2);
+    expect(useCartStore.getState().getTotalItemsCount()).toBe(8);
+
+    // Update quantity of second item to 10
+    useCartStore.getState().updateQuantity(secondProduct.id, 10);
+    expect(useCartStore.getState().getTotalItemsCount()).toBe(13);
+
+    // Remove first item
+    useCartStore.getState().removeItem(limitedProduct.id);
+    expect(useCartStore.getState().getTotalItemsCount()).toBe(10);
+
+    // Clear cart
+    useCartStore.getState().clearCart();
+    expect(useCartStore.getState().getTotalItemsCount()).toBe(0);
+  });
 });
+

@@ -111,6 +111,56 @@ describe('Carousel Slides API', () => {
       const data = await response.json();
       expect(data.error).toBe('Title and Image URL are required');
     });
+
+    it('should reject malicious javascript: and dangerous schemes with 400 (Issue #44)', async () => {
+      const maliciousPayloads = [
+        'javascript:alert(1)',
+        'JAVASCRIPT:alert(document.cookie)',
+        'data:text/html,<script>alert(1)</script>',
+        'vbscript:msgbox(1)',
+        '//evil.com/phish',
+      ];
+
+      for (const linkUrl of maliciousPayloads) {
+        const req = new NextRequest('http://localhost/api/carousel-slides', {
+          method: 'POST',
+          body: JSON.stringify({
+            title: 'Malicious Slide',
+            imageUrl: 'https://res.cloudinary.com/dummy/slide.jpg',
+            linkUrl,
+          }),
+        });
+
+        const response = await createSlide(req);
+        expect(response.status).toBe(400);
+        const data = await response.json();
+        expect(data.error).toMatch(/Invalid linkUrl/i);
+      }
+    });
+
+    it('should reject unvalidated external domains with 400 (Issue #44)', async () => {
+      const externalUrls = [
+        'https://evil-phishing.com/login',
+        'https://example.com/promo',
+        'http://insecure-domain.com/landing',
+      ];
+
+      for (const linkUrl of externalUrls) {
+        const req = new NextRequest('http://localhost/api/carousel-slides', {
+          method: 'POST',
+          body: JSON.stringify({
+            title: 'External Slide',
+            imageUrl: 'https://res.cloudinary.com/dummy/slide.jpg',
+            linkUrl,
+          }),
+        });
+
+        const response = await createSlide(req);
+        expect(response.status).toBe(400);
+        const data = await response.json();
+        expect(data.error).toMatch(/Invalid linkUrl/i);
+      }
+    });
   });
 
   describe('PUT /api/carousel-slides/[id]', () => {
@@ -143,6 +193,22 @@ describe('Carousel Slides API', () => {
           order: mockSlide.order,
         },
       });
+    });
+
+    it('should reject invalid or malicious linkUrl on update with 400 (Issue #44)', async () => {
+      vi.mocked(prisma.carouselSlide.findUnique).mockResolvedValueOnce(mockSlide);
+
+      const req = new NextRequest('http://localhost/api/carousel-slides/slide-uuid-1', {
+        method: 'PUT',
+        body: JSON.stringify({
+          linkUrl: 'javascript:alert(1)',
+        }),
+      });
+
+      const response = await updateSlide(req, { params: Promise.resolve({ id: 'slide-uuid-1' }) });
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toMatch(/Invalid linkUrl/i);
     });
   });
 

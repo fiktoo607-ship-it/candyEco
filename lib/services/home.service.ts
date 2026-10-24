@@ -50,7 +50,7 @@ export interface HomePageData {
 async function getFeaturedProducts(): Promise<HomeProductItem[]> {
   try {
     const dbFeatured = await prisma.product.findMany({
-      where: { state: 'exist' },
+      where: { state: 'exist', isPublished: true },
       orderBy: [
         { visibility: 'desc' },
         { createdAt: 'desc' }
@@ -96,7 +96,7 @@ async function getFeaturedProducts(): Promise<HomeProductItem[]> {
 async function getNewProducts(newProductsLimit: number): Promise<HomeProductItem[]> {
   try {
     const dbNewProducts = await prisma.product.findMany({
-      where: { state: 'exist' },
+      where: { state: 'exist', isPublished: true },
       orderBy: { createdAt: 'desc' },
       take: newProductsLimit,
       select: {
@@ -165,6 +165,7 @@ async function getPopularProducts(popularLimit = 4): Promise<HomeProductItem[]> 
         where: {
           id: { in: orderedProductIds },
           state: 'exist',
+          isPublished: true,
         },
         select: {
           id: true,
@@ -196,6 +197,7 @@ async function getPopularProducts(popularLimit = 4): Promise<HomeProductItem[]> 
       const fallbackProducts = await prisma.product.findMany({
         where: {
           state: 'exist',
+          isPublished: true,
           id: { notIn: popularProducts.map((p) => p.id) },
         },
         orderBy: [

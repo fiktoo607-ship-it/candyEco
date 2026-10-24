@@ -4,6 +4,7 @@ import { deleteImage } from '@/lib/cloudinary';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { handleServerError } from '@/lib/api-error-handler';
+import { sanitizeSlideUrl } from '@/lib/carousel-url';
 
 export async function PUT(
   request: NextRequest,
@@ -27,6 +28,22 @@ export async function PUT(
       return NextResponse.json({ error: 'Slide not found' }, { status: 404 });
     }
 
+    let sanitizedLinkUrl = existingSlide.linkUrl;
+    if (linkUrl !== undefined) {
+      if (linkUrl === null || String(linkUrl).trim() === '') {
+        sanitizedLinkUrl = null;
+      } else {
+        const validated = sanitizeSlideUrl(String(linkUrl));
+        if (!validated) {
+          return NextResponse.json(
+            { error: 'Invalid linkUrl. Only relative internal paths or trusted HTTPS URLs are allowed.' },
+            { status: 400 }
+          );
+        }
+        sanitizedLinkUrl = validated;
+      }
+    }
+
     // Clean up old image if changing imageUrl
     if (imageUrl !== undefined && imageUrl !== existingSlide.imageUrl && existingSlide.imageUrl) {
       try {
@@ -42,7 +59,7 @@ export async function PUT(
         title: title !== undefined ? title : existingSlide.title,
         description: description !== undefined ? description : existingSlide.description,
         imageUrl: imageUrl !== undefined ? imageUrl : existingSlide.imageUrl,
-        linkUrl: linkUrl !== undefined ? (linkUrl || null) : existingSlide.linkUrl,
+        linkUrl: sanitizedLinkUrl,
         order: order !== undefined ? Number(order) : existingSlide.order,
       },
     });

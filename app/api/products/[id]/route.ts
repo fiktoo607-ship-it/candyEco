@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { checkRateLimit, createRateLimitResponse, getClientIp } from '@/lib/rate-limiter';
 import { normalizePrice } from '@/lib/utils/currency';
 import { handleServerError } from '@/lib/api-error-handler';
+import { isProductPubliclyVisible } from '@/lib/products';
 
 export async function GET(
   request: NextRequest,
@@ -33,16 +34,10 @@ export async function GET(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    // Hide unpublished products from non-admin visitors (Issue #10)
-    if (!isDashboard) {
-      const isUnpublished =
-        (product.visibility !== undefined && product.visibility !== null && product.visibility <= 0) ||
-        product.state === 'draft' ||
-        (product.publishedAt && new Date(product.publishedAt) > new Date());
-
-      if (isUnpublished) {
-        return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-      }
+    // Hide unpublished products from non-admin visitors (Issue #10, #144, #145)
+    // Default visibility 0 is treated as active item
+    if (!isDashboard && !isProductPubliclyVisible(product)) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
     const mappedProduct = {
@@ -134,6 +129,21 @@ export async function PUT(
       }
     }
 
+    try {
+      const { revalidatePath } = await import('next/cache');
+      revalidatePath('/our-product');
+      revalidatePath(`/our-product/${updatedProduct.slug}`);
+      if (existingProduct.slug !== updatedProduct.slug) {
+        revalidatePath(`/our-product/${existingProduct.slug}`);
+      }
+      revalidatePath('/products');
+      revalidatePath('/home');
+      revalidatePath('/');
+      revalidatePath('/sitemap.xml');
+    } catch {
+      // Safe fallback if called outside Next.js request context
+    }
+
     return NextResponse.json({
       ...updatedProduct,
       tags: Array.isArray(updatedProduct.tags)
@@ -165,6 +175,21 @@ export async function DELETE(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
+    // Prevent hard deletion if product has historical order items (Issue #22)
+    if (typeof (prisma as any).orderItem?.count === 'function') {
+      const orderItemsCount = await (prisma as any).orderItem.count({
+        where: { productId: id },
+      });
+      if (orderItemsCount > 0) {
+        return NextResponse.json(
+          {
+            error: "Impossible de supprimer ce produit car il est lié à des commandes existantes. Veuillez plutôt l'archiver pour préserver l'historique des commandes.",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     await prisma.$transaction(async (tx) => {
       await tx.product.delete({
         where: { id },
@@ -180,8 +205,28 @@ export async function DELETE(
       }
     }
 
+    try {
+      const { revalidatePath } = await import('next/cache');
+      revalidatePath('/our-product');
+      revalidatePath(`/our-product/${existingProduct.slug}`);
+      revalidatePath('/products');
+      revalidatePath('/home');
+      revalidatePath('/');
+      revalidatePath('/sitemap.xml');
+    } catch {
+      // Safe fallback if called outside Next.js request context
+    }
+
     return NextResponse.json({ message: 'Product deleted successfully' });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === 'P2003') {
+      return NextResponse.json(
+        {
+          error: "Impossible de supprimer ce produit car il est lié à des commandes existantes. Veuillez plutôt l'archiver pour préserver l'historique des commandes.",
+        },
+        { status: 400 }
+      );
+    }
     return handleServerError(error, '[Products API DELETE]', 'Une erreur interne est survenue.');
   }
 }
@@ -223,8 +268,9 @@ export async function POST(
     const user = session.user as any;
 
     // Enforce uniqueness: allow only one rating per user per product (Issue #11)
-    if (user?.id && typeof prisma.rating?.findFirst === 'function') {
-      const existingRating = await prisma.rating.findFirst({
+    const ratingModel = (prisma as any).review || (prisma as any).rating;
+    if (user?.id && typeof ratingModel?.findFirst === 'function') {
+      const existingRating = await ratingModel.findFirst({
         where: {
           productId: id,
           userId: user.id,
@@ -266,8 +312,10 @@ export async function POST(
         return null;
       }
 
-      if (user?.id && typeof tx.rating?.findFirst === 'function') {
-        const alreadyRated = await tx.rating.findFirst({
+      const ratingDelegate = (tx as any).review || (tx as any).rating;
+
+      if (user?.id && typeof ratingDelegate?.findFirst === 'function') {
+        const alreadyRated = await ratingDelegate.findFirst({
           where: {
             productId: id,
             userId: user.id,
@@ -278,7 +326,7 @@ export async function POST(
         }
       }
 
-      await tx.rating.create({
+      await ratingDelegate.create({
         data: {
           productId: id,
           rating,
@@ -286,7 +334,7 @@ export async function POST(
         }
       });
 
-      const aggregation = await tx.rating.aggregate({
+      const aggregation = await ratingDelegate.aggregate({
         where: { productId: id },
         _avg: { rating: true },
         _count: true,

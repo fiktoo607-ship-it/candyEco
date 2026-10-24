@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { handleServerError } from '@/lib/api-error-handler';
+import { sanitizeSlideUrl } from '@/lib/carousel-url';
 
 export async function GET() {
   try {
@@ -29,6 +30,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Title and Image URL are required' }, { status: 400 });
     }
 
+    let sanitizedLinkUrl: string | null = null;
+    if (linkUrl !== undefined && linkUrl !== null && String(linkUrl).trim() !== '') {
+      sanitizedLinkUrl = sanitizeSlideUrl(String(linkUrl));
+      if (!sanitizedLinkUrl) {
+        return NextResponse.json(
+          { error: 'Invalid linkUrl. Only relative internal paths or trusted HTTPS URLs are allowed.' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Determine the next order if not specified
     let finalOrder = order;
     if (finalOrder === undefined || finalOrder === null) {
@@ -43,7 +55,7 @@ export async function POST(request: NextRequest) {
         title,
         description: description || '',
         imageUrl,
-        linkUrl: linkUrl || null,
+        linkUrl: sanitizedLinkUrl,
         order: Number(finalOrder),
       },
     });

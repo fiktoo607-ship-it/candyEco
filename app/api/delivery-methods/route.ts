@@ -39,7 +39,12 @@ export async function GET() {
       if (cleanName.toLowerCase().includes('yalidin')) {
         cleanName = 'Yalidine Express';
       }
-      return { ...m, name: cleanName };
+      const slug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      return {
+        ...m,
+        name: cleanName,
+        slug,
+      };
     });
 
     return NextResponse.json(sanitizedMethods);

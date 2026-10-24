@@ -81,7 +81,7 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
           const data = await res.json();
           if (data && data.length > 0) {
             setDeliveryMethods(data);
-            setSelectedMethod(data[0].name);
+            setSelectedMethod(data[0].id || data[0].name);
             return;
           }
         }
@@ -304,12 +304,14 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
           <div className="space-y-xs">
             {deliveryMethods.map((method) => {
               const methodInputId = `delivery-method-${method.id}`;
+              const methodKey = method.id || method.name;
+              const isSelected = selectedMethod === methodKey || selectedMethod === method.name || selectedMethod === method.id;
               return (
                 <label
                   key={method.id}
                   htmlFor={methodInputId}
                   className={`flex items-start gap-sm rounded-xl border p-sm cursor-pointer transition-all ${
-                    selectedMethod === method.name
+                    isSelected
                       ? 'border-primary bg-primary/5'
                       : 'border-outline-variant bg-surface-container-low hover:bg-surface-container-high'
                   }`}
@@ -318,9 +320,9 @@ export default function CheckoutForm({ onSuccess }: CheckoutFormProps) {
                     type="radio"
                     id={methodInputId}
                     name="deliveryMethod"
-                    value={method.name}
-                    checked={selectedMethod === method.name}
-                    onChange={() => setSelectedMethod(method.name)}
+                    value={methodKey}
+                    checked={isSelected}
+                    onChange={() => setSelectedMethod(methodKey)}
                     className="mt-[3px] accent-primary"
                   />
                   <div className="flex flex-col">

@@ -4,7 +4,13 @@ import fs from 'fs';
 import path from 'path';
 import { GET as getProducts } from '@/app/api/products/route';
 import { POST as createOrder } from '@/app/api/orders/route';
+import { DELETE as deleteProduct } from '@/app/api/products/[id]/route';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+
+vi.mock('@/lib/cloudinary', () => ({
+  deleteImage: vi.fn().mockResolvedValue({ result: 'ok' }),
+}));
 
 vi.mock('next-auth', () => ({
   getServerSession: vi.fn().mockResolvedValue(null),
@@ -195,7 +201,7 @@ describe('Product Lifecycle & Catalog Integrity (Issues #10, #22, #25)', () => {
     });
   });
 
-  describe('Issue #25: Retain Historical OrderItems on Product Deletion', () => {
+  describe('Issue #22: Retain Historical OrderItems on Product Deletion', () => {
     it('enforces onDelete: Restrict on OrderItem -> Product relation in schema.prisma', () => {
       const schemaPath = path.join(process.cwd(), 'prisma', 'schema.prisma');
       const schemaContent = fs.readFileSync(schemaPath, 'utf-8');
@@ -208,6 +214,115 @@ describe('Product Lifecycle & Catalog Integrity (Issues #10, #22, #25)', () => {
       expect(orderItemBlock).not.toMatch(/product\s+Product\s+@relation\([^)]*onDelete:\s*Cascade[^)]*\)/);
       // Must enforce Restrict to retain order history
       expect(orderItemBlock).toMatch(/product\s+Product\s+@relation\([^)]*onDelete:\s*Restrict[^)]*\)/);
+    });
+
+    it('verifies Prisma migration enforces ON DELETE RESTRICT on OrderItem_productId_fkey', () => {
+      const migrationsDir = path.join(process.cwd(), 'prisma', 'migrations');
+      const migrationFiles = fs.readdirSync(migrationsDir, { recursive: true }) as string[];
+      const sqlFiles = migrationFiles.filter((f) => f.endsWith('.sql'));
+
+      let hasRestrictFkey = false;
+      for (const sqlFile of sqlFiles) {
+        const fullPath = path.join(migrationsDir, sqlFile);
+        const content = fs.readFileSync(fullPath, 'utf-8');
+        if (content.includes('OrderItem_productId_fkey') && content.includes('ON DELETE RESTRICT')) {
+          hasRestrictFkey = true;
+          break;
+        }
+      }
+
+      expect(hasRestrictFkey).toBe(true);
+    });
+
+    it('prevents product deletion and returns 400 when product has order history', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({
+        user: { id: 'admin-1', role: 'admin' },
+      } as any);
+
+      vi.spyOn(prisma.product, 'findUnique').mockResolvedValueOnce({
+        id: 'prod-with-orders',
+        title: 'Chakhchoukha Traditionnelle',
+        price: '12.00',
+        imageUrl: '',
+      } as any);
+
+      // 3 existing order items reference this product
+      vi.spyOn(prisma.orderItem, 'count').mockResolvedValueOnce(3);
+      const deleteSpy = vi.spyOn(prisma.product, 'delete');
+
+      const req = new NextRequest('http://localhost/api/products/prod-with-orders', {
+        method: 'DELETE',
+      });
+
+      const res = await deleteProduct(req, {
+        params: Promise.resolve({ id: 'prod-with-orders' }),
+      });
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toMatch(/commandes existantes|archiver/i);
+      // Hard delete must never be called on product when order items exist
+      expect(deleteSpy).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 error if database Restrict constraint (P2003) is raised during deletion', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({
+        user: { id: 'admin-1', role: 'admin' },
+      } as any);
+
+      vi.spyOn(prisma.product, 'findUnique').mockResolvedValueOnce({
+        id: 'prod-foreign-key-restricted',
+        title: 'Makroudh aux dattes',
+        price: '6.00',
+        imageUrl: '',
+      } as any);
+
+      vi.spyOn(prisma.orderItem, 'count').mockResolvedValueOnce(0);
+      const p2003Error: any = new Error('Foreign key constraint failed on the field: OrderItem_productId_fkey');
+      p2003Error.code = 'P2003';
+      vi.spyOn(prisma.product, 'delete').mockRejectedValueOnce(p2003Error);
+
+      const req = new NextRequest('http://localhost/api/products/prod-foreign-key-restricted', {
+        method: 'DELETE',
+      });
+
+      const res = await deleteProduct(req, {
+        params: Promise.resolve({ id: 'prod-foreign-key-restricted' }),
+      });
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toMatch(/commandes existantes|archiver/i);
+    });
+
+    it('allows deleting product with 200 when product has no order history', async () => {
+      vi.mocked(getServerSession).mockResolvedValueOnce({
+        user: { id: 'admin-1', role: 'admin' },
+      } as any);
+
+      vi.spyOn(prisma.product, 'findUnique').mockResolvedValueOnce({
+        id: 'prod-clean',
+        title: 'New Prototype Candy',
+        price: '4.00',
+        imageUrl: '',
+      } as any);
+
+      vi.spyOn(prisma.orderItem, 'count').mockResolvedValueOnce(0);
+      vi.spyOn(prisma.product, 'delete').mockResolvedValueOnce({
+        id: 'prod-clean',
+      } as any);
+
+      const req = new NextRequest('http://localhost/api/products/prod-clean', {
+        method: 'DELETE',
+      });
+
+      const res = await deleteProduct(req, {
+        params: Promise.resolve({ id: 'prod-clean' }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.message).toMatch(/deleted successfully/i);
     });
   });
 });

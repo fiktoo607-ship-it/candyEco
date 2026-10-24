@@ -52,9 +52,19 @@ vi.mock('@/lib/prisma', () => {
   };
 });
 
+import { resetRateLimiter } from '@/lib/rate-limiter';
+
+vi.mock('@/lib/config', () => ({
+  getSiteConfig: vi.fn().mockImplementation((key) => {
+    if (key === 'store_enabled') return Promise.resolve(true);
+    return Promise.resolve(null);
+  }),
+}));
+
 describe('Delivery Method Selection API Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetRateLimiter();
   });
 
   describe('GET /api/delivery-methods', () => {
@@ -235,6 +245,142 @@ describe('Delivery Method Selection API Tests', () => {
           }),
         })
       );
+    });
+
+    describe('Issue #137: Delivery Method API Mismatch (GET sanitized names vs POST raw DB lookup)', () => {
+      const mockRawDbMethods = [
+        { id: 'y-1', name: 'yalidin test test test', price: 7.0, active: true },
+        { id: 'p-1', name: 'Store Pickup', price: 0.0, active: true },
+        { id: 'h-1', name: 'Home Delivery', price: 5.0, active: true },
+      ];
+
+      it('should resolve order when client sends sanitized name "Yalidine Express" returned by GET /api/delivery-methods', async () => {
+        vi.mocked(getServerSession).mockResolvedValue(null);
+        vi.mocked(prisma.product.findMany).mockResolvedValue([
+          { id: 'prod-1', title: 'Cookie', price: '$2.50', state: 'exist' },
+        ] as any);
+        // findFirst fails on exact match because DB contains raw name 'yalidin test test test'
+        vi.mocked(prisma.deliveryMethod.findFirst).mockResolvedValue(null);
+        // findMany returns the DB methods, allowing route to resolve sanitized name
+        vi.mocked(prisma.deliveryMethod.findMany).mockResolvedValue(mockRawDbMethods as any);
+        (vi.mocked(prisma.order.create) as any).mockImplementation((args: any) => Promise.resolve({ id: 'order-y1', ...args.data }));
+
+        const payload = {
+          customerName: 'Karim',
+          customerPhone: '+213555123456',
+          shippingAddress: 'Alger Centre',
+          deliveryMethod: 'Yalidine Express',
+          items: [{ productId: 'prod-1', quantity: 2 }], // 2 * $2.50 = $5.00 + $7.00 delivery = $12.00
+        };
+
+        const req = new NextRequest('http://localhost/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const res = await createOrder(req);
+        expect(res.status).toBe(201);
+        const data = await res.json();
+        expect(data.totalAmount).toBe(12.0);
+        expect(data.totalPrice).toBe('$12.00');
+        expect(data.deliveryMethod).toBe('Yalidine Express');
+      });
+
+      it('should resolve order when client sends unique method ID "y-1"', async () => {
+        vi.mocked(getServerSession).mockResolvedValue(null);
+        vi.mocked(prisma.product.findMany).mockResolvedValue([
+          { id: 'prod-1', title: 'Cookie', price: '$2.50', state: 'exist' },
+        ] as any);
+        vi.mocked(prisma.deliveryMethod.findFirst).mockResolvedValue({
+          id: 'y-1',
+          name: 'yalidin test test test',
+          price: 7.0,
+          active: true,
+        } as any);
+        (vi.mocked(prisma.order.create) as any).mockImplementation((args: any) => Promise.resolve({ id: 'order-y1', ...args.data }));
+
+        const payload = {
+          customerName: 'Karim',
+          customerPhone: '+213555123456',
+          shippingAddress: 'Alger Centre',
+          deliveryMethod: 'y-1',
+          items: [{ productId: 'prod-1', quantity: 2 }],
+        };
+
+        const req = new NextRequest('http://localhost/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const res = await createOrder(req);
+        expect(res.status).toBe(201);
+        const data = await res.json();
+        expect(data.totalAmount).toBe(12.0);
+        expect(data.deliveryMethod).toBe('Yalidine Express');
+      });
+
+      it('should resolve order when client sends slug "yalidine-express"', async () => {
+        vi.mocked(getServerSession).mockResolvedValue(null);
+        vi.mocked(prisma.product.findMany).mockResolvedValue([
+          { id: 'prod-1', title: 'Cookie', price: '$2.50', state: 'exist' },
+        ] as any);
+        vi.mocked(prisma.deliveryMethod.findFirst).mockResolvedValue(null);
+        vi.mocked(prisma.deliveryMethod.findMany).mockResolvedValue(mockRawDbMethods as any);
+        (vi.mocked(prisma.order.create) as any).mockImplementation((args: any) => Promise.resolve({ id: 'order-slug', ...args.data }));
+
+        const payload = {
+          customerName: 'Karim',
+          customerPhone: '+213555123456',
+          shippingAddress: 'Alger Centre',
+          deliveryMethod: 'yalidine-express',
+          items: [{ productId: 'prod-1', quantity: 2 }],
+        };
+
+        const req = new NextRequest('http://localhost/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const res = await createOrder(req);
+        expect(res.status).toBe(201);
+        const data = await res.json();
+        expect(data.deliveryMethod).toBe('Yalidine Express');
+      });
+
+      it('should successfully complete checkout with each available delivery method end-to-end', async () => {
+        vi.mocked(getServerSession).mockResolvedValue(null);
+        vi.mocked(prisma.product.findMany).mockResolvedValue([
+          { id: 'prod-1', title: 'Cookie', price: '$2.50', state: 'exist' },
+        ] as any);
+        vi.mocked(prisma.deliveryMethod.findMany).mockResolvedValue(mockRawDbMethods as any);
+
+        for (const method of mockRawDbMethods) {
+          resetRateLimiter();
+          vi.mocked(prisma.deliveryMethod.findFirst).mockResolvedValueOnce(method as any);
+          (vi.mocked(prisma.order.create) as any).mockImplementationOnce((args: any) => Promise.resolve({ id: `order-${method.id}`, ...args.data }));
+
+          const req = new NextRequest('http://localhost/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customerName: 'Test Client',
+              customerPhone: '+213555999000',
+              shippingAddress: 'Street 10',
+              deliveryMethod: method.id,
+              items: [{ productId: 'prod-1', quantity: 2 }],
+            }),
+          });
+
+          const res = await createOrder(req);
+          expect(res.status).toBe(201);
+          const data = await res.json();
+          const expectedTotal = 5.0 + method.price;
+          expect(data.totalAmount).toBe(expectedTotal);
+        }
+      });
     });
   });
 });

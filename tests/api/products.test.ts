@@ -115,16 +115,33 @@ describe('Products API', () => {
 
       const response = await getProducts();
       expect(response.status).toBe(200);
+      expect(response.headers.get('Cache-Control')).toBe('public, s-maxage=60, stale-while-revalidate=300');
 
       const data = await response.json();
-      expect(data).toEqual(expectedProductsJson);
-      expect(prisma.product.findMany).toHaveBeenCalledWith({
-        orderBy: [
-          { visibility: 'desc' },
-          { createdAt: 'desc' },
-        ],
-        include: { tags: true }
-      });
+      expect(prisma.product.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isPublished: true,
+            visibility: { gte: 0 },
+          }),
+          orderBy: [
+            { visibility: 'desc' },
+            { createdAt: 'desc' },
+          ],
+          include: { tags: true }
+        })
+      );
+    });
+
+    it('should return Edge-optimized Cache-Control headers for public requests and private headers for dashboard requests', async () => {
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce([]);
+      const publicRes = await getProducts(new NextRequest('http://localhost/api/products'));
+      expect(publicRes.headers.get('Cache-Control')).toBe('public, s-maxage=60, stale-while-revalidate=300');
+
+      vi.mocked(prisma.product.findMany).mockResolvedValueOnce([]);
+      const dashboardReq = new NextRequest('http://localhost/api/products?dashboard=true');
+      const dashRes = await getProducts(dashboardReq);
+      expect(dashRes.headers.get('Cache-Control')).toBe('private, no-cache, no-store, must-revalidate');
     });
 
     it('should preserve rating field when dashboard=true query parameter is present', async () => {
@@ -517,10 +534,25 @@ describe('Products API', () => {
       expect(data).toEqual({ error: 'Product not found' });
     });
 
-    it('should return 404 for non-admin customer when product has visibility <= 0 (Issue #10)', async () => {
+    it('should display active product for non-admin customer when product has default visibility 0 (Issue #144, #10)', async () => {
       vi.mocked(prisma.product.findUnique).mockResolvedValueOnce({
         ...mockProduct,
         visibility: 0,
+      });
+
+      const req = new NextRequest(`http://localhost/api/products/${mockProduct.id}`);
+      const response = await getProduct(req, { params: Promise.resolve({ id: mockProduct.id }) });
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.id).toBe(mockProduct.id);
+      expect(data.visibility).toBe(0);
+    });
+
+    it('should return 404 for non-admin customer when product has isPublished: false (Issue #145, #10)', async () => {
+      vi.mocked(prisma.product.findUnique).mockResolvedValueOnce({
+        ...mockProduct,
+        isPublished: false,
       });
 
       const req = new NextRequest(`http://localhost/api/products/${mockProduct.id}`);
