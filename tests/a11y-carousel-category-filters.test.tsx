@@ -59,18 +59,15 @@ describe('A11y Fixes Verification (Issues #56, #57)', () => {
       expect(HeroCarouselReExport).toBe(HeroCarousel);
     });
 
-    it('renders exactly one <h1> heading for the first slide across multiple slides', () => {
+    it('renders semantic h2 headings for slide titles to preserve page-level h1 landmark (Issue #127)', () => {
       const { container, unmount } = renderComponent(<HeroCarousel slides={mockSlides} />);
 
-      const h1Elements = container.querySelectorAll('h1');
-      expect(h1Elements.length).toBe(1);
-      expect(h1Elements[0].textContent).toContain('Pâtisserie Artisanale 1');
-
-      // Subsequent slides must be h2
+      // Under Issue #127, slide titles use h2 so the page-level h1 landmark outside the carousel is never hidden when slides cycle
       const h2Elements = container.querySelectorAll('h2');
-      expect(h2Elements.length).toBe(2);
-      expect(h2Elements[0].textContent).toContain('Viennoiseries Croustillantes 2');
-      expect(h2Elements[1].textContent).toContain('Douceurs Traditionnelles 3');
+      expect(h2Elements.length).toBe(3);
+      expect(h2Elements[0].textContent).toContain('Pâtisserie Artisanale 1');
+      expect(h2Elements[1].textContent).toContain('Viennoiseries Croustillantes 2');
+      expect(h2Elements[2].textContent).toContain('Douceurs Traditionnelles 3');
 
       unmount();
     });
@@ -254,9 +251,11 @@ describe('A11y Fixes Verification (Issues #56, #57)', () => {
       expect(sanitizeSlideUrl('/a-propos')).toBe('/a-propos');
     });
 
-    it('allows valid external http and https URLs', () => {
-      expect(sanitizeSlideUrl('https://example.com/promo')).toBe('https://example.com/promo');
-      expect(sanitizeSlideUrl('http://example.com/promo')).toBe('http://example.com/promo');
+    it('rejects unvalidated external domains and insecure http schemes (Issue #44)', () => {
+      expect(sanitizeSlideUrl('https://example.com/promo')).toBeNull();
+      expect(sanitizeSlideUrl('http://example.com/promo')).toBeNull();
+      expect(sanitizeSlideUrl('https://evil-phishing.com/steal')).toBeNull();
+      expect(sanitizeSlideUrl('https://candyeco.dz/promo')).toBe('https://candyeco.dz/promo');
     });
 
     it('rejects invalid or malformed URL strings', () => {

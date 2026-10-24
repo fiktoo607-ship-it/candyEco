@@ -118,7 +118,7 @@ describe('Storefront Accessibility Fixes (Issues #34, #33, #32, #1)', () => {
 
       const skipLink = container.querySelector('a[href="#main-content"]');
       expect(skipLink).not.toBeNull();
-      expect(skipLink?.textContent?.trim()).toMatch(/skip to main content/i);
+      expect(skipLink?.textContent?.trim()).toMatch(/passer au contenu principal|skip to main content/i);
       expect(skipLink?.className).toContain('sr-only');
       expect(skipLink?.className).toContain('focus:not-sr-only');
 

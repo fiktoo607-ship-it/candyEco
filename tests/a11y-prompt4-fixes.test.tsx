@@ -143,7 +143,7 @@ describe('Accessibility Enhancements (Issues #24, #27, #33)', () => {
 
     it('renders indicator dots for slides and navigates properly', () => {
       const { container, unmount } = renderComponent(<PopularProductsSection products={sampleProducts} />);
-      const indicatorBtns = container.querySelectorAll('button[aria-label^="Go to slide"]');
+      const indicatorBtns = container.querySelectorAll('button[aria-label^="Aller à la diapositive"], button[aria-label^="Go to slide"]');
       expect(indicatorBtns.length).toBe(sampleProducts.length);
       unmount();
     });

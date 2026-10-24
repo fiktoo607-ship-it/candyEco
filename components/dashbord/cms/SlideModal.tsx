@@ -77,41 +77,52 @@ export function SlideModal({
         <form onSubmit={handleSlideSubmit} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-md space-y-md">
             <div className="flex flex-col gap-xs">
-              <label className="text-xs md:text-sm font-bold text-on-surface-variant">Titre *</label>
+              <label htmlFor="slide-title" className="text-xs md:text-sm font-bold text-on-surface-variant">Titre *</label>
               <input
+                id="slide-title"
                 type="text"
                 required
                 value={slideTitle}
                 onChange={(e) => setSlideTitle(e.target.value)}
-                className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 w-full transition-all"
+                className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 w-full transition-all focus:border-primary"
                 placeholder="Ex: Coming Soon, Promotion, Holiday Announcement..."
               />
             </div>
 
             <div className="flex flex-col gap-xs">
-              <label className="text-xs md:text-sm font-bold text-on-surface-variant">Description</label>
+              <label htmlFor="slide-description" className="text-xs md:text-sm font-bold text-on-surface-variant">Description</label>
               <textarea
+                id="slide-description"
                 rows={3}
                 value={slideDescription}
                 onChange={(e) => setSlideDescription(e.target.value)}
-                className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none w-full transition-all"
+                className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 resize-none w-full transition-all focus:border-primary"
                 placeholder="Description affichée sur la diapositive..."
               />
             </div>
 
             <div className="flex flex-col gap-xs">
-              <label className="text-xs md:text-sm font-bold text-on-surface-variant">Lien URL (optionnel)</label>
+              <label htmlFor="slide-link-url" className="text-xs md:text-sm font-bold text-on-surface-variant">Lien URL (optionnel)</label>
               <input
+                id="slide-link-url"
                 type="text"
                 value={slideLinkUrl}
                 onChange={(e) => setSlideLinkUrl(e.target.value)}
-                className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 w-full transition-all"
+                className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 w-full transition-all focus:border-primary"
                 placeholder="Ex: /our-product/dziriettes ou externe"
               />
             </div>
 
             <div className="flex flex-col gap-xs">
-              <label className="text-xs md:text-sm font-bold text-on-surface-variant">Image du carousel *</label>
+              <label htmlFor="slide-image-file" className="text-xs md:text-sm font-bold text-on-surface-variant">Image du carousel *</label>
+              <input
+                id="slide-image-file"
+                type="file"
+                accept="image/*"
+                onChange={handleSlideImageUpload}
+                disabled={isSlideUploading}
+                className="sr-only"
+              />
               <div className="flex flex-col gap-md">
                 {slideImageUrl && (
                   <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden bg-neutral-900 border border-outline-variant shadow-soft group">
@@ -119,7 +130,7 @@ export function SlideModal({
                     <button
                       type="button"
                       onClick={() => setSlideImageUrl("")}
-                      className="absolute top-2 right-2 bg-black/60 hover:bg-black/85 text-white rounded-full p-1.5 transition-colors shadow-md flex items-center justify-center"
+                      className="absolute top-2 right-2 bg-black/60 hover:bg-black/85 text-white rounded-full p-1.5 transition-colors shadow-md flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                       title="Supprimer l'image"
                       aria-label="Supprimer l'image de la diapositive"
                     >
@@ -129,17 +140,10 @@ export function SlideModal({
                 )}
                 
                 {!slideImageUrl && (
-                  <label className={`flex flex-col items-center justify-center border-2 border-dashed border-outline-variant/60 hover:border-primary/60 bg-surface-container-low hover:bg-primary/5 rounded-2xl p-md text-center cursor-pointer transition-all ${isSlideUploading ? 'pointer-events-none opacity-50' : ''}`}>
+                  <label htmlFor="slide-image-file" className={`flex flex-col items-center justify-center border-2 border-dashed border-outline-variant/60 hover:border-primary/60 bg-surface-container-low hover:bg-primary/5 rounded-2xl p-md text-center cursor-pointer transition-all focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 ${isSlideUploading ? 'pointer-events-none opacity-50' : ''}`}>
                     <span className="material-symbols-outlined text-4xl text-outline mb-xs animate-pulse" aria-hidden="true">cloud_upload</span>
                     <span className="text-sm font-semibold text-on-surface">Cliquez pour téléverser une image</span>
                     <span className="text-xs text-on-surface-variant mt-[2px]">Format WebP, PNG, JPG (Max 10Mo)</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleSlideImageUpload}
-                      disabled={isSlideUploading}
-                      className="hidden"
-                    />
                   </label>
                 )}
                 

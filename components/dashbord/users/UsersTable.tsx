@@ -83,11 +83,11 @@ export function UsersTable({
                     ) : (
                       <button
                         onClick={() => onDeleteUser(user.id)}
-                        className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-sm py-[8px] text-xs font-bold text-error hover:bg-rose-500/10 transition-colors flex items-center gap-xs"
+                        className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-sm py-[8px] text-xs font-bold text-error hover:bg-rose-500/10 transition-colors flex items-center gap-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
                         title="Supprimer le client"
                         aria-label="Supprimer le client"
                       >
-                        <span className="material-symbols-outlined text-sm">delete</span>
+                        <span className="material-symbols-outlined text-sm" aria-hidden="true">delete</span>
                         Supprimer
                       </button>
                     )}
@@ -141,7 +141,7 @@ export function UsersTable({
                   </td>
                   <td className="p-md">
                     <span className="inline-flex items-center gap-xs rounded-full bg-emerald-500/10 px-sm py-xs text-xs font-bold text-emerald-600 border border-emerald-500/20 whitespace-nowrap">
-                      <span className="material-symbols-outlined text-xs select-none">verified_user</span>
+                      <span className="material-symbols-outlined text-xs select-none" aria-hidden="true">verified_user</span>
                       <span className="whitespace-nowrap">{user.trustScore} p</span>
                     </span>
                   </td>
@@ -156,11 +156,11 @@ export function UsersTable({
                     ) : (
                       <button
                         onClick={() => onDeleteUser(user.id)}
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-xl border border-rose-500/20 text-on-surface-variant hover:text-error hover:bg-rose-500/5 transition-colors"
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-xl border border-rose-500/20 text-on-surface-variant hover:text-error hover:bg-rose-500/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
                         title="Supprimer le client"
                         aria-label="Supprimer le client"
                       >
-                        <span className="material-symbols-outlined text-lg select-none">delete</span>
+                        <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">delete</span>
                       </button>
                     )}
                   </td>

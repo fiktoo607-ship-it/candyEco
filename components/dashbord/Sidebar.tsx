@@ -69,7 +69,7 @@ export default function Sidebar() {
         <button
           onClick={toggleCollapsed}
           className="hidden desktop:flex absolute top-6 -right-4 h-8 w-8 items-center justify-center rounded-full border border-outline-variant/35 bg-surface hover:bg-surface-container-low text-on-surface-variant focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 shadow-sm z-[35] transition-all cursor-pointer hover:scale-105 active:scale-95"
-          aria-label={activeCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={activeCollapsed ? "Agrandir la barre latérale" : "Réduire la barre latérale"}
         >
           <span className="material-symbols-outlined text-lg select-none" aria-hidden="true">
             {activeCollapsed ? 'chevron_right' : 'chevron_left'}
@@ -255,7 +255,7 @@ export default function Sidebar() {
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-surface-container-low text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:hidden"
-                aria-label="Toggle navigation menu"
+                aria-label="Basculer le menu de navigation"
               >
                 <span className="material-symbols-outlined text-2xl select-none" aria-hidden="true">
                   {isOpen ? 'close' : 'menu'}

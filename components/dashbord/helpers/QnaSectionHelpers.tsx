@@ -21,16 +21,17 @@ export function QnaFilters({
   return (
     <div className="flex flex-col gap-sm sm:flex-row sm:items-center sm:justify-between bg-surface-container-lowest/50 p-md rounded-2xl border border-outline-variant/10 shadow-soft">
       {/* Search Input */}
-      <label className="relative w-full sm:w-80">
+      <label htmlFor="qna-search-input" className="relative w-full sm:w-80">
         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none" aria-hidden="true">
           search
         </span>
         <input
+          id="qna-search-input"
           type="text"
           placeholder="Rechercher des FAQ..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-xl border border-outline-variant bg-surface-container-low py-sm pl-10 pr-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+          className="w-full rounded-xl border border-outline-variant bg-surface-container-low py-sm pl-10 pr-sm text-base text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary"
         />
       </label>
 
@@ -257,26 +258,28 @@ export function QnaModal({
         {/* Form Body (Scrollable) */}
         <form onSubmit={onSave} className="flex-1 overflow-y-auto p-md flex flex-col gap-md">
           <div className="flex flex-col gap-xs">
-            <label className="text-sm font-bold text-on-surface-variant">Question *</label>
+            <label htmlFor="qna-question" className="text-sm font-bold text-on-surface-variant">Question *</label>
             <textarea
+              id="qna-question"
               value={questionText}
               onChange={(e) => setQuestionText(e.target.value)}
               placeholder="Ex: Quels sont vos horaires d'ouverture ?"
               rows={3}
               required
-              className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
+              className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary resize-none"
             />
           </div>
 
           <div className="flex flex-col gap-xs">
-            <label className="text-sm font-bold text-on-surface-variant">Réponse *</label>
+            <label htmlFor="qna-answer" className="text-sm font-bold text-on-surface-variant">Réponse *</label>
             <textarea
+              id="qna-answer"
               value={answerText}
               onChange={(e) => setAnswerText(e.target.value)}
               placeholder="Ex: Nous sommes ouverts de 8h à 20h du lundi au samedi."
               rows={5}
               required
-              className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
+              className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary resize-none"
             />
           </div>
 

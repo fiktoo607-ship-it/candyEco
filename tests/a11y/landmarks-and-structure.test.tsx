@@ -37,6 +37,14 @@ vi.mock('next-auth/react', () => ({
 // Mock useProducts and useConfig
 vi.mock('@/lib/hooks/use-products', () => ({
   useProducts: () => ({ data: [], isLoading: false }),
+  useInfiniteProducts: () => ({
+    data: { pages: [] },
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetching: false,
+    isFetchingNextPage: false,
+    isLoading: false,
+  }),
 }));
 
 vi.mock('@/lib/hooks/use-config', () => ({
@@ -48,6 +56,8 @@ vi.mock('@/lib/hooks/use-config', () => ({
 
 import RootLayout, { viewport } from '@/app/layout';
 import HomePage from '@/app/home/page';
+import OurProductPage from '@/app/our-product/page';
+import HeroCarousel from '@/components/home/HeroCarousel';
 import ProductCard from '@/components/ProductCard';
 import FaqSection from '@/components/home/FaqSection';
 import FaqAccordion from '@/components/faq/FaqAccordion';
@@ -88,6 +98,12 @@ function renderComponent(ui: React.ReactNode) {
 describe('Issues #1, #34, and #127: Storefront Accessibility Landmarks, Hierarchy & Controls', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    class MockIntersectionObserver {
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+    }
+    global.IntersectionObserver = MockIntersectionObserver as any;
   });
 
   describe('Issue #34: Skip Link and Viewport Zoom', () => {
@@ -210,4 +226,74 @@ describe('Issues #1, #34, and #127: Storefront Accessibility Landmarks, Hierarch
       unmount();
     });
   });
+
+  describe('Issue #133: Heading Hierarchy & Semantic H1 Landmark on /our-product', () => {
+    it('renders a visible <h1> landmark and <h2> filter landmark on OurProductPage', () => {
+      const { container, unmount } = renderComponent(<OurProductPage />);
+
+      const main = container.querySelector('main#main-content');
+      expect(main).not.toBeNull();
+
+      // Heading 1 check
+      const h1 = main?.querySelector('h1');
+      expect(h1).not.toBeNull();
+      expect(h1?.textContent?.trim()).toBe('Nos Produits');
+      expect(h1?.className).not.toContain('sr-only');
+
+      // Heading 2 check ensuring hierarchy before h3 product cards
+      const h2 = main?.querySelector('h2');
+      expect(h2).not.toBeNull();
+      expect(h2?.textContent?.trim()).toMatch(/recherche et filtres/i);
+
+      unmount();
+    });
+  });
+
+  describe('Issue #126 & #127: French Carousel Controls and Non-destructive Heading Structure', () => {
+    const mockCarouselSlides = [
+      {
+        id: 's-1',
+        title: 'Douceurs Fraîches',
+        description: 'Faits maison chaque matin.',
+        imageUrl: '/test.jpg',
+        primaryLink: { label: 'Commander', href: '/our-product' },
+      },
+      {
+        id: 's-2',
+        title: 'Pâtisseries Fines',
+        description: 'Ingrédients biologiques.',
+        imageUrl: '/test2.jpg',
+        primaryLink: { label: 'Découvrir', href: '/our-product' },
+      },
+    ];
+
+    it('provides French aria-labels on Previous and Next buttons and slide indicators', () => {
+      const { container, unmount } = renderComponent(<HeroCarousel slides={mockCarouselSlides} />);
+
+      const prevBtn = container.querySelector('button[aria-label="Diapositive précédente"]');
+      const nextBtn = container.querySelector('button[aria-label="Diapositive suivante"]');
+      expect(prevBtn).not.toBeNull();
+      expect(nextBtn).not.toBeNull();
+
+      // Dot indicators container
+      const dotGroup = container.querySelector('div[role="group"][aria-label="Choisir une diapositive"]');
+      expect(dotGroup).not.toBeNull();
+
+      // Dot buttons have French labels
+      const dotButtons = dotGroup?.querySelectorAll('button');
+      expect(dotButtons?.length).toBe(mockCarouselSlides.length);
+      expect(dotButtons?.[0]?.getAttribute('aria-label')).toBe('Aller à la diapositive 1 sur 2');
+      expect(dotButtons?.[1]?.getAttribute('aria-label')).toBe('Aller à la diapositive 2 sur 2');
+
+      // Slide titles use h2 so active slide cycling does not hide the page h1
+      const h1InsideCarousel = container.querySelectorAll('h1');
+      expect(h1InsideCarousel.length).toBe(0);
+
+      const h2InsideCarousel = container.querySelectorAll('h2');
+      expect(h2InsideCarousel.length).toBe(2);
+
+      unmount();
+    });
+  });
 });
+

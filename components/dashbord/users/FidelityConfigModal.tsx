@@ -160,36 +160,38 @@ export function FidelityConfigModal({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm pt-xs">
               <div>
-                <label className="block text-xs font-bold text-on-surface-variant mb-xs">
+                <label htmlFor="fidelity-vip-threshold" className="block text-xs font-bold text-on-surface-variant mb-xs">
                   Seuil VIP (ex: 700 p)
                 </label>
                 <div className="relative">
                   <input
+                    id="fidelity-vip-threshold"
                     type="number"
                     required
                     min="0"
                     placeholder="700"
                     value={vipThreshold}
                     onChange={(e) => setVipThreshold(e.target.value)}
-                    className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-sm font-bold text-on-surface outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-sm font-bold text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-amber-600">p</span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-on-surface-variant mb-xs">
+                <label htmlFor="fidelity-fidele-threshold" className="block text-xs font-bold text-on-surface-variant mb-xs">
                   Seuil Fidèle (ex: 200 p)
                 </label>
                 <div className="relative">
                   <input
+                    id="fidelity-fidele-threshold"
                     type="number"
                     required
                     min="0"
                     placeholder="200"
                     value={fideleThreshold}
                     onChange={(e) => setFideleThreshold(e.target.value)}
-                    className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-sm font-bold text-on-surface outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-sm font-bold text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-indigo-600">p</span>
                 </div>
@@ -200,7 +202,7 @@ export function FidelityConfigModal({
               <button
                 type="submit"
                 disabled={savingConfig || loadingConfig}
-                className="rounded-xl bg-primary px-md py-xs text-xs font-bold text-white hover:bg-surface-tint transition-all disabled:opacity-50 flex items-center gap-xs shadow-soft"
+                className="rounded-xl bg-primary px-md py-xs text-xs font-bold text-white hover:bg-surface-tint transition-all disabled:opacity-50 flex items-center gap-xs shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {savingConfig && <span className="material-symbols-outlined text-xs animate-spin" aria-hidden="true">sync</span>}
                 Enregistrer les seuils
@@ -218,13 +220,14 @@ export function FidelityConfigModal({
             </div>
 
             <div className="space-y-xs pt-xs">
-              <label className="block text-xs font-bold text-on-surface-variant mb-xs">
+              <label htmlFor="fidelity-selected-user" className="block text-xs font-bold text-on-surface-variant mb-xs">
                 Sélectionner un Client
               </label>
               <select
+                id="fidelity-selected-user"
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
-                className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-semibold text-on-surface outline-none focus:border-primary cursor-pointer"
+                className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-semibold text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary cursor-pointer"
               >
                 <option value="">-- Choisir un client --</option>
                 {users.map((u) => (
@@ -238,13 +241,14 @@ export function FidelityConfigModal({
             {selectedUserId && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm pt-xs animate-fade-in">
                 <div>
-                  <label className="block text-xs font-bold text-on-surface-variant mb-xs">
+                  <label htmlFor="fidelity-custom-status" className="block text-xs font-bold text-on-surface-variant mb-xs">
                     Nouveau Statut
                   </label>
                   <select
+                    id="fidelity-custom-status"
                     value={customStatus}
                     onChange={(e) => setCustomStatus(e.target.value)}
-                    className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-bold text-on-surface outline-none focus:border-primary cursor-pointer"
+                    className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-xs font-bold text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary cursor-pointer"
                   >
                     <option value="VIP">VIP</option>
                     <option value="Fidèle">Fidèle</option>
@@ -254,16 +258,17 @@ export function FidelityConfigModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-on-surface-variant mb-xs">
+                  <label htmlFor="fidelity-custom-points" className="block text-xs font-bold text-on-surface-variant mb-xs">
                     Points (p)
                   </label>
                   <div className="relative">
                     <input
+                      id="fidelity-custom-points"
                       type="number"
                       min="0"
                       value={customPoints}
                       onChange={(e) => setCustomPoints(e.target.value)}
-                      className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-sm font-bold text-on-surface outline-none focus:border-primary"
+                      className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-xs text-sm font-bold text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-600">p</span>
                   </div>

@@ -45,7 +45,14 @@ export default function NewProductsSection({ products }: NewProductsSectionProps
       return 3;
     };
 
+    let lastWidth = -1;
+
     const handleResize = () => {
+      if (typeof window === 'undefined') return;
+      const currentWidth = window.innerWidth;
+      if (currentWidth === lastWidth) return;
+      lastWidth = currentWidth;
+
       const newItems = getItemsPerView();
       setItemsPerView(newItems);
       setCurrentSlide(newItems);
@@ -245,7 +252,12 @@ export default function NewProductsSection({ products }: NewProductsSectionProps
 
       {/* Dotted Slide Indicators */}
       {N > 1 && (
-        <div suppressHydrationWarning className="mt-lg flex gap-3 justify-center items-center z-20 relative">
+        <div 
+          role="group"
+          aria-label="Choisir une diapositive"
+          suppressHydrationWarning 
+          className="mt-lg flex gap-3 justify-center items-center z-20 relative"
+        >
           {Array.from({ length: N }).map((_, index) => {
             const isActive = index === activeIndicatorIndex;
             return (
@@ -260,7 +272,7 @@ export default function NewProductsSection({ products }: NewProductsSectionProps
                     ? "w-12 bg-[#2a1082] shadow-sm shadow-[#2a1082]/30"
                     : "w-3 bg-neutral-300 hover:bg-neutral-400 hover:scale-105"
                 }`}
-                aria-label={`Go to slide ${index + 1}`}
+                aria-label={`Aller à la diapositive ${index + 1}`}
                 aria-current={isActive ? "true" : undefined}
               />
             );

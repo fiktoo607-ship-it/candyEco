@@ -20,11 +20,12 @@ export function ProductTagsEditor({
 }: ProductTagsEditorProps) {
   return (
     <div className="flex flex-col gap-xs">
-      <label className="text-sm font-bold text-on-surface-variant">
+      <label htmlFor="product-tag-input" className="text-sm font-bold text-on-surface-variant">
         Mots-clés (Tags)
       </label>
       <div className="flex flex-col min-[415px]:flex-row gap-xs">
         <input
+          id="product-tag-input"
           type="text"
           placeholder="Ex: لوز, شوكولا, زيت..."
           value={newTagInput}

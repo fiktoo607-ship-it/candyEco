@@ -21,48 +21,8 @@ interface Slide {
   primaryLink?: { href: string; label: string; isComingSoon: boolean };
 }
 
-/**
- * Validates and sanitizes slide link URLs to prevent open redirects and XSS (Issue #16).
- * Rejects javascript:, data:, vbscript: and ensures external links use valid http/https
- * or relative internal paths.
- */
-export function sanitizeSlideUrl(url?: string | null): string | null {
-  if (!url || typeof url !== 'string') return null;
-  const trimmed = url.trim();
-  if (!trimmed || trimmed === '#') return null;
-
-  const lower = trimmed.toLowerCase();
-  if (
-    lower.startsWith('javascript:') ||
-    lower.startsWith('data:') ||
-    lower.startsWith('vbscript:') ||
-    lower.startsWith('file:')
-  ) {
-    return null;
-  }
-
-  // Reject protocol-relative URLs
-  if (trimmed.startsWith('//')) {
-    return null;
-  }
-
-  // Allow relative internal paths
-  if (trimmed.startsWith('/')) {
-    return trimmed;
-  }
-
-  // Allow valid http / https URLs
-  try {
-    const parsed = new URL(trimmed);
-    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-      return trimmed;
-    }
-  } catch {
-    // Invalid URL
-  }
-
-  return null;
-}
+export { sanitizeSlideUrl } from '@/lib/carousel-url';
+import { sanitizeSlideUrl } from '@/lib/carousel-url';
 
 interface HeroCarouselProps {
   slides?: CarouselSlide[];
@@ -167,6 +127,9 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
 
   return (
     <section 
+      role="region"
+      aria-roledescription="carrousel"
+      aria-label="Carrousel principal"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -179,6 +142,9 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
           return (
             <div
               key={index}
+              role="group"
+              aria-roledescription="diapositive"
+              aria-label={`${index + 1} sur ${displaySlides.length}`}
               aria-hidden={!isActive ? true : undefined}
               inert={!isActive ? true : undefined}
               className={`absolute inset-0 h-full w-full transition-all duration-1000 ease-in-out motion-reduce:transition-none motion-reduce:transform-none ${
@@ -190,7 +156,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
               {/* Background Image with Slow Zoom */}
               <img
                 src={slide.imageUrl}
-                alt={slide.title}
+                alt=""
                 className={`absolute inset-0 h-full w-full object-cover object-center transition-transform duration-[5000ms] ease-out motion-reduce:transition-none motion-reduce:transform-none ${
                   isActive ? "scale-100" : "scale-110"
                 }`}
@@ -205,24 +171,14 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
                   className="w-full max-w-2xl text-left text-white rounded-3xl p-sm xs:p-md md:p-12 transition-all duration-500 hover:border-white/20"
                   dir="ltr"
                 >
-                  {/* Elegant Typography - Single H1 for primary slide, H2 for subsequent slides */}
-                  {index === 0 ? (
-                    <h1 className="mt-sm sm:mt-md font-display text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-white drop-shadow-md max-w-[15ch] md:max-w-[18ch]">
-                      {containsArabic(slide.title) ? (
-                        <span lang="ar" dir="rtl">{slide.title}</span>
-                      ) : (
-                        slide.title
-                      )}
-                    </h1>
-                  ) : (
-                    <h2 className="mt-sm sm:mt-md font-display text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-white drop-shadow-md max-w-[15ch] md:max-w-[18ch]">
-                      {containsArabic(slide.title) ? (
-                        <span lang="ar" dir="rtl">{slide.title}</span>
-                      ) : (
-                        slide.title
-                      )}
-                    </h2>
-                  )}
+                  {/* Semantic H2 for carousel slide titles (preserves permanent page H1 landmark outside carousel) */}
+                  <h2 className="mt-sm sm:mt-md font-display text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-white drop-shadow-md max-w-[15ch] md:max-w-[18ch]">
+                    {containsArabic(slide.title) ? (
+                      <span lang="ar" dir="rtl">{slide.title}</span>
+                    ) : (
+                      slide.title
+                    )}
+                  </h2>
 
                   <p className="mt-xs sm:mt-md max-w-xl text-xs xs:text-sm sm:text-lg md:text-2xl leading-relaxed text-neutral-300 font-medium line-clamp-3 sm:line-clamp-4 lg:line-clamp-none">
                     {containsArabic(slide.description) ? (
@@ -242,6 +198,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
                       ) : (
                         <Link
                           href={slide.primaryLink.href}
+                          aria-label={`${slide.primaryLink.label} sur ${slide.title}`}
                           className="rounded-xl bg-[#deb53d] px-6 py-2.5 xs:px-8 xs:py-3 md:px-[50px] md:py-[16px] text-xs xs:text-sm md:text-base font-extrabold text-neutral-950 shadow-lg shadow-[#deb53d]/20 transition-all hover:scale-[1.02] hover:bg-[#ca9e2b] active:scale-[0.98]"
                         >
                           {slide.primaryLink.label}
@@ -306,7 +263,12 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
 
       {/* Slide Indicator Dots centered at the bottom */}
       {displaySlides.length > 1 && (
-        <div suppressHydrationWarning className="absolute bottom-md left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 bg-neutral-900/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 shadow-lg">
+        <div 
+          role="group"
+          aria-label="Choisir une diapositive"
+          suppressHydrationWarning 
+          className="absolute bottom-md left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 bg-neutral-900/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 shadow-lg"
+        >
           {displaySlides.map((_, index) => {
             const isActive = index === currentSlide;
             return (
@@ -318,7 +280,7 @@ export default function HeroCarousel({ slides = [] }: HeroCarouselProps) {
                     ? "w-12 bg-[#2a1082] shadow-md shadow-[#2a1082]/50"
                     : "w-3 bg-white/40 hover:bg-white/70 hover:scale-110 motion-reduce:hover:scale-100"
                 }`}
-                aria-label={`Aller à la diapositive ${index + 1}`}
+                aria-label={`Aller à la diapositive ${index + 1} sur ${displaySlides.length}`}
                 aria-current={isActive ? "true" : undefined}
               />
             );

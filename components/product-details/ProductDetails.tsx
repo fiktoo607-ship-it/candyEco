@@ -27,6 +27,7 @@ interface ProductData {
 }
 
 export default function ProductDetails({ product }: { product: ProductData }) {
+  const { data: session, status } = useSession();
   const addItem = useCartStore((state) => state.addItem);
   const minQuantity = product.limitBay && product.limitBay > 1 ? product.limitBay : 1;
   const [quantity, setQuantity] = useState(minQuantity);
@@ -254,7 +255,11 @@ export default function ProductDetails({ product }: { product: ProductData }) {
                   </span>
                 )}
               </label>
-              <div className="flex items-center border border-outline-variant/60 rounded-full bg-surface-container-low p-0.5 w-40">
+              <div
+                role="group"
+                aria-label="Quantité"
+                className="flex items-center border border-outline-variant/60 rounded-full bg-surface-container-low p-0.5 w-40"
+              >
                 <button
                   type="button"
                   onClick={() => setQuantity((prev) => (prev > minQuantity ? prev - 1 : minQuantity))}
@@ -267,10 +272,11 @@ export default function ProductDetails({ product }: { product: ProductData }) {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
                   </svg>
                 </button>
-                <span className="flex-1 text-center text-sm font-bold text-on-surface">{quantity}</span>
+                <span aria-live="polite" className="flex-1 text-center text-sm font-bold text-on-surface">{quantity}</span>
                 <button
                   type="button"
-                  onClick={() => setQuantity((prev) => prev + 1)}
+                  onClick={() => setQuantity((prev) => (prev < 100 ? prev + 1 : 100))}
+                  disabled={quantity >= 100}
                   aria-label="Augmenter la quantité"
                   className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >

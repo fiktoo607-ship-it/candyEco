@@ -144,38 +144,41 @@ export function DeliveryForm({
 
       <div className="space-y-sm">
         <div>
-          <label className="block text-sm font-bold text-on-surface-variant mb-xs">
+          <label htmlFor="delivery-method-name" className="block text-sm font-bold text-on-surface-variant mb-xs">
             Nom de la méthode (ex: World Express, Yalidin)
           </label>
           <input
+            id="delivery-method-name"
             type="text"
             required
             placeholder="Nom de la méthode..."
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-on-surface-variant mb-xs">
+          <label htmlFor="delivery-method-description" className="block text-sm font-bold text-on-surface-variant mb-xs">
             Description
           </label>
           <textarea
+            id="delivery-method-description"
             placeholder="Description (ex: Livraison express)..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
+            className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary resize-none"
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
           <div>
-            <label className="block text-sm font-bold text-on-surface-variant mb-xs">
+            <label htmlFor="delivery-method-home-price" className="block text-sm font-bold text-on-surface-variant mb-xs">
               Prix à domicile (€) (Home)
             </label>
             <input
+              id="delivery-method-home-price"
               type="number"
               step="0.01"
               required
@@ -185,22 +188,23 @@ export function DeliveryForm({
                 setHomePrice(e.target.value);
                 setPrice(e.target.value);
               }}
-              className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-on-surface-variant mb-xs">
+            <label htmlFor="delivery-method-stock-price" className="block text-sm font-bold text-on-surface-variant mb-xs">
               Prix au stock / bureau (€) (Stock)
             </label>
             <input
+              id="delivery-method-stock-price"
               type="number"
               step="0.01"
               required
               placeholder="0.00"
               value={stockPrice}
               onChange={(e) => setStockPrice(e.target.value)}
-              className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary"
             />
           </div>
         </div>
@@ -536,36 +540,38 @@ export function LieuPriceModal({
 
           <div className="space-y-sm">
             <div>
-              <label className="block text-xs font-bold text-on-surface-variant mb-xs uppercase tracking-wider">
+              <label htmlFor="lieu-home-price" className="block text-xs font-bold text-on-surface-variant mb-xs uppercase tracking-wider">
                 Prix à domicile (Home) (€)
               </label>
               <div className="relative">
                 <input
+                  id="lieu-home-price"
                   type="number"
                   step="0.01"
                   required
                   placeholder="0.00"
                   value={homePrice}
                   onChange={(e) => setHomePrice(e.target.value)}
-                  className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base font-semibold text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 pr-7"
+                  className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base font-semibold text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary pr-7"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-on-surface-variant">€</span>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-on-surface-variant mb-xs uppercase tracking-wider">
+              <label htmlFor="lieu-stock-price" className="block text-xs font-bold text-on-surface-variant mb-xs uppercase tracking-wider">
                 Prix au stock / bureau (Stock) (€)
               </label>
               <div className="relative">
                 <input
+                  id="lieu-stock-price"
                   type="number"
                   step="0.01"
                   required
                   placeholder="0.00"
                   value={stockPrice}
                   onChange={(e) => setStockPrice(e.target.value)}
-                  className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base font-semibold text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 pr-7"
+                  className="w-full rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base font-semibold text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary pr-7"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-on-surface-variant">€</span>
               </div>

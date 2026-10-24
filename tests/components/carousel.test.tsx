@@ -91,7 +91,9 @@ describe('Issues #27, #44, and #126: Carousel Accessibility, Security & Motion C
       expect(sanitizeSlideUrl('javascript:void(0)')).toBeNull();
       expect(sanitizeSlideUrl('data:text/html,<script>alert(1)</script>')).toBeNull();
       expect(sanitizeSlideUrl('vbscript:msgbox(1)')).toBeNull();
+      expect(sanitizeSlideUrl('file:///etc/passwd')).toBeNull();
       expect(sanitizeSlideUrl('//evil.com/phish')).toBeNull();
+      expect(sanitizeSlideUrl('/\\evil.com')).toBeNull();
 
       // 2. Component rendering test with malicious linkUrl
       const maliciousSlides: CarouselSlide[] = [
@@ -116,6 +118,61 @@ describe('Issues #27, #44, and #126: Carousel Accessibility, Security & Motion C
 
       // The malicious link should be neutralized into coming soon / disabled state
       expect(container.textContent).toContain('Bientôt disponible');
+
+      unmount();
+    });
+
+    it('sanitizes unvalidated external domains and open redirect attempts (Issue #44)', () => {
+      // Untrusted external domains must be sanitized to null
+      expect(sanitizeSlideUrl('https://evil-phishing.com/steal')).toBeNull();
+      expect(sanitizeSlideUrl('https://example.com/promo')).toBeNull();
+      expect(sanitizeSlideUrl('http://insecure-domain.com/path')).toBeNull();
+
+      // Trusted domains and relative internal routes must be preserved
+      expect(sanitizeSlideUrl('/our-product/macarons')).toBe('/our-product/macarons');
+      expect(sanitizeSlideUrl('/products/gateau')).toBe('/products/gateau');
+      expect(sanitizeSlideUrl('https://candyeco.dz/our-product/macarons')).toBe('https://candyeco.dz/our-product/macarons');
+      expect(sanitizeSlideUrl('https://www.candyeco.dz/promo')).toBe('https://www.candyeco.dz/promo');
+
+      // Component rendering test with external untrusted domain
+      const externalSlides: CarouselSlide[] = [
+        {
+          id: 'external-1',
+          title: 'External Phish',
+          description: 'Phishing slide',
+          imageUrl: '/img-phish.jpg',
+          linkUrl: 'https://evil-phishing.com/login',
+        },
+      ];
+
+      const { container, unmount } = renderComponent(<HeroCarousel slides={externalSlides} />);
+      const links = container.querySelectorAll('a');
+      links.forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        expect(href).not.toContain('evil-phishing.com');
+      });
+      expect(container.textContent).toContain('Bientôt disponible');
+      unmount();
+    });
+
+    it('properly preserves and navigates to valid product URLs', () => {
+      const validSlides: CarouselSlide[] = [
+        {
+          id: 'slide-prod-1',
+          title: 'Macarons Royaux',
+          description: 'Saveurs artisanales',
+          imageUrl: '/macarons.jpg',
+          linkUrl: '/our-product/macarons-royaux',
+          isProduct: true,
+        },
+      ];
+
+      const { container, unmount } = renderComponent(<HeroCarousel slides={validSlides} />);
+
+      const ctaLink = container.querySelector('a[href="/our-product/macarons-royaux"]');
+      expect(ctaLink).not.toBeNull();
+      expect(ctaLink?.getAttribute('href')).toBe('/our-product/macarons-royaux');
+      expect(ctaLink?.textContent).toContain('En savoir plus');
 
       unmount();
     });

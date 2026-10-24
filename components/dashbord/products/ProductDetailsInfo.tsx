@@ -16,37 +16,39 @@ export function ProductDetailsInfo({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
       <div className="flex flex-col gap-xs">
-        <label className="text-sm font-bold text-on-surface-variant flex items-center justify-between">
+        <label htmlFor="product-limit-bay" className="text-sm font-bold text-on-surface-variant flex items-center justify-between">
           <span>Limite d'achat (Quantité min)</span>
           <span className="text-[11px] font-normal text-on-surface-variant/70">Min. à l'achat</span>
         </label>
         <input
+          id="product-limit-bay"
           type="number"
           min="1"
           placeholder="Ex: 6 (achat de 6 ou plus)"
           value={limitBay}
           onChange={(e) => setLimitBay(e.target.value)}
-          className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+          className="rounded-xl border border-outline-variant bg-surface-container-low px-sm py-sm text-base text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all focus:border-primary"
         />
         <span className="text-[11px] text-on-surface-variant/70">
           Définit la quantité minimum requise par commande (ex: 6 ou plus).
         </span>
       </div>
       <div className="flex flex-col gap-xs">
-        <label className="text-sm font-bold text-on-surface-variant">
+        <label htmlFor="product-state" className="text-sm font-bold text-on-surface-variant">
           État *
         </label>
         <div className="relative">
           <select
+            id="product-state"
             value={state}
             onChange={(e) => setState(e.target.value as 'exist' | 'outofStock' | 'commingSoun')}
-            className="w-full rounded-xl border border-outline-variant bg-surface-container-low pl-sm pr-8 py-sm text-base text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 h-[46px] appearance-none cursor-pointer"
+            className="w-full rounded-xl border border-outline-variant bg-surface-container-low pl-sm pr-8 py-sm text-base text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 h-[46px] appearance-none cursor-pointer transition-all focus:border-primary"
           >
             <option value="exist">Disponible</option>
             <option value="outofStock">Indisponible</option>
             <option value="commingSoun">Bientôt</option>
           </select>
-          <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none">
+          <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none select-none" aria-hidden="true">
             arrow_drop_down
           </span>
         </div>

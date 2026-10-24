@@ -41,16 +41,16 @@ export function ProductImageUpload({
                   setImageUrl("");
                 }
               }}
-              className="rounded-xl bg-error/10 px-md py-sm text-xs font-bold text-error hover:bg-error/20 transition-colors flex items-center gap-xs"
+              className="rounded-xl bg-error/10 px-md py-sm text-xs font-bold text-error hover:bg-error/20 transition-colors flex items-center gap-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
             >
-              <span className="material-symbols-outlined text-sm">delete</span>
+              <span className="material-symbols-outlined text-sm" aria-hidden="true">delete</span>
               Supprimer l'image
             </button>
           </div>
         ) : (
-          <label className="flex flex-col items-center justify-center cursor-pointer py-md w-full gap-sm">
+          <label htmlFor="product-image-file" className="flex flex-col items-center justify-center cursor-pointer py-md w-full gap-sm focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 rounded-2xl">
             <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant/40">
-              <span className="material-symbols-outlined text-3xl">image</span>
+              <span className="material-symbols-outlined text-3xl" aria-hidden="true">image</span>
             </div>
             <div className="text-center">
               <span className="text-sm font-bold text-primary hover:underline block">
@@ -61,6 +61,7 @@ export function ProductImageUpload({
               </span>
             </div>
             <input
+              id="product-image-file"
               type="file"
               accept="image/*"
               onChange={onFileUpload}
@@ -84,7 +85,7 @@ export function ProductImageUpload({
 
       {uploadError && (
         <span className="text-xs text-error font-medium flex items-center gap-xs">
-          <span className="material-symbols-outlined text-xs select-none">error</span>
+          <span className="material-symbols-outlined text-xs select-none" aria-hidden="true">error</span>
           {uploadError}
         </span>
       )}
