@@ -17,7 +17,8 @@ export type ProductCard = {
   description: string;
   story: string;
   limitBay: number | null; // Minimum purchase quantity per order
-  state: 'exist' | 'outofStock' | 'commingSoun';
+  state: 'exist' | 'outofStock' | 'commingSoun' | 'archived';
+  isPublished?: boolean | null;
   publishedAt: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;

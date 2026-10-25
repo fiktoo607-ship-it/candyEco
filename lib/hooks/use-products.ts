@@ -12,8 +12,9 @@ export interface Product {
   description: string;
   story: string;
   limitBay: number | null;
-  state: 'exist' | 'outofStock' | 'commingSoun';
+  state: 'exist' | 'outofStock' | 'commingSoun' | 'archived';
   visibility: number;
+  isPublished?: boolean | null;
   rating?: number;
   ratingCount?: number;
   tags: string[];
@@ -31,8 +32,9 @@ export interface ProductInput {
   description: string;
   story: string;
   limitBay: number | null;
-  state: 'exist' | 'outofStock' | 'commingSoun';
+  state: 'exist' | 'outofStock' | 'commingSoun' | 'archived';
   visibility: number;
+  isPublished?: boolean | null;
   rating?: number;
   ratingCount?: number;
   tags?: string[];
