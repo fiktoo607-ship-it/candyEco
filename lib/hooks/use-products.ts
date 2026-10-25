@@ -223,6 +223,41 @@ export function useDeleteProduct() {
   });
 }
 
+export function useArchiveProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      isPublished = false,
+      state = 'archived',
+    }: {
+      id: string;
+      isPublished?: boolean;
+      state?: string;
+    }) => {
+      const res = await fetch(`/api/products/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isPublished,
+          state,
+          visibility: isPublished ? 0 : -1,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Échec de l'archivage du produit");
+      }
+
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
 export function useUploadImage() {
   return useMutation({
     mutationFn: async (formData: FormData) => {

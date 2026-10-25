@@ -324,12 +324,17 @@ export default function ProductsSection() {
                       </button>
                       <button
                         onClick={() => openDelete(product)}
-                        className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-sm py-xs text-xs font-bold text-error hover:bg-rose-500/10 transition-colors flex items-center gap-xs"
+                        className={`rounded-xl border px-sm py-xs text-xs font-bold transition-colors flex items-center gap-xs ${
+                          product.state === 'archived' || product.isPublished === false
+                            ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-500/20'
+                            : 'border-amber-500/20 bg-amber-500/10 text-amber-800 dark:text-amber-300 hover:bg-amber-500/20'
+                        }`}
+                        title={product.state === 'archived' || product.isPublished === false ? 'Réactiver' : 'Archiver'}
                       >
                         <span className="material-symbols-outlined text-sm">
-                          delete
+                          {product.state === 'archived' || product.isPublished === false ? 'unarchive' : 'inventory_2'}
                         </span>
-                        Supprimer
+                        {product.state === 'archived' || product.isPublished === false ? 'Réactiver' : 'Archiver'}
                       </button>
                     </div>
                   </div>
@@ -424,11 +429,16 @@ export default function ProductsSection() {
                           </button>
                           <button
                             onClick={() => openDelete(product)}
-                            className="inline-flex items-center justify-center rounded-xl p-2 text-error border border-rose-500/20 hover:bg-rose-500/5 active:scale-95 transition-all h-[34px] w-[34px]"
-                            title="Supprimer"
+                            className={`inline-flex items-center justify-center rounded-xl p-2 border active:scale-95 transition-all h-[34px] w-[34px] ${
+                              product.state === 'archived' || product.isPublished === false
+                                ? 'text-emerald-700 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10'
+                                : 'text-amber-700 dark:text-amber-400 border-amber-500/20 hover:bg-amber-500/10'
+                            }`}
+                            title={product.state === 'archived' || product.isPublished === false ? 'Réactiver' : 'Archiver'}
+                            aria-label={product.state === 'archived' || product.isPublished === false ? `Réactiver ${product.title}` : `Archiver ${product.title}`}
                           >
                             <span className="material-symbols-outlined text-lg">
-                              delete
+                              {product.state === 'archived' || product.isPublished === false ? 'unarchive' : 'inventory_2'}
                             </span>
                           </button>
                         </div>

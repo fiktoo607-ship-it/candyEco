@@ -70,7 +70,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { title, slug, price, category, imageUrl, description, story, limitBay, state, publishedAt, visibility, tags, rating, ratingCount } = body;
+    const { title, slug, price, category, imageUrl, description, story, limitBay, state, isPublished, publishedAt, visibility, tags, rating, ratingCount } = body;
 
     const existingProduct = await prisma.product.findUnique({
       where: { id },
@@ -103,6 +103,7 @@ export async function PUT(
           limitBay: limitBay !== undefined ? (limitBay === null ? null : Number(limitBay)) : existingProduct.limitBay,
           state: state !== undefined ? state : existingProduct.state,
           visibility: visibility !== undefined ? Number(visibility) : existingProduct.visibility,
+          ...(isPublished !== undefined ? { isPublished: Boolean(isPublished) } : {}),
           rating: rating !== undefined ? Number(rating) : existingProduct.rating,
           ratingCount: ratingCount !== undefined ? Number(ratingCount) : existingProduct.ratingCount,
           tags: tags !== undefined ? {
@@ -228,6 +229,64 @@ export async function DELETE(
       );
     }
     return handleServerError(error, '[Products API DELETE]', 'Une erreur interne est survenue.');
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json().catch(() => ({}));
+
+    const existingProduct = await prisma.product.findUnique({
+      where: { id },
+    });
+
+    if (!existingProduct) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    const isPublished = body.isPublished !== undefined ? Boolean(body.isPublished) : false;
+    const state = body.state !== undefined ? String(body.state) : (isPublished ? 'exist' : 'archived');
+    const visibility = body.visibility !== undefined ? Number(body.visibility) : (isPublished ? 0 : -1);
+
+    const updatedProduct = await prisma.product.update({
+      where: { id },
+      data: {
+        isPublished,
+        state,
+        visibility,
+      },
+      include: {
+        tags: true,
+      },
+    });
+
+    try {
+      const { revalidatePath } = await import('next/cache');
+      revalidatePath('/our-product');
+      revalidatePath(`/our-product/${updatedProduct.slug}`);
+      revalidatePath('/products');
+      revalidatePath('/home');
+      revalidatePath('/');
+      revalidatePath('/sitemap.xml');
+    } catch {
+      // Safe fallback if called outside Next.js request context
+    }
+
+    return NextResponse.json({
+      message: isPublished ? 'Produit réactivé avec succès' : 'Produit archivé avec succès',
+      product: updatedProduct,
+    });
+  } catch (error) {
+    return handleServerError(error, '[Products API PATCH]', 'Une erreur interne est survenue.');
   }
 }
 
