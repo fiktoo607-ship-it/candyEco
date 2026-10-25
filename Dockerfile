@@ -66,11 +66,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
 
-# Copy Prisma CLI and configuration dependencies from deps to enable migrations at runtime
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules/dotenv ./node_modules/dotenv
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules/.bin ./node_modules/.bin
+# Copy dependencies from deps to ensure all Prisma CLI and runtime modules (effect, c12, etc.) are available
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Symlink prisma executable to PATH
 RUN ln -sf /app/node_modules/prisma/build/index.js /usr/local/bin/prisma
